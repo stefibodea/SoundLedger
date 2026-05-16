@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# uploaded files
+/public/uploads/artists/
+/public/uploads/covers/
+/public/uploads/catalog/*
+!/public/uploads/catalog/.gitkeep
+
+# audio-service Python env
+audio-service/venv/
+audio-service/__pycache__/
+audio-service/*.pyc

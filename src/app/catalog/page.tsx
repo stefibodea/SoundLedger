@@ -1,0 +1,86 @@
+import { redirect } from 'next/navigation'
+import { AppShell } from '@/components/app-shell'
+import { KPICard } from '@/components/ui/KPICard'
+import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth-guards'
+import { canViewCatalog, canManageArtists } from '@/lib/roles'
+import { enforceOnboarding } from '@/lib/onboarding'
+import { CatalogClient, type TrackRow, type ArtistOption } from './catalog-client'
+
+type SearchParams = { artist?: string }
+
+export default async function CatalogPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  const session = await requireSession()
+  await enforceOnboarding(session, '/catalog')
+  if (!session.labelId || !canViewCatalog(session.role)) redirect('/dashboard')
+
+  const { artist: initialArtistFilter = '' } = await searchParams
+
+  const startOfMonth = new Date()
+  startOfMonth.setDate(1)
+  startOfMonth.setHours(0, 0, 0, 0)
+
+  const [rawTracks, rawArtists, albumsCount, releasedCount, addedThisMonth] = await Promise.all([
+    prisma.track.findMany({
+      where: { labelId: session.labelId },
+      include: { artist: { select: { id: true, name: true, photo: true } } },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.artist.findMany({
+      where: { labelId: session.labelId },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.album.count({ where: { labelId: session.labelId } }),
+    prisma.track.count({ where: { labelId: session.labelId, status: 'RELEASED' } }),
+    prisma.track.count({ where: { labelId: session.labelId, createdAt: { gte: startOfMonth } } }),
+  ])
+
+  const totalTracks = rawTracks.length
+
+  const tracks: TrackRow[] = rawTracks.map((t) => ({
+    id:        t.id,
+    title:     t.title,
+    type:      t.type,
+    status:    t.status,
+    genre:     t.genre,
+    isrc:      t.isrc,
+    bpm:       t.bpm,
+    duration:  t.duration,
+    coverArt:  t.coverArt,
+    createdAt: t.createdAt.toISOString(),
+    artist:    { id: t.artist.id, name: t.artist.name, photo: t.artist.photo ?? null },
+  }))
+
+  const artists: ArtistOption[] = rawArtists.map((a) => ({ id: a.id, name: a.name }))
+
+  const canWrite = canManageArtists(session.role)
+
+  return (
+    <AppShell session={session} title="Catalog Muzical">
+
+      {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+        <KPICard label="Total piese"          value={totalTracks}    accentColor="purple" bgIcon="🎵" />
+        <KPICard label="Lansate"               value={releasedCount}  accentColor="green"  bgIcon="💿"
+          subtitle={totalTracks > 0 ? `${Math.round((releasedCount / totalTracks) * 100)}% din catalog` : undefined}
+        />
+        <KPICard label="Albume & EP-uri"       value={albumsCount}    accentColor="blue"   bgIcon="📀" />
+        <KPICard label="Adăugate luna aceasta" value={addedThisMonth} accentColor="yellow" bgIcon="✨" />
+      </div>
+
+      {/* ── Client Component: filtre + tabel + modal ──────────────────────── */}
+      <CatalogClient
+        tracks={tracks}
+        artists={artists}
+        canWrite={canWrite}
+        initialArtistFilter={initialArtistFilter}
+      />
+
+    </AppShell>
+  )
+}

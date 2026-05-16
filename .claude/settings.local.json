@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx next:*)",
+      "Bash(node -e ' *)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Bash(node --env-file=.env -e ' *)"
+    ]
+  }
+}

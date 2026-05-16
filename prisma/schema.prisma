@@ -1,0 +1,392 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  firstName     String
+  lastName      String
+  role              String   @default("LABEL_MANAGER") // SUPER_ADMIN, LABEL_MANAGER, AR_MANAGER, FINANCIAL, ARTIST
+  mustResetPassword Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  ownedLabel    Label?   @relation("LabelOwner")
+  labelId       String?
+  label         Label?   @relation("LabelMembers", fields: [labelId], references: [id])
+  artistProfile Artist?  @relation("ArtistUser")
+  notifications Notification[]
+  sentInvitations Invitation[] @relation("InvitationSender")
+}
+
+model Label {
+  id          String   @id @default(cuid())
+  name        String
+  country     String
+  city        String
+  genre       String
+  logo        String?
+  plan        String   @default("FREE_TRIAL") // FREE_TRIAL, INDIE, PRO, ENTERPRISE
+  planExpiry  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Owner
+  ownerId     String   @unique
+  owner       User     @relation("LabelOwner", fields: [ownerId], references: [id])
+
+  // Relations
+  members     User[]   @relation("LabelMembers")
+  artists     Artist[]
+  tracks      Track[]
+  albums      Album[]
+  contracts   Contract[]
+  revenues    Revenue[]
+  royaltyPayments RoyaltyPayment[]
+  arProspects    ARProspect[]
+  releases       Release[]
+  invitations    Invitation[]
+  aiPermissions     AIPermission[]
+  aiDetections      AIDetection[]
+  humanMadeCerts    HumanMadeCertificate[]
+  audioFingerprints AudioFingerprint[]
+}
+
+model Invitation {
+  id            String   @id @default(cuid())
+  email         String
+  role          String
+  token         String   @unique
+  expiresAt     DateTime
+  acceptedAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  labelId       String
+  label         Label    @relation(fields: [labelId], references: [id])
+  createdById   String?
+  createdBy     User?    @relation("InvitationSender", fields: [createdById], references: [id])
+
+  @@index([labelId, email])
+}
+
+model Artist {
+  id            String   @id @default(cuid())
+  name          String
+  realName      String?
+  birthDate     String?
+  nationality   String?
+  genre         String
+  subgenre      String?
+  bio           String?
+  photo         String?
+  spotifyUrl    String?
+  appleMusicUrl String?
+  youtubeUrl    String?
+  instagram     String?
+  tiktok        String?
+  contactEmail  String?
+  contactPhone  String?
+  managerName   String?
+  managerContact String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Link to user account (if artist has login)
+  userId        String?  @unique
+  user          User?    @relation("ArtistUser", fields: [userId], references: [id])
+
+  // Label
+  labelId       String
+  label         Label    @relation(fields: [labelId], references: [id])
+
+  // Relations
+  tracks        Track[]
+  albums        Album[]
+  contracts     Contract[]
+  revenues      Revenue[]
+  royaltyPayments RoyaltyPayment[]
+}
+
+model Track {
+  id            String   @id @default(cuid())
+  title         String
+  type          String   @default("SINGLE") // SINGLE, ALBUM_TRACK, EP_TRACK
+  releaseDate   String?
+  status        String   @default("UNRELEASED") // UNRELEASED, RELEASED
+  genre         String?
+  subgenre      String?
+  isrc          String?
+  bpm           Int?
+  key           String?
+  duration      Int?     // in seconds
+  audioFile     String?
+  coverArt      String?
+  lyrics        String?
+  composers     String?
+  producers     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  artistId      String
+  artist        Artist   @relation(fields: [artistId], references: [id])
+  labelId       String
+  label         Label    @relation(fields: [labelId], references: [id])
+  albumId       String?
+  album         Album?   @relation(fields: [albumId], references: [id])
+  revenues      Revenue[]
+  releases      Release[]
+  aiPermission  AIPermission?
+  humanMadeCert HumanMadeCertificate?
+  fingerprint   AudioFingerprint?
+}
+
+model Album {
+  id            String   @id @default(cuid())
+  title         String
+  releaseDate   String?
+  coverArt      String?
+  type          String   @default("ALBUM") // ALBUM, EP
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  artistId      String
+  artist        Artist   @relation(fields: [artistId], references: [id])
+  labelId       String
+  label         Label    @relation(fields: [labelId], references: [id])
+  tracks        Track[]
+  releases      Release[]
+}
+
+model Contract {
+  id              String   @id @default(cuid())
+  duration        String   // e.g. "2 years"
+  royaltyPercent  Float
+  advance         Float?
+  territories     String?  // JSON string array
+  rights          String?  // JSON string array
+  specialClauses  String?
+  status          String   @default("DRAFT") // DRAFT, ACTIVE, EXPIRING, EXPIRED, NEGOTIATION
+  startDate       String?
+  endDate         String?
+  signedAt        DateTime?
+  documentUrl     String?
+  aiAnalysis      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  artistId        String
+  artist          Artist   @relation(fields: [artistId], references: [id])
+  labelId         String
+  label           Label    @relation(fields: [labelId], references: [id])
+  royaltyPayments RoyaltyPayment[]
+}
+
+model Revenue {
+  id          String   @id @default(cuid())
+  source      String   // STREAMING, YOUTUBE, APPLE_MUSIC, LICENSING, PHYSICAL, SYNC
+  amount      Float
+  streams     Int?     // număr de streamuri (pentru YouTube, Apple Music, Spotify)
+  period      String   // e.g. "2024-01"
+  description String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  labelId     String
+  label       Label    @relation(fields: [labelId], references: [id])
+  artistId    String?
+  artist      Artist?  @relation(fields: [artistId], references: [id])
+  trackId     String?
+  track       Track?   @relation(fields: [trackId], references: [id])
+}
+
+model RoyaltyPayment {
+  id          String   @id @default(cuid())
+  amount      Float
+  period      String
+  status      String   @default("PENDING") // PENDING, PAID
+  paidAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  artistId    String
+  artist      Artist   @relation(fields: [artistId], references: [id])
+  contractId  String
+  contract    Contract @relation(fields: [contractId], references: [id])
+  labelId     String
+  label       Label    @relation(fields: [labelId], references: [id])
+}
+
+model ARProspect {
+  id            String   @id @default(cuid())
+  name          String
+  spotifyUrl    String?
+  youtubeUrl    String?
+  soundcloudUrl String?
+  instagram     String?
+  tiktok        String?
+  status        String   @default("IDENTIFIED") // IDENTIFIED, ANALYZING, CONTACTED, NEGOTIATION, SIGNED, REJECTED
+  aiScore       Int?
+  aiReport      String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  labelId       String
+  label         Label    @relation(fields: [labelId], references: [id])
+}
+
+model Release {
+  id            String   @id @default(cuid())
+  releaseDate   String
+  status        String   @default("PLANNING") // PLANNING, READY, RELEASED
+  checklist     String?  // JSON string
+  pressRelease  String?
+  socialPlan    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  trackId       String?
+  track         Track?   @relation(fields: [trackId], references: [id])
+  albumId       String?
+  album         Album?   @relation(fields: [albumId], references: [id])
+  labelId       String
+  label         Label    @relation(fields: [labelId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  message   String
+  type      String   @default("INFO") // INFO, WARNING, AI_INSIGHT, CONTRACT, ROYALTY, AI_COMPLIANCE
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+// ── Modul AI Compliance & Rights Protection ───────────────────────────────────
+
+// Permisiuni AI per piesă — stabilite de Label Manager cu consimțământul artistului
+model AIPermission {
+  id      String @id @default(cuid())
+  trackId String @unique
+  track   Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  labelId String
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  allowAITraining   Boolean  @default(false) // Permite utilizarea pentru antrenare AI
+  allowResearchOnly Boolean  @default(false) // Doar research academic, nu comercial
+  requiresLicense   Boolean  @default(true)  // Necesită licență plătită
+  artistConsent     Boolean  @default(false) // Artistul a consimțit explicit
+  minCompensation   Float?                   // Compensație minimă cerută (EUR)
+  consentDate       DateTime?                // Data la care artistul a consimțit
+  notes             String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Detecție piesă suspectă — raportată de echipa labelului când suspectează utilizare AI neautorizată
+model AIDetection {
+  id      String @id @default(cuid())
+  labelId String
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  suspectUrl    String  // URL-ul piesei suspecte (YouTube, Spotify, TikTok etc.)
+  suspectTitle  String?
+  suspectArtist String? // Ex: "Lolita Cercel"
+  platform      String? // YouTube, Spotify, TikTok, Altele
+
+  similarityScore Float?  // 0-100
+  matchedTrackIds String? // JSON array cu ID-urile pieselor din catalog cu similitudine ridicată
+  aiAnalysis      String? // Raportul AI complet
+
+  status String @default("PENDING") // PENDING, CONFIRMED, DISMISSED, RESOLVED
+
+  takedownSent        Boolean @default(false)
+  compensationClaimed Boolean @default(false)
+
+  reportedById String? // userId-ul celui care a raportat
+  notes        String?
+
+  // Câmpuri adăugate pentru detecție similaritate audio
+  suspectAudioFile String?
+  suspectDuration  Float?
+  matches          String?   // JSON serializat cu detalii match-uri
+  topMatchScore    Float?
+  topMatchTrackId  String?
+  analyzedAt       DateTime?
+  analysisError    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([topMatchScore])
+}
+
+// Amprentă audio — features extrase de serviciul Python pentru comparație similaritate
+model AudioFingerprint {
+  id         String @id @default(cuid())
+  trackId    String @unique
+  track      Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  mfccMean    String // JSON number[13] — media per coeficient MFCC
+  chromaMean  String // JSON number[12] — media per bin chroma
+  mfccMatrix  String // JSON number[][] — shape (n_frames, 13)
+  chromaMatrix String // JSON number[][] — shape (n_frames, 12)
+
+  tempo      Float
+  duration   Float
+  sampleRate Int   @default(22050)
+  hopLength  Int   @default(512)
+
+  computedAt DateTime @default(now())
+
+  labelId String
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@index([labelId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  email     String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+  @@index([email])
+}
+
+// Certificat "Human Made" — declară că o piesă este 100% creație umană, fără AI
+model HumanMadeCertificate {
+  id      String @id @default(cuid())
+  trackId String @unique
+  track   Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  labelId String
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  certificateCode String   @unique // Ex: HM-2026-A1B2C3
+  issuedAt        DateTime @default(now())
+  issuedById      String   // userId-ul celui care a emis certificatul
+  declaration     String   // Textul declarativ semnat
+
+  isRevoked     Boolean   @default(false)
+  revokedAt     DateTime?
+  revokedReason String?
+}

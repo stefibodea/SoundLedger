@@ -6,17 +6,41 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "dev:audio:win": "audio-service\\venv\\Scripts\\uvicorn main:app --reload --port 8000 --app-dir audio-service",
+    "dev:audio:unix": "audio-service/venv/bin/uvicorn main:app --reload --port 8000 --app-dir audio-service",
+    "dev:audio": "audio-service\\venv\\Scripts\\uvicorn main:app --reload --port 8000 --app-dir audio-service",
+    "dev:all": "concurrently --names \"next,audio\" --prefix-colors \"cyan,magenta\" \"npm run dev\" \"npm run dev:audio\"",
+    "seed:fingerprints": "node scripts/seed-fingerprints.mjs",
+    "seed:fingerprints:force": "node scripts/seed-fingerprints.mjs --force",
+    "sync:bpm": "node scripts/sync-bpm-from-fingerprints.mjs",
+    "seed:releases": "node scripts/seed-releases.mjs"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@prisma/adapter-better-sqlite3": "^7.5.0",
+    "@prisma/client": "^7.5.0",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.8.0",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.3.1",
+    "jose": "^6.2.2",
+    "lucide-react": "^1.14.0",
     "next": "16.2.1",
+    "nodemailer": "^7.0.7",
+    "prisma": "^7.5.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "recharts": "^3.8.0",
+    "resend": "^6.12.2"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
+    "@types/nodemailer": "^7.0.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "typescript": "^5"
