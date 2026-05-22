@@ -52,3 +52,22 @@ next-env.d.ts
 audio-service/venv/
 audio-service/__pycache__/
 audio-service/*.pyc
+
+# Database
+dev.db
+dev.db-journal
+
+# Uploaded files
+public/uploads/avatars/*
+public/uploads/suspects/*
+public/uploads/catalog/*
+!public/uploads/avatars/.gitkeep
+!public/uploads/suspects/.gitkeep
+!public/uploads/catalog/.gitkeep
+
+# Python venv
+audio-service/venv/
+
+# Environment
+.env
+.env.local
