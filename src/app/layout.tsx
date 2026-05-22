@@ -22,7 +22,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ro" style={{ colorScheme: 'dark' }} className={plusJakartaSans.variable} suppressHydrationWarning>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            top: '40%',
+            right: -80,
+            width: 400,
+            height: 400,
+            background: 'radial-gradient(circle, rgba(180,60,220,0.07) 0%, transparent 65%)',
+            pointerEvents: 'none',
+            zIndex: 0,
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
+import { User, LogOut } from 'lucide-react'
 import { logoutAction } from '@/app/actions/auth'
-import { ROLES } from '@/lib/roles'
 
 const ROLE_GRADIENTS: Record<string, string> = {
   SUPER_ADMIN:   'linear-gradient(135deg, #fca5a5, #e85d5d)',
@@ -16,236 +16,287 @@ const ROLE_GRADIENTS: Record<string, string> = {
 const ROLE_COLORS: Record<string, { bg: string; text: string; glow: string; border: string }> = {
   SUPER_ADMIN:   { bg: 'rgba(252,165,165,0.12)', text: '#fca5a5', glow: 'rgba(252,165,165,0.35)', border: 'rgba(252,165,165,0.3)' },
   LABEL_MANAGER: { bg: 'rgba(155,148,240,0.12)', text: '#9B94F0',  glow: 'rgba(155,148,240,0.35)', border: 'rgba(155,148,240,0.3)' },
-  AR_MANAGER:    { bg: 'rgba(110,231,183,0.12)', text: '#6ee7b7',  glow: 'rgba(110,231,183,0.35)', border: 'rgba(110,231,183,0.3)'  },
-  FINANCIAL:     { bg: 'rgba(253,230,138,0.12)', text: '#fde68a',  glow: 'rgba(253,230,138,0.35)', border: 'rgba(253,230,138,0.3)'  },
-  ARTIST:        { bg: 'rgba(147,197,253,0.12)', text: '#93c5fd',  glow: 'rgba(147,197,253,0.35)', border: 'rgba(147,197,253,0.3)'  },
+  AR_MANAGER:    { bg: 'rgba(110,231,183,0.12)', text: '#6ee7b7',  glow: 'rgba(110,231,183,0.35)', border: 'rgba(110,231,183,0.3)' },
+  FINANCIAL:     { bg: 'rgba(253,230,138,0.12)', text: '#fde68a',  glow: 'rgba(253,230,138,0.35)', border: 'rgba(253,230,138,0.3)' },
+  ARTIST:        { bg: 'rgba(147,197,253,0.12)', text: '#93c5fd',  glow: 'rgba(147,197,253,0.35)', border: 'rgba(147,197,253,0.3)' },
 }
 
 type Props = {
   initials: string
   displayName: string
   roleDisplay: string
+  email: string
   role: string
+  avatarUrl?: string
 }
 
-export function UserMenu({ initials, displayName, roleDisplay, role }: Props) {
+type NavItemProps = {
+  href: string
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+}
+
+function NavItem({ href, icon, label, onClick }: NavItemProps) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '12px 20px',
+        cursor: 'pointer',
+        textDecoration: 'none',
+        color: hovered ? 'var(--text-primary)' : 'var(--text-secondary)',
+        fontSize: 14,
+        background: hovered ? 'rgba(255,255,255,0.05)' : 'transparent',
+        transition: 'background 0.15s ease, color 0.15s ease',
+      }}
+    >
+      {icon}
+      {label}
+    </Link>
+  )
+}
+
+export function UserMenu({ initials, displayName, roleDisplay, email, role, avatarUrl }: Props) {
   const [isOpen, setIsOpen] = useState(false)
   const [logoutHover, setLogoutHover] = useState(false)
-  const [profileHover, setProfileHover] = useState(false)
   const [isPending, startTransition] = useTransition()
-  const containerRef = useRef<HTMLDivElement>(null)
 
-  const gradient  = ROLE_GRADIENTS[role] ?? ROLE_GRADIENTS.LABEL_MANAGER
-  const colors    = ROLE_COLORS[role]    ?? ROLE_COLORS.LABEL_MANAGER
-  const isArtist  = role === ROLES.ARTIST
+  const gradient = ROLE_GRADIENTS[role] ?? ROLE_GRADIENTS.LABEL_MANAGER
+  const colors   = ROLE_COLORS[role]    ?? ROLE_COLORS.LABEL_MANAGER
+
+  const close = () => setIsOpen(false)
 
   useEffect(() => {
-    if (!isOpen) return
-    const handleClick = (e: MouseEvent) => {
-      if (!containerRef.current?.contains(e.target as Node)) setIsOpen(false)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false)
     }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = 'hidden'
+    }
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = ''
+    }
   }, [isOpen])
 
   return (
     <>
-      <style>{`
-        @keyframes um-drop-in {
-          from { opacity: 0; transform: translateY(-6px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .um-dropdown {
-          animation: um-drop-in 0.18s ease forwards;
-        }
-      `}</style>
+      {/* ── Avatar trigger ── */}
+      <button
+        onClick={() => setIsOpen(true)}
+        aria-label="Meniu utilizator"
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.glow}, 0 0 16px ${colors.glow}`
+          e.currentTarget.style.transform = 'scale(1.07)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = `0 0 0 2px ${colors.border}`
+          e.currentTarget.style.transform = 'scale(1)'
+        }}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: '50%',
+          background: gradient,
+          color: 'white',
+          fontSize: 13,
+          fontWeight: 700,
+          border: 'none',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: `0 0 0 2px ${colors.border}`,
+          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          fontFamily: 'inherit',
+          flexShrink: 0,
+          padding: 0,
+          overflow: 'hidden',
+        }}
+      >
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+        ) : (
+          initials
+        )}
+      </button>
 
-      <div ref={containerRef} style={{ position: 'relative', display: 'inline-block' }}>
+      {/* ── Overlay ── */}
+      <div
+        onClick={close}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.5)',
+          zIndex: 199,
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? 'auto' : 'none',
+          transition: 'opacity 0.2s ease',
+        }}
+      />
 
-        {/* ── Avatar trigger ── */}
-        <button
-          onClick={() => setIsOpen((v) => !v)}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.glow}, 0 0 16px ${colors.glow}`
-            e.currentTarget.style.transform = 'scale(1.07)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = isOpen
-              ? `0 0 0 2px ${colors.border}, 0 0 10px ${colors.glow}`
-              : `0 0 0 2px ${colors.border}`
-            e.currentTarget.style.transform = isOpen ? 'scale(1.05)' : 'scale(1)'
-          }}
-          aria-label="Meniu utilizator"
-          style={{
-            width: 36,
-            height: 36,
+      {/* ── Slide-in panel ── */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          height: '100vh',
+          width: 300,
+          background: 'var(--bg-secondary)',
+          borderLeft: '1px solid rgba(255,255,255,0.08)',
+          zIndex: 200,
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '-8px 0 32px rgba(0,0,0,0.4)',
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+      >
+        {/* ── Header ── */}
+        <div style={{
+          padding: '24px 20px',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          position: 'relative',
+        }}>
+          {/* X button */}
+          <button
+            onClick={close}
+            aria-label="Închide"
+            style={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--text-secondary)',
+              fontSize: 20,
+              lineHeight: 1,
+              padding: '2px 6px',
+              borderRadius: 4,
+              fontFamily: 'inherit',
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}
+          >
+            ×
+          </button>
+
+          {/* Large avatar */}
+          <div style={{
+            width: 72,
+            height: 72,
             borderRadius: '50%',
             background: gradient,
-            color: 'white',
-            fontSize: 13,
-            fontWeight: 700,
-            border: 'none',
-            cursor: 'pointer',
+            margin: '0 auto 12px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transform: isOpen ? 'scale(1.05)' : 'scale(1)',
-            boxShadow: isOpen
-              ? `0 0 0 2px ${colors.border}, 0 0 10px ${colors.glow}`
-              : `0 0 0 2px ${colors.border}`,
-            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-            fontFamily: 'inherit',
+            fontSize: 24,
+            fontWeight: 700,
+            color: 'white',
+            boxShadow: `0 0 0 3px ${colors.border}, 0 0 20px ${colors.glow}`,
+            overflow: 'hidden',
             flexShrink: 0,
-          }}
-        >
-          {initials}
-        </button>
+          }}>
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+            ) : (
+              initials
+            )}
+          </div>
 
-        {/* ── Dropdown ── */}
-        {isOpen && (
-          /* Gradient border wrapper */
-          <div
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 10px)',
-              right: 0,
-              padding: 1,
-              borderRadius: 13,
-              background: 'linear-gradient(135deg, #9B94F0 0%, #22d3ee 100%)',
-              boxShadow: '0 12px 40px rgba(0,0,0,0.5), 0 0 24px rgba(155,148,240,0.12)',
-              zIndex: 200,
-            }}
-          >
-            <div
-              className="um-dropdown"
+          {/* Name */}
+          <div style={{
+            textAlign: 'center',
+            fontSize: 16,
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+            marginBottom: 4,
+          }}>
+            {displayName}
+          </div>
+
+          {/* Role badge */}
+          <div style={{ textAlign: 'center', marginBottom: 8 }}>
+            <span style={{
+              display: 'inline-block',
+              padding: '2px 10px',
+              borderRadius: 999,
+              background: colors.bg,
+              border: `1px solid ${colors.border}`,
+              fontSize: 11,
+              fontWeight: 600,
+              color: colors.text,
+              letterSpacing: '0.02em',
+            }}>
+              {roleDisplay}
+            </span>
+          </div>
+
+          {/* Email */}
+          <div style={{
+            textAlign: 'center',
+            fontSize: 12,
+            color: 'var(--text-secondary)',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            {email}
+          </div>
+        </div>
+
+        {/* ── Nav items ── */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+          <NavItem href="/profile" icon={<User size={18} />} label="Profilul meu" onClick={close} />
+        </div>
+
+        {/* ── Logout ── */}
+        <div style={{
+          padding: '12px 20px 24px',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+        }}>
+          <form action={() => startTransition(() => logoutAction())}>
+            <button
+              type="submit"
+              disabled={isPending}
+              onMouseEnter={() => setLogoutHover(true)}
+              onMouseLeave={() => setLogoutHover(false)}
               style={{
-                minWidth: 210,
-                background: 'rgba(22,20,32,0.85)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                borderRadius: 12,
-                overflow: 'hidden',
-              }}
-            >
-              {/* ── Header: avatar + nume + rol badge ── */}
-              <div style={{
-                padding: '14px 16px 12px',
-                borderBottom: '1px solid rgba(255,255,255,0.07)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 12,
-              }}>
-                {/* Mini avatar */}
-                <div style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: '50%',
-                  background: gradient,
-                  flexShrink: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: 'white',
-                  boxShadow: `0 0 0 2px ${colors.border}, 0 0 8px ${colors.glow}`,
-                }}>
-                  {initials}
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: '#f0efe8',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}>
-                    {displayName}
-                  </div>
-                  {/* Rol badge */}
-                  <div style={{
-                    display: 'inline-block',
-                    marginTop: 4,
-                    padding: '2px 8px',
-                    borderRadius: 999,
-                    background: colors.bg,
-                    border: `1px solid ${colors.border}`,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: colors.text,
-                    letterSpacing: '0.02em',
-                  }}>
-                    {roleDisplay}
-                  </div>
-                </div>
-              </div>
-
-              {/* ── Profil meu — doar Artist ── */}
-              {isArtist && (
-                <button
-                  type="button"
-                  onMouseEnter={() => setProfileHover(true)}
-                  onMouseLeave={() => setProfileHover(false)}
-                  onClick={() => { setIsOpen(false); window.location.href = '/my-profile' }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '10px 16px',
-                    fontSize: 13,
-                    color: profileHover ? '#f0efe8' : '#c8c6bc',
-                    width: '100%',
-                    textAlign: 'left',
-                    background: profileHover ? 'rgba(255,255,255,0.05)' : 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    transition: 'background 0.12s ease, color 0.12s ease',
-                  }}
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-                  </svg>
-                  Profilul meu
-                </button>
-              )}
-
-              {/* ── Deconectare ── */}
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() => startTransition(() => logoutAction())}
-                onMouseEnter={() => setLogoutHover(true)}
-                onMouseLeave={() => setLogoutHover(false)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '10px 16px',
-                  fontSize: 13,
-                  color: logoutHover ? '#ff6b6b' : '#fca5a5',
-                  width: '100%',
-                  textAlign: 'left',
-                  background: logoutHover ? 'rgba(252,100,100,0.08)' : 'transparent',
-                  border: 'none',
-                  cursor: isPending ? 'default' : 'pointer',
-                  fontFamily: 'inherit',
-                  transition: 'background 0.12s ease, color 0.12s ease',
-                  filter: logoutHover ? 'drop-shadow(0 0 6px rgba(255,107,107,0.5))' : 'none',
-                }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                  <polyline points="16 17 21 12 16 7" />
-                  <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
-                {isPending ? 'Se deconectează…' : 'Deconectare'}
-              </button>
-            </div>
-          </div>
-        )}
+                justifyContent: 'center',
+                gap: 8,
+                width: '100%',
+                padding: 10,
+                background: logoutHover ? 'rgba(252,165,165,0.15)' : 'rgba(252,165,165,0.08)',
+                border: '1px solid rgba(252,165,165,0.2)',
+                borderRadius: 8,
+                color: '#fca5a5',
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: isPending ? 'default' : 'pointer',
+                fontFamily: 'inherit',
+                transition: 'background 0.15s ease',
+              }}
+            >
+              <LogOut size={16} />
+              {isPending ? 'Se deconectează…' : 'Deconectare'}
+            </button>
+          </form>
+        </div>
       </div>
     </>
   )

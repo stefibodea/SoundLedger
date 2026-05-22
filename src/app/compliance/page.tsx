@@ -54,7 +54,7 @@ export default async function CompliancePage({
   return (
     <AppShell
       session={session}
-      title="🛡️ AI Compliance"
+      title="AI Compliance"
     >
       {showReport && (
         <div className="card" style={{ borderLeft: '3px solid var(--role-ar-dark)', marginBottom: 20 }}>
@@ -121,7 +121,6 @@ export default async function CompliancePage({
       <section className="grid grid-3" style={{ marginBottom: 20 }}>
         <Link href="/compliance/permissions" style={{ textDecoration: 'none' }}>
           <div className="card" style={{ cursor: 'pointer', transition: 'opacity 0.15s' }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>⚙️</div>
             <h3 style={{ marginBottom: 4 }}>Permisiuni AI</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>
               Setează ce este permis sau interzis per piesă. Gestionează consimțământul artiștilor.
@@ -134,7 +133,6 @@ export default async function CompliancePage({
 
         <Link href="/compliance/scanner" style={{ textDecoration: 'none' }}>
           <div className="card" style={{ cursor: 'pointer', transition: 'opacity 0.15s' }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
             <h3 style={{ marginBottom: 4 }}>Scanner piese suspecte</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>
               Raportează și analizează cu AI piese externe care par să fi utilizat muzica ta.
@@ -147,7 +145,6 @@ export default async function CompliancePage({
 
         <Link href="/compliance/certificates" style={{ textDecoration: 'none' }}>
           <div className="card" style={{ cursor: 'pointer', transition: 'opacity 0.15s' }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
             <h3 style={{ marginBottom: 4 }}>Certificate Human Made</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>
               Certifică piesele 100% create de oameni, fără implicarea AI-ului.

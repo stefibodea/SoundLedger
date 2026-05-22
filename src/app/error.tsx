@@ -69,7 +69,7 @@ export default function GlobalError({
               color: '#aaa', fontSize: 14, textDecoration: 'none', display: 'inline-block',
             }}
           >
-            ← Dashboard
+            ← Acasă
           </a>
         </div>
       </div>

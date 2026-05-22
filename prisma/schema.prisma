@@ -14,6 +14,7 @@ model User {
   firstName     String
   lastName      String
   role              String   @default("LABEL_MANAGER") // SUPER_ADMIN, LABEL_MANAGER, AR_MANAGER, FINANCIAL, ARTIST
+  avatar            String?  // path relativ în public/uploads/avatars/
   mustResetPassword Boolean  @default(false)
   createdAt         DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -193,13 +194,14 @@ model Contract {
 }
 
 model Revenue {
-  id          String   @id @default(cuid())
-  source      String   // STREAMING, YOUTUBE, APPLE_MUSIC, LICENSING, PHYSICAL, SYNC
-  amount      Float
-  streams     Int?     // număr de streamuri (pentru YouTube, Apple Music, Spotify)
-  period      String   // e.g. "2024-01"
-  description String?
-  createdAt   DateTime @default(now())
+  id            String   @id @default(cuid())
+  source        String   // STREAMING, YOUTUBE, APPLE_MUSIC, LICENSING, PHYSICAL, SYNC
+  amount        Float
+  streams       Int?     // număr de streamuri (pentru YouTube, Apple Music, Spotify)
+  period        String   // e.g. "2024-01"
+  description   String?
+  revenueStatus String   @default("ESTIMAT") // ESTIMAT, RECONCILIAT
+  createdAt     DateTime @default(now())
 
   // Relations
   labelId     String
@@ -208,6 +210,7 @@ model Revenue {
   artist      Artist?  @relation(fields: [artistId], references: [id])
   trackId     String?
   track       Track?   @relation(fields: [trackId], references: [id])
+  royaltyPayments RoyaltyPayment[]
 }
 
 model RoyaltyPayment {
@@ -216,6 +219,7 @@ model RoyaltyPayment {
   period      String
   status      String   @default("PENDING") // PENDING, PAID
   paidAt      DateTime?
+  notes       String?
   createdAt   DateTime @default(now())
 
   // Relations
@@ -225,6 +229,8 @@ model RoyaltyPayment {
   contract    Contract @relation(fields: [contractId], references: [id])
   labelId     String
   label       Label    @relation(fields: [labelId], references: [id])
+  revenueId   String?
+  revenue     Revenue? @relation(fields: [revenueId], references: [id])
 }
 
 model ARProspect {

@@ -27,7 +27,7 @@ export async function ArtistDashboard({ session }: { session: SessionPayload }) 
 
   if (!artist) {
     return (
-      <AppShell session={session} title="Dashboard">
+      <AppShell session={session} title="Acasă">
         <div className="card empty-state">
           <div className="empty-icon">🎵</div>
           <p style={{ fontWeight: 600, marginBottom: 8 }}>Contul tău nu este încă configurat.</p>

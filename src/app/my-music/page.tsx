@@ -4,27 +4,31 @@ import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { ROLES } from '@/lib/roles'
 import { getArtistProfile } from '@/lib/artist-profile'
-import { generateArtistInsightsAction } from '@/app/actions/ai'
-
-type PageProps = {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>
-}
 
 const SOURCE_LABELS: Record<string, string> = {
-  STREAMING:   'Spotify',
-  YOUTUBE:     'YouTube',
-  APPLE_MUSIC: 'Apple Music',
-  LICENSING:   'Licențiere',
-  PHYSICAL:    'Vânzări fizice',
-  SYNC:        'Sync',
+  SPOTIFY:             'Spotify',
+  APPLE_MUSIC:         'Apple Music',
+  YOUTUBE_MUSIC:       'YouTube Music',
+  YOUTUBE_CONTENT_ID:  'YouTube Content ID',
+  TIKTOK:              'TikTok',
+  DEEZER:              'Deezer',
+  RADIO_TV:            'Radio & TV',
+  SYNC_LICENSING:      'Sync Licensing',
+  LICENTIERE:          'Licențiere',
+  VANZARI_FIZICE:      'Vânzări fizice',
+  MERCHANDISE:         'Merchandise',
+  ALTE_SURSE:          'Alte surse',
+  // legacy
+  STREAMING:           'Spotify',
+  YOUTUBE:             'YouTube',
+  LICENSING:           'Licențiere',
+  PHYSICAL:            'Vânzări fizice',
+  SYNC:                'Sync',
 }
 
-export default async function MyMusicPage({ searchParams }: PageProps) {
+export default async function MyMusicPage() {
   const session = await requireSession()
   if (session.role !== ROLES.ARTIST) redirect('/dashboard')
-
-  const params = (await searchParams) ?? {}
-  const error  = typeof params.error === 'string' ? params.error : null
 
   const artist = await getArtistProfile(session)
 
@@ -39,17 +43,11 @@ export default async function MyMusicPage({ searchParams }: PageProps) {
     )
   }
 
-  const [tracks, latestInsight] = await Promise.all([
-    prisma.track.findMany({
-      where: { artistId: artist.id },
-      include: { revenues: { orderBy: { createdAt: 'desc' } } },
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.notification.findFirst({
-      where: { userId: session.userId, type: 'AI_INSIGHT' },
-      orderBy: { createdAt: 'desc' },
-    }),
-  ])
+  const tracks = await prisma.track.findMany({
+    where: { artistId: artist.id },
+    include: { revenues: { orderBy: { createdAt: 'desc' } } },
+    orderBy: { createdAt: 'desc' },
+  })
 
   const totalRevenue = tracks.flatMap((t) => t.revenues).reduce((sum, r) => sum + r.amount, 0)
   const totalStreams  = tracks.flatMap((t) => t.revenues).reduce((sum, r) => sum + (r.streams ?? 0), 0)
@@ -57,12 +55,6 @@ export default async function MyMusicPage({ searchParams }: PageProps) {
 
   return (
     <AppShell session={session} title="Muzica mea">
-      {error && (
-        <div className="card" style={{ marginBottom: 16, borderLeft: '3px solid var(--status-expired)', padding: '12px 16px' }}>
-          <p style={{ color: 'var(--status-expired)', margin: 0 }}>{decodeURIComponent(error.replace(/\+/g, ' '))}</p>
-        </div>
-      )}
-
       {/* ── Stats ── */}
       <section className="grid grid-4" style={{ marginBottom: 20 }}>
         <div className="card card-stat">
@@ -83,41 +75,6 @@ export default async function MyMusicPage({ searchParams }: PageProps) {
           </div>
           <div className="stat-label">Streamuri totale</div>
         </div>
-      </section>
-
-      {/* ── AI Career Insights ── */}
-      <section className="card" style={{ marginBottom: 20, borderLeft: '3px solid var(--primary)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: latestInsight ? 14 : 0 }}>
-          <div>
-            <h3 style={{ marginBottom: 4 }}>✨ Career Insights AI</h3>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-              Recomandări personalizate bazate pe catalogul și datele tale.
-            </p>
-          </div>
-          <form action={generateArtistInsightsAction} style={{ flexShrink: 0, marginLeft: 16 }}>
-            <button className="btn btn-secondary btn-sm" type="submit">
-              {latestInsight ? 'Regenerează' : 'Generează insights'}
-            </button>
-          </form>
-        </div>
-        {latestInsight && (
-          <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border-light)' }}>
-            {latestInsight.message.split('\n').filter(Boolean).map((line, i) => (
-              <p key={i} style={{
-                margin: '6px 0',
-                fontSize: 14,
-                color: line.startsWith('→') ? 'var(--text-primary)' : 'var(--text-secondary)',
-                fontWeight: line.startsWith('→') ? 500 : 400,
-                paddingLeft: line.startsWith('→') ? 4 : 0,
-              }}>
-                {line}
-              </p>
-            ))}
-            <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 10 }}>
-              Generat la {new Date(latestInsight.createdAt).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-            </p>
-          </div>
-        )}
       </section>
 
       {tracks.length === 0 ? (

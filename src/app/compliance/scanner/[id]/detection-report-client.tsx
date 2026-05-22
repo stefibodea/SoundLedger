@@ -125,8 +125,8 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage 
   // Chart data — top 3 matches
   const chartData = matches.slice(0, 3).map((m) => ({
     name:              truncate(m.trackTitle, 22),
-    'MFCC (timbru)':   Math.round(m.mfccSimilarity   * 100),
-    'Chroma (armonie)': Math.round(m.chromaSimilarity * 100),
+    'OpenL3 (semantic)':       Math.round(m.mfccSimilarity   * 100),
+    'Chromaprint (copiere)':   Math.round(m.chromaSimilarity * 100),
     'Overall':          Math.round(m.overallScore     * 100),
   }))
 
@@ -291,8 +291,8 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage 
                   contentStyle={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-light)', borderRadius: 6, fontSize: 12 }}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="MFCC (timbru)"   fill="#fde68a" radius={[0, 3, 3, 0]} />
-                <Bar dataKey="Chroma (armonie)" fill="#6ee7b7" radius={[0, 3, 3, 0]} />
+                <Bar dataKey="OpenL3 (semantic)"     fill="#fde68a" radius={[0, 3, 3, 0]} />
+                <Bar dataKey="Chromaprint (copiere)" fill="#6ee7b7" radius={[0, 3, 3, 0]} />
                 <Bar dataKey="Overall"          fill="#9B94F0" radius={[0, 3, 3, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -328,9 +328,8 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage 
           {/* Metrici */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 14 }}>
             {[
-              { label: 'MFCC (timbru)',     value: m.mfccSimilarity },
-              { label: 'Chroma (armonie)',   value: m.chromaSimilarity },
-              { label: 'Tempo',             value: m.tempoMatch },
+              { label: 'OpenL3 (semantic)',     value: m.mfccSimilarity },
+              { label: 'Chromaprint (copiere)', value: m.chromaSimilarity },
             ].map(({ label, value }) => (
               <div key={label} style={{ textAlign: 'center', padding: '10px 8px', background: 'var(--bg-tertiary)', borderRadius: 6 }}>
                 <div style={{ fontSize: 20, fontWeight: 700, color: scoreColor(value) }}>
@@ -358,28 +357,7 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage 
             </div>
           )}
 
-          {/* Segmente */}
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 6 }}>
-              Segmente similare detectate (prag cosine ≥ 85%)
-            </div>
-            {m.segments && m.segments.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {m.segments.map((s, si) => (
-                  <div key={si} style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', gap: 8 }}>
-                    <span style={{ color: 'var(--primary)', fontWeight: 500 }}>
-                      {s.startSec.toFixed(1)}s – {s.endSec.toFixed(1)}s
-                    </span>
-                    <span>→ similaritate {Math.round(s.score * 100)}%</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                Nu s-au detectat segmente similare cu prag &gt; 85%
-              </span>
-            )}
-          </div>
+          {/* Segmente — ascunse: algoritmul Chromaprint + OpenL3 nu produce timestamps */}
         </div>
       ))}
 

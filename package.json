@@ -14,7 +14,9 @@
     "seed:fingerprints": "node scripts/seed-fingerprints.mjs",
     "seed:fingerprints:force": "node scripts/seed-fingerprints.mjs --force",
     "sync:bpm": "node scripts/sync-bpm-from-fingerprints.mjs",
-    "seed:releases": "node scripts/seed-releases.mjs"
+    "seed:releases": "node scripts/seed-releases.mjs",
+    "clear:fingerprints": "node scripts/clear-fingerprints.mjs",
+    "update:contract-dates": "node scripts/update-contract-dates.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

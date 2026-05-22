@@ -6,26 +6,51 @@ import { RevenueCharts } from '@/components/revenue-charts'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canViewFinance, canManageFinance } from '@/lib/roles'
-import { createRevenueAction } from '@/app/actions/revenues'
+import { createRevenueAction, reconcileRevenueAction } from '@/app/actions/revenues'
 import { generateFinanceReportAction } from '@/app/actions/ai'
+import { SuccessBanner } from './SuccessBanner'
 import { enforceOnboarding } from '@/lib/onboarding'
 
 const SOURCE_LABELS: Record<string, string> = {
-  STREAMING:   'Spotify',
-  YOUTUBE:     'YouTube',
-  APPLE_MUSIC: 'Apple Music',
-  LICENSING:   'Licențiere',
-  PHYSICAL:    'Vânzări fizice',
-  SYNC:        'Sync',
+  SPOTIFY:             'Spotify',
+  APPLE_MUSIC:         'Apple Music',
+  YOUTUBE_MUSIC:       'YouTube Music',
+  YOUTUBE_CONTENT_ID:  'YouTube Content ID',
+  TIKTOK:              'TikTok',
+  DEEZER:              'Deezer',
+  RADIO_TV:            'Radio & TV (CREDIDAM/UCMR-ADA)',
+  SYNC_LICENSING:      'Sync Licensing',
+  LICENTIERE:          'Licențiere',
+  VANZARI_FIZICE:      'Vânzări fizice',
+  MERCHANDISE:         'Merchandise',
+  ALTE_SURSE:          'Alte surse',
+  // legacy
+  STREAMING:           'Spotify (legacy)',
+  YOUTUBE:             'YouTube (legacy)',
+  LICENSING:           'Licențiere (legacy)',
+  PHYSICAL:            'Vânzări fizice (legacy)',
+  SYNC:                'Sync (legacy)',
 }
 
 const SOURCE_STYLES: Record<string, { bg: string; color: string }> = {
-  STREAMING:   { bg: '#dcfce7',                       color: '#15803d' },
-  YOUTUBE:     { bg: '#fee2e2',                       color: '#b91c1c' },
-  APPLE_MUSIC: { bg: '#fce7f3',                       color: '#be185d' },
-  LICENSING:   { bg: 'var(--role-label-light)',        color: 'var(--role-label-dark)' },
-  PHYSICAL:    { bg: 'var(--bg-tertiary)',             color: 'var(--text-secondary)' },
-  SYNC:        { bg: 'var(--role-finance-light)',      color: 'var(--role-finance-dark)' },
+  SPOTIFY:             { bg: '#dcfce7',                       color: '#15803d' },
+  APPLE_MUSIC:         { bg: '#fce7f3',                       color: '#be185d' },
+  YOUTUBE_MUSIC:       { bg: '#fee2e2',                       color: '#b91c1c' },
+  YOUTUBE_CONTENT_ID:  { bg: '#fef9c3',                       color: '#854d0e' },
+  TIKTOK:              { bg: '#f0f9ff',                       color: '#0369a1' },
+  DEEZER:              { bg: '#ede9fe',                       color: '#6d28d9' },
+  RADIO_TV:            { bg: 'var(--role-finance-light)',      color: 'var(--role-finance-dark)' },
+  SYNC_LICENSING:      { bg: 'var(--role-ar-light)',           color: 'var(--role-ar-dark)' },
+  LICENTIERE:          { bg: 'var(--role-label-light)',        color: 'var(--role-label-dark)' },
+  VANZARI_FIZICE:      { bg: 'var(--bg-tertiary)',             color: 'var(--text-secondary)' },
+  MERCHANDISE:         { bg: '#fdf2f8',                       color: '#9d174d' },
+  ALTE_SURSE:          { bg: 'var(--bg-tertiary)',             color: 'var(--text-secondary)' },
+  // legacy
+  STREAMING:           { bg: '#dcfce7',                       color: '#15803d' },
+  YOUTUBE:             { bg: '#fee2e2',                       color: '#b91c1c' },
+  LICENSING:           { bg: 'var(--role-label-light)',        color: 'var(--role-label-dark)' },
+  PHYSICAL:            { bg: 'var(--bg-tertiary)',             color: 'var(--text-secondary)' },
+  SYNC:                { bg: 'var(--role-finance-light)',      color: 'var(--role-finance-dark)' },
 }
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>
@@ -37,6 +62,10 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
 
   const params     = (await searchParams) ?? {}
   const errorMsg   = typeof params.error      === 'string' ? params.error      : null
+  const successType   = typeof params.success === 'string' ? params.success    : null
+  const successAmount = typeof params.amount  === 'string' ? params.amount     : null
+  const successArtist = typeof params.artist  === 'string' ? decodeURIComponent(params.artist) : null
+  const successPercent = typeof params.percent === 'string' ? params.percent   : null
   const filterSrc  = typeof params.source     === 'string' ? params.source     : ''
   const filterArt  = typeof params.artistId   === 'string' ? params.artistId   : ''
   const periodFrom = typeof params.periodFrom === 'string' ? params.periodFrom : ''
@@ -54,6 +83,13 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
     if (periodTo)   pf.lte = periodTo
     filteredWhere.period = pf
   }
+
+  // Royalties neplatite
+  const royaltiesNeplatite = await prisma.royaltyPayment.aggregate({
+    where: { labelId: session.labelId, status: 'PENDING' },
+    _sum: { amount: true },
+    _count: true,
+  })
 
   // Latest AI finance report for this user
   const latestAiReport = await prisma.notification.findFirst({
@@ -139,8 +175,12 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
         </div>
       )}
 
+      {successType === 'royalty_generated' && successAmount && successArtist && successPercent && (
+        <SuccessBanner amount={successAmount} artist={successArtist} percent={successPercent} />
+      )}
+
       {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 16, marginBottom: 20 }}>
         <KPICard
           label="Total venituri"
           value={`${totalAll.toFixed(2)} €`}
@@ -161,6 +201,12 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
           label="Artiști cu venituri"
           value={perArtist.filter((a) => a.name !== '(fără artist)').length}
           accentColor="yellow"
+        />
+        <KPICard
+          label="Royalties neplatite"
+          value={`${(royaltiesNeplatite._sum.amount ?? 0).toFixed(2)} €`}
+          accentColor={royaltiesNeplatite._count > 0 ? 'yellow' : 'gray'}
+          subtitle={`${royaltiesNeplatite._count} plăți în așteptare`}
         />
       </div>
 
@@ -213,13 +259,19 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label" htmlFor="source">Sursă</label>
-                <select className="form-input form-select" id="source" name="source" defaultValue="STREAMING">
-                  <option value="STREAMING">Streaming (Spotify)</option>
-                  <option value="YOUTUBE">YouTube</option>
+                <select className="form-input form-select" id="source" name="source" defaultValue="SPOTIFY">
+                  <option value="SPOTIFY">Spotify</option>
                   <option value="APPLE_MUSIC">Apple Music</option>
-                  <option value="LICENSING">Licențiere</option>
-                  <option value="PHYSICAL">Vânzări fizice</option>
-                  <option value="SYNC">Sync</option>
+                  <option value="YOUTUBE_MUSIC">YouTube Music</option>
+                  <option value="YOUTUBE_CONTENT_ID">YouTube Content ID</option>
+                  <option value="TIKTOK">TikTok</option>
+                  <option value="DEEZER">Deezer</option>
+                  <option value="RADIO_TV">Radio &amp; TV (CREDIDAM/UCMR-ADA)</option>
+                  <option value="SYNC_LICENSING">Sync Licensing</option>
+                  <option value="LICENTIERE">Licențiere</option>
+                  <option value="VANZARI_FIZICE">Vânzări fizice</option>
+                  <option value="MERCHANDISE">Merchandise</option>
+                  <option value="ALTE_SURSE">Alte surse</option>
                 </select>
               </div>
               <div className="form-group">
@@ -246,11 +298,24 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
                     <option key={a.id} value={a.id}>{a.name}</option>
                   ))}
                 </select>
+                <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                  Dacă artistul are contract activ, royalty-ul va fi calculat și înregistrat automat.
+                </p>
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="description">Descriere / notă contabilă (opțional)</label>
                 <input className="form-input" id="description" name="description" placeholder="ex: Q1 2026 Spotify statement" />
               </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label" htmlFor="revenueStatus">Status venit</label>
+                <select className="form-input form-select" id="revenueStatus" name="revenueStatus" defaultValue="ESTIMAT">
+                  <option value="ESTIMAT">Estimat — statement provizoriu</option>
+                  <option value="RECONCILIAT">Reconciliat — statement final confirmat</option>
+                </select>
+              </div>
+              <div className="form-group" />
             </div>
             <button className="btn btn-primary" type="submit">Salvează venit</button>
           </form>
@@ -287,7 +352,7 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
           </div>
           <div className="form-group" style={{ margin: 0, flex: '0 0 130px' }}>
             <label className="form-label">Perioadă de la</label>
-            <input name="periodFrom" className="form-input" defaultValue={periodFrom} placeholder="2025-01" />
+            <input name="periodFrom" className="form-input" defaultValue={periodFrom} placeholder="2026-01" />
           </div>
           <div className="form-group" style={{ margin: 0, flex: '0 0 130px' }}>
             <label className="form-label">Perioadă până la</label>
@@ -315,12 +380,13 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
                 <th>Artist</th>
                 <th>Streamuri</th>
                 <th>Descriere</th>
+                <th>Status</th>
                 {canManage && <th></th>}
               </tr>
             </thead>
             <tbody>
               {filteredRevenues.length === 0 ? (
-                <tr><td colSpan={canManage ? 7 : 6}>Nu există venituri pentru filtrele selectate.</td></tr>
+                <tr><td colSpan={canManage ? 8 : 7}>Nu există venituri pentru filtrele selectate.</td></tr>
               ) : (
                 filteredRevenues.map((r) => (
                   <tr key={r.id}>
@@ -342,11 +408,44 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
                     <td style={{ fontSize: 12, color: 'var(--text-secondary)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {r.description ?? '—'}
                     </td>
+                    <td>
+                      {r.revenueStatus === 'RECONCILIAT' ? (
+                        <span style={{ background: 'rgba(110,231,183,0.15)', color: '#6ee7b7', border: '1px solid rgba(110,231,183,0.3)', fontSize: 11, padding: '2px 8px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+                          Reconciliat
+                        </span>
+                      ) : (
+                        <span style={{ background: 'rgba(253,230,138,0.15)', color: '#fde68a', border: '1px solid rgba(253,230,138,0.3)', fontSize: 11, padding: '2px 8px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+                          Estimat
+                        </span>
+                      )}
+                    </td>
                     {canManage && (
                       <td>
-                        <Link href={`/finance/${r.id}`} className="btn btn-sm btn-secondary" style={{ fontSize: 11 }}>
-                          Editează
-                        </Link>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <Link href={`/finance/${r.id}`} className="btn btn-sm btn-secondary" style={{ fontSize: 11 }}>
+                            Editează
+                          </Link>
+                          {r.revenueStatus === 'ESTIMAT' && (
+                            <form action={reconcileRevenueAction} style={{ display: 'inline' }}>
+                              <input type="hidden" name="id" value={r.id} />
+                              <button
+                                type="submit"
+                                style={{
+                                  fontSize: 11,
+                                  padding: '3px 10px',
+                                  borderRadius: 6,
+                                  border: '1px solid rgba(110,231,183,0.3)',
+                                  background: 'rgba(110,231,183,0.1)',
+                                  color: '#6ee7b7',
+                                  cursor: 'pointer',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                Reconciliază
+                              </button>
+                            </form>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>

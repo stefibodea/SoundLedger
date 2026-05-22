@@ -265,7 +265,7 @@ export function SidebarNav({ role, isArtist }: Props) {
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {isArtist ? (
           <>
-            <NavItem href="/dashboard"   icon={LayoutDashboard} label="Dashboard"       pathname={pathname} isCollapsed={isCollapsed} />
+            <NavItem href="/dashboard"   icon={LayoutDashboard} label="Acasă"       pathname={pathname} isCollapsed={isCollapsed} />
             <NavItem href="/my-profile"  icon={User}            label="Profilul meu"    pathname={pathname} isCollapsed={isCollapsed} />
             <NavItem href="/my-music"    icon={Music2}          label="Muzica mea"      pathname={pathname} isCollapsed={isCollapsed} />
             <NavItem href="/my-contract" icon={FileText}        label="Contractul meu"  pathname={pathname} isCollapsed={isCollapsed} />
@@ -275,7 +275,7 @@ export function SidebarNav({ role, isArtist }: Props) {
           <>
             {/* GENERAL */}
             <SectionHeader label="General" first isCollapsed={isCollapsed} />
-            <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" pathname={pathname} isCollapsed={isCollapsed} />
+            <NavItem href="/dashboard" icon={LayoutDashboard} label="Acasă" pathname={pathname} isCollapsed={isCollapsed} />
             {canManageArtists(role)  && <NavItem href="/artists"  icon={Mic2}        label="Artiști"  pathname={pathname} isCollapsed={isCollapsed} />}
             {canViewCatalog(role)    && <NavItem href="/catalog"  icon={ListMusic}    label="Catalog"  pathname={pathname} isCollapsed={isCollapsed} />}
             {canManageReleases(role) && <NavItem href="/releases" icon={CalendarDays} label="Lansări"  pathname={pathname} isCollapsed={isCollapsed} />}

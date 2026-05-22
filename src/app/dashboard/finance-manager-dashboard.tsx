@@ -21,7 +21,7 @@ function getTodayStr(): string {
 export async function FinanceManagerDashboard({ session }: { session: SessionPayload }) {
   if (!session.labelId) {
     return (
-      <AppShell session={session} title="Dashboard Finance">
+      <AppShell session={session} title="Acasă">
         <div className="card empty-state">
           <p>Contul tău nu este asociat unui label. Contactează administratorul.</p>
         </div>
@@ -86,7 +86,7 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
   const pendingRoyalties = pendingRoyaltiesAgg._sum.amount ?? 0
 
   return (
-    <AppShell session={session} title="Dashboard Finance">
+    <AppShell session={session} title="Acasă">
 
       {/* ── KPI cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
@@ -152,14 +152,14 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
         {/* Contracte care expiră */}
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h3 style={{ margin: 0 }}>📄 Contracte care expiră în 30 zile</h3>
+            <h3 style={{ margin: 0 }}>Contracte care expiră în 30 zile</h3>
             <Link href="/contracts" className="btn btn-ghost" style={{ fontSize: 12 }}>
               Toate →
             </Link>
           </div>
           {expiringContracts.length === 0 ? (
             <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>
-              ✓ Niciun contract nu expiră în următoarele 30 de zile.
+              Niciun contract nu expiră în următoarele 30 de zile.
             </p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -199,7 +199,7 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
 
         {/* Top 3 artiști după venituri */}
         <div className="card">
-          <h3 style={{ margin: '0 0 14px' }}>🏆 Top artiști după venituri</h3>
+          <h3 style={{ margin: '0 0 14px' }}>Top artiști după venituri</h3>
           {topArtistRows.length === 0 ? (
             <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>Nu există venituri înregistrate per artist.</p>
           ) : (
@@ -217,8 +217,8 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 16, opacity: 0.7 }}>
-                      {i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}
+                    <span style={{ fontSize: 13, opacity: 0.5, fontWeight: 600 }}>
+                      {i + 1}.
                     </span>
                     <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{a.name}</span>
                   </div>
@@ -247,7 +247,7 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
             gap: 12,
           }}
         >
-          <span style={{ fontSize: 18 }}>⚠</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--role-finance-dark)' }}>!</span>
           <span style={{ color: 'var(--role-finance-dark)', fontWeight: 500 }}>
             Royalties neplatite:{' '}
             {pendingRoyalties >= 1000

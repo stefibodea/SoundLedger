@@ -133,9 +133,9 @@ export function ContractsClient({ contracts, artists, canManage }: Props) {
     {
       key: 'period',
       header: 'Perioadă',
-      width: '180px',
+      width: '200px',
       render: (c) => (
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+        <span style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
           {fmtDate(c.startDate)} → {fmtDate(c.endDate)}
         </span>
       ),

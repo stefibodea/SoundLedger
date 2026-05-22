@@ -253,6 +253,11 @@ export async function generateArtistBioAction() {
     : null
 
   const sourceLabel: Record<string, string> = {
+    SPOTIFY: 'Spotify', APPLE_MUSIC: 'Apple Music', YOUTUBE_MUSIC: 'YouTube Music',
+    YOUTUBE_CONTENT_ID: 'YouTube Content ID', TIKTOK: 'TikTok', DEEZER: 'Deezer',
+    RADIO_TV: 'Radio & TV', SYNC_LICENSING: 'Sync Licensing', LICENTIERE: 'licențiere',
+    VANZARI_FIZICE: 'vânzări fizice', MERCHANDISE: 'merchandise', ALTE_SURSE: 'alte surse',
+    // legacy
     STREAMING: 'streaming', YOUTUBE: 'YouTube', LICENSING: 'licențiere', SYNC: 'sync', PHYSICAL: 'vânzări fizice',
   }
 

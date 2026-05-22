@@ -15,7 +15,7 @@ const PROSPECT_STATUSES = [
 export async function ARManagerDashboard({ session }: { session: SessionPayload }) {
   if (!session.labelId) {
     return (
-      <AppShell session={session} title="Dashboard A&R">
+      <AppShell session={session} title="Acasă">
         <div className="card empty-state">
           <p>Contul tău nu este asociat unui label. Contactează administratorul.</p>
         </div>
@@ -61,7 +61,7 @@ export async function ARManagerDashboard({ session }: { session: SessionPayload 
   )
 
   return (
-    <AppShell session={session} title="Dashboard A&R">
+    <AppShell session={session} title="Acasă">
 
       {/* ── KPI cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>

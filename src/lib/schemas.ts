@@ -149,7 +149,12 @@ export const createContractSchema = z.object({
 
 // ── Venituri ───────────────────────────────────────────────────────────────────
 
-const VALID_REVENUE_SOURCES = ['STREAMING', 'YOUTUBE', 'APPLE_MUSIC', 'LICENSING', 'PHYSICAL', 'SYNC', 'OTHER']
+const VALID_REVENUE_SOURCES = [
+  'SPOTIFY', 'APPLE_MUSIC', 'YOUTUBE_MUSIC', 'YOUTUBE_CONTENT_ID', 'TIKTOK', 'DEEZER',
+  'RADIO_TV', 'SYNC_LICENSING', 'LICENTIERE', 'VANZARI_FIZICE', 'MERCHANDISE', 'ALTE_SURSE',
+  // legacy values kept for backwards compatibility
+  'STREAMING', 'YOUTUBE', 'LICENSING', 'PHYSICAL', 'SYNC', 'OTHER',
+]
 
 export const createRevenueSchema = z.object({
   source: z.string().refine((v) => VALID_REVENUE_SOURCES.includes(v), 'Sursă de venit invalidă'),

@@ -7,12 +7,24 @@ import { canManageFinance } from '@/lib/roles'
 import { updateRevenueAction, deleteRevenueAction } from '@/app/actions/revenues'
 
 const SOURCE_LABELS: Record<string, string> = {
-  STREAMING:   'Spotify',
-  YOUTUBE:     'YouTube',
-  APPLE_MUSIC: 'Apple Music',
-  LICENSING:   'Licențiere',
-  PHYSICAL:    'Vânzări fizice',
-  SYNC:        'Sync',
+  SPOTIFY:             'Spotify',
+  APPLE_MUSIC:         'Apple Music',
+  YOUTUBE_MUSIC:       'YouTube Music',
+  YOUTUBE_CONTENT_ID:  'YouTube Content ID',
+  TIKTOK:              'TikTok',
+  DEEZER:              'Deezer',
+  RADIO_TV:            'Radio & TV (CREDIDAM/UCMR-ADA)',
+  SYNC_LICENSING:      'Sync Licensing',
+  LICENTIERE:          'Licențiere',
+  VANZARI_FIZICE:      'Vânzări fizice',
+  MERCHANDISE:         'Merchandise',
+  ALTE_SURSE:          'Alte surse',
+  // legacy
+  STREAMING:           'Spotify',
+  YOUTUBE:             'YouTube',
+  LICENSING:           'Licențiere',
+  PHYSICAL:            'Vânzări fizice',
+  SYNC:                'Sync',
 }
 
 type Props = {
@@ -55,12 +67,18 @@ export default async function EditRevenuePage({ params, searchParams }: Props) {
               <div className="form-group">
                 <label className="form-label">Sursă</label>
                 <select name="source" className="form-input form-select" defaultValue={revenue.source}>
-                  <option value="STREAMING">Streaming (Spotify)</option>
-                  <option value="YOUTUBE">YouTube</option>
+                  <option value="SPOTIFY">Spotify</option>
                   <option value="APPLE_MUSIC">Apple Music</option>
-                  <option value="LICENSING">Licențiere</option>
-                  <option value="PHYSICAL">Vânzări fizice</option>
-                  <option value="SYNC">Sync</option>
+                  <option value="YOUTUBE_MUSIC">YouTube Music</option>
+                  <option value="YOUTUBE_CONTENT_ID">YouTube Content ID</option>
+                  <option value="TIKTOK">TikTok</option>
+                  <option value="DEEZER">Deezer</option>
+                  <option value="RADIO_TV">Radio &amp; TV (CREDIDAM/UCMR-ADA)</option>
+                  <option value="SYNC_LICENSING">Sync Licensing</option>
+                  <option value="LICENTIERE">Licențiere</option>
+                  <option value="VANZARI_FIZICE">Vânzări fizice</option>
+                  <option value="MERCHANDISE">Merchandise</option>
+                  <option value="ALTE_SURSE">Alte surse</option>
                 </select>
               </div>
               <div className="form-group">

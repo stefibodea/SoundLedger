@@ -3,12 +3,24 @@ import { getSession } from '@/lib/session'
 import { canViewFinance } from '@/lib/roles'
 
 const SOURCE_LABELS: Record<string, string> = {
-  STREAMING:   'Spotify',
-  YOUTUBE:     'YouTube',
-  APPLE_MUSIC: 'Apple Music',
-  LICENSING:   'Licentiere',
-  PHYSICAL:    'Vanzari fizice',
-  SYNC:        'Sync',
+  SPOTIFY:             'Spotify',
+  APPLE_MUSIC:         'Apple Music',
+  YOUTUBE_MUSIC:       'YouTube Music',
+  YOUTUBE_CONTENT_ID:  'YouTube Content ID',
+  TIKTOK:              'TikTok',
+  DEEZER:              'Deezer',
+  RADIO_TV:            'Radio & TV (CREDIDAM/UCMR-ADA)',
+  SYNC_LICENSING:      'Sync Licensing',
+  LICENTIERE:          'Licentiere',
+  VANZARI_FIZICE:      'Vanzari fizice',
+  MERCHANDISE:         'Merchandise',
+  ALTE_SURSE:          'Alte surse',
+  // legacy
+  STREAMING:           'Spotify',
+  YOUTUBE:             'YouTube',
+  LICENSING:           'Licentiere',
+  PHYSICAL:            'Vanzari fizice',
+  SYNC:                'Sync',
 }
 
 function csvCell(value: string) {

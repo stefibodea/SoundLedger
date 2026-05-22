@@ -25,7 +25,7 @@ const MONTH_LABELS: Record<string, string> = {
 export async function LabelManagerDashboard({ session }: { session: SessionPayload }) {
   if (!session.labelId) {
     return (
-      <AppShell session={session} title="Dashboard">
+      <AppShell session={session} title="Acasă">
         <div className="card empty-state">
           <p>Contul tău nu este asociat unui label. Contactează administratorul.</p>
         </div>
@@ -86,7 +86,7 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
     return { month: MONTH_LABELS[month] ?? month, amount: found?._sum.amount ?? 0 }
   })
 
-  const greeting = currentUser?.firstName ? `Bună, ${currentUser.firstName}` : 'Dashboard'
+  const greeting = currentUser?.firstName ? `Bună, ${currentUser.firstName}` : 'Acasă'
 
   return (
     <AppShell session={session} title={greeting} >

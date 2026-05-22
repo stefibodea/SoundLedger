@@ -20,7 +20,7 @@ const ids = {
 const tracks = [
   // Krrysopher
   { artist: 'Krrysopher', title: 'Homesick', genre: 'Indie', releaseDate: '2023-03-15', bpm: 82, duration: 198 },
-  { artist: 'Krrysopher', title: 'sare', genre: 'Indie', releaseDate: '2025-01-24', bpm: 95, duration: 212 },
+  { artist: 'Krrysopher', title: 'sare', genre: 'Indie', releaseDate: '2026-01-24', bpm: 95, duration: 212 },
   { artist: 'Krrysopher', title: 'INDIGO (close your eyes)', genre: 'Indie Rock', releaseDate: '2024-06-07', bpm: 110, duration: 187 },
   { artist: 'Krrysopher', title: 'fantezie', genre: 'Indie', releaseDate: '2024-11-15', bpm: 88, duration: 203 },
 
@@ -39,16 +39,16 @@ const tracks = [
   // HVNDS
   { artist: 'HVNDS', title: 'Turn On', genre: 'Rock', releaseDate: '2016-10-01', bpm: 140, duration: 178 },
   { artist: 'HVNDS', title: 'Home', genre: 'Rock', releaseDate: '2017-02-14', bpm: 128, duration: 204 },
-  { artist: 'HVNDS', title: 'Blood', genre: 'Metal', releaseDate: '2025-09-26', bpm: 155, duration: 215 },
-  { artist: 'HVNDS', title: 'Cel mai dulce blestem', genre: 'Alternative Rock', releaseDate: '2025-02-07', bpm: 118, duration: 198, composers: 'Andrei Wintincher, Cristi Ciofu' },
+  { artist: 'HVNDS', title: 'Blood', genre: 'Metal', releaseDate: '2026-09-26', bpm: 155, duration: 215 },
+  { artist: 'HVNDS', title: 'Cel mai dulce blestem', genre: 'Alternative Rock', releaseDate: '2026-02-07', bpm: 118, duration: 198, composers: 'Andrei Wintincher, Cristi Ciofu' },
   { artist: 'HVNDS', title: 'Dor', genre: 'Alternative Rock', releaseDate: '2026-02-01', bpm: 112, duration: 189, composers: 'Andrei Wintincher' },
 
   // COJO
-  { artist: 'COJO', title: 'Latent', genre: 'Alternative', releaseDate: '2025-03-12', bpm: 86, duration: 208 },
-  { artist: 'COJO', title: 'Erupt', genre: 'Alternative', releaseDate: '2025-01-17', bpm: 92, duration: 221 },
+  { artist: 'COJO', title: 'Latent', genre: 'Alternative', releaseDate: '2026-03-12', bpm: 86, duration: 208 },
+  { artist: 'COJO', title: 'Erupt', genre: 'Alternative', releaseDate: '2026-01-17', bpm: 92, duration: 221 },
   { artist: 'COJO', title: 'Din mine pentru toti', genre: 'Alternative', releaseDate: '2024-10-04', bpm: 78, duration: 234 },
   { artist: 'COJO', title: 'Daca stiam', genre: 'Alternative', releaseDate: '2024-12-06', bpm: 84, duration: 216, composers: 'Andrei-Ovidiu Cojocaru' },
-  { artist: 'COJO', title: 'Asta seara mancam in familie', genre: 'Alternative', releaseDate: '2025-01-03', bpm: 74, duration: 247 },
+  { artist: 'COJO', title: 'Asta seara mancam in familie', genre: 'Alternative', releaseDate: '2026-01-03', bpm: 74, duration: 247 },
 
   // The Motans
   { artist: 'The Motans', title: 'Versus', genre: 'Pop', releaseDate: '2016-08-01', bpm: 95, duration: 243, composers: 'Denis Roabes' },
@@ -68,7 +68,7 @@ const tracks = [
   { artist: 'MATEK', title: 'Deep Down', genre: 'House', releaseDate: '2023-06-01', bpm: 124, duration: 356 },
   { artist: 'MATEK', title: 'Bass Therapy', genre: 'Bass House', releaseDate: '2024-01-19', bpm: 128, duration: 412 },
   { artist: 'MATEK', title: 'Iasi Sessions Vol.1', genre: 'Electronic', releaseDate: '2024-08-30', bpm: 132, duration: 3600 },
-  { artist: 'MATEK', title: 'Gravity Pull', genre: 'House', releaseDate: '2025-03-07', bpm: 126, duration: 378 },
+  { artist: 'MATEK', title: 'Gravity Pull', genre: 'House', releaseDate: '2026-03-07', bpm: 126, duration: 378 },
 ]
 
 const stmt = db.prepare(`INSERT INTO Track (id, title, genre, releaseDate, status, bpm, duration, composers, type, artistId, labelId, createdAt, updatedAt)

@@ -2,9 +2,10 @@ import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
-import { ROLES, ROLE_LABELS, canManageTeam } from '@/lib/roles'
-import { inviteTeamMemberAction, revokeTeamInvitationAction } from '@/app/actions/team'
+import { ROLE_LABELS, canManageTeam } from '@/lib/roles'
+import { revokeTeamInvitationAction } from '@/app/actions/team'
 import { enforceOnboarding } from '@/lib/onboarding'
+import { TeamPageClient, type MemberRow, type DepartmentGroup } from './team-client'
 
 type TeamPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>
@@ -23,13 +24,21 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
   const errorMsg = typeof params.error === 'string' ? params.error : null
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000'
 
-  const [label, members, invitations] = await Promise.all([
-    prisma.label.findUnique({
-      where: { id: session.labelId },
-      include: { owner: true, members: true },
-    }),
+  const [members, invitations] = await Promise.all([
     prisma.user.findMany({
-      where: { labelId: session.labelId, NOT: { ownedLabel: { id: session.labelId } } },
+      where: {
+        labelId: session.labelId,
+        role: { not: 'ARTIST' },
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        avatar: true,
+        createdAt: true,
+      },
       orderBy: { createdAt: 'asc' },
     }),
     prisma.invitation.findMany({
@@ -39,10 +48,41 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
     }),
   ])
 
+  const memberRows: MemberRow[] = members.map((m) => ({
+    id: m.id,
+    firstName: m.firstName,
+    lastName: m.lastName,
+    email: m.email,
+    role: m.role,
+    avatar: m.avatar,
+    createdAt: m.createdAt.toISOString(),
+  }))
+
+  const departments: DepartmentGroup[] = [
+    {
+      key: 'management',
+      label: 'Management',
+      members: memberRows.filter((m) =>
+        ['LABEL_MANAGER', 'AR_MANAGER', 'SUPER_ADMIN'].includes(m.role),
+      ),
+    },
+    {
+      key: 'financial',
+      label: 'Departament Financiar',
+      members: memberRows.filter((m) => m.role === 'FINANCIAL'),
+    },
+  ].filter((d) => d.members.length > 0)
+
+  const totalCount = memberRows.length
+  const subtitle = `${totalCount} ${totalCount === 1 ? 'membru' : 'membri'}`
+
   return (
-    <AppShell session={session} title="Echipă">
+    <AppShell session={session} title="Echipă" subtitle={subtitle}>
       {errorMsg && (
-        <div className="card" style={{ marginBottom: 16, borderLeft: '3px solid var(--status-expired)', padding: '12px 16px' }}>
+        <div
+          className="card"
+          style={{ marginBottom: 16, borderLeft: '3px solid var(--status-expired)', padding: '12px 16px' }}
+        >
           <p style={{ color: 'var(--status-expired)', margin: 0 }}>{decodeURIComponent(errorMsg)}</p>
         </div>
       )}
@@ -53,7 +93,16 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
           <p style={{ color: 'var(--text-secondary)', marginBottom: 8 }}>
             Trimite acest link membrului pentru activarea contului:
           </p>
-          <code style={{ display: 'block', padding: 10, background: 'var(--bg-tertiary)', borderRadius: 8, overflowX: 'auto', fontSize: 13 }}>
+          <code
+            style={{
+              display: 'block',
+              padding: 10,
+              background: 'var(--bg-tertiary)',
+              borderRadius: 8,
+              overflowX: 'auto',
+              fontSize: 13,
+            }}
+          >
             {`${appUrl}/invite/${inviteToken}`}
           </code>
           {mailStatus === 'ok' && (
@@ -67,77 +116,14 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
         </div>
       )}
 
-      <section className="card" style={{ marginBottom: 20 }}>
-        <h3 style={{ marginBottom: 12 }}>Invită membru nou</h3>
-        <form action={inviteTeamMemberAction}>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label" htmlFor="email">Email</label>
-              <input id="email" name="email" type="email" className="form-input" required />
-            </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="role">Rol</label>
-              <select id="role" name="role" className="form-input form-select" defaultValue={ROLES.AR_MANAGER}>
-                <option value={ROLES.AR_MANAGER}>A&R Manager</option>
-                <option value={ROLES.FINANCIAL}>Departament Financiar</option>
-                <option value={ROLES.ARTIST}>Artist</option>
-              </select>
-            </div>
-          </div>
-          <button className="btn btn-primary" type="submit">Invită</button>
-        </form>
-      </section>
-
-      <section className="card" style={{ marginBottom: 20 }}>
-        <h3 style={{ marginBottom: 12 }}>Membrii echipei</h3>
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Nume</th>
-                <th>Email</th>
-                <th>Rol</th>
-                <th>Tip</th>
-                <th>Înregistrat la</th>
-              </tr>
-            </thead>
-            <tbody>
-              {label?.owner && (
-                <tr>
-                  <td><strong>{label.owner.firstName} {label.owner.lastName}</strong></td>
-                  <td>{label.owner.email}</td>
-                  <td>
-                    <span className="badge" style={{ background: 'var(--role-label-light)', color: 'var(--role-label-dark)' }}>
-                      {ROLE_LABELS[label.owner.role] ?? label.owner.role}
-                    </span>
-                  </td>
-                  <td style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>Proprietar</td>
-                  <td>{label.owner.createdAt.toLocaleDateString('ro-RO')}</td>
-                </tr>
-              )}
-              {members.map((member) => (
-                <tr key={member.id}>
-                  <td>{member.firstName} {member.lastName}</td>
-                  <td>{member.email}</td>
-                  <td>
-                    <span className="badge" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
-                      {ROLE_LABELS[member.role] ?? member.role}
-                    </span>
-                  </td>
-                  <td style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>Membru</td>
-                  <td>{member.createdAt.toLocaleDateString('ro-RO')}</td>
-                </tr>
-              ))}
-              {!label?.owner && members.length === 0 && (
-                <tr><td colSpan={5}>Niciun membru găsit.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <TeamPageClient
+        departments={departments}
+        canManage={canManageTeam(session.role)}
+        currentUserId={session.userId}
+      />
 
       {invitations.length > 0 && (
-        <section className="card">
+        <section className="card" style={{ marginTop: 8 }}>
           <h3 style={{ marginBottom: 12 }}>Invitații în așteptare ({invitations.length})</h3>
           <div className="table-container">
             <table className="table">
@@ -155,16 +141,33 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
                   <tr key={inv.id}>
                     <td>{inv.email}</td>
                     <td>
-                      <span className="badge" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
+                      <span
+                        className="badge"
+                        style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
+                      >
                         {ROLE_LABELS[inv.role] ?? inv.role}
                       </span>
                     </td>
                     <td>
                       {(() => {
-                        const daysLeft = Math.ceil((inv.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                        const daysLeft = Math.ceil(
+                          (inv.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+                        )
                         return (
-                          <span style={{ color: daysLeft <= 1 ? 'var(--status-expired)' : daysLeft <= 3 ? 'var(--role-finance-dark)' : 'var(--text-secondary)', fontSize: 13 }}>
-                            {daysLeft <= 0 ? 'Expiră azi' : `expiră în ${daysLeft} ${daysLeft === 1 ? 'zi' : 'zile'}`}
+                          <span
+                            style={{
+                              color:
+                                daysLeft <= 1
+                                  ? 'var(--status-expired)'
+                                  : daysLeft <= 3
+                                    ? 'var(--role-finance-dark)'
+                                    : 'var(--text-secondary)',
+                              fontSize: 13,
+                            }}
+                          >
+                            {daysLeft <= 0
+                              ? 'Expiră azi'
+                              : `expiră în ${daysLeft} ${daysLeft === 1 ? 'zi' : 'zile'}`}
                           </span>
                         )
                       })()}
@@ -175,7 +178,9 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
                     <td>
                       <form action={revokeTeamInvitationAction}>
                         <input type="hidden" name="invitationId" value={inv.id} />
-                        <button className="btn btn-sm btn-danger" type="submit">Revocă</button>
+                        <button className="btn btn-sm btn-danger" type="submit">
+                          Revocă
+                        </button>
                       </form>
                     </td>
                   </tr>

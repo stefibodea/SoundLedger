@@ -9,7 +9,7 @@ type NavLink = { href: string; label: string }
 
 const NAV_LINKS: Record<string, NavLink[]> = {
   [ROLES.LABEL_MANAGER]: [
-    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/dashboard', label: 'Acasă' },
     { href: '/artists', label: 'Artiști' },
     { href: '/catalog', label: 'Catalog' },
     { href: '/releases', label: 'Lansări' },
@@ -20,7 +20,7 @@ const NAV_LINKS: Record<string, NavLink[]> = {
     { href: '/team', label: 'Echipă' },
   ],
   [ROLES.AR_MANAGER]: [
-    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/dashboard', label: 'Acasă' },
     { href: '/artists', label: 'Artiști' },
     { href: '/catalog', label: 'Catalog' },
     { href: '/ar', label: 'Scouting' },
@@ -28,14 +28,14 @@ const NAV_LINKS: Record<string, NavLink[]> = {
     { href: '/compliance/fingerprints', label: 'Fingerprints' },
   ],
   [ROLES.FINANCIAL]: [
-    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/dashboard', label: 'Acasă' },
     { href: '/catalog', label: 'Catalog' },
     { href: '/contracts', label: 'Contracte' },
     { href: '/finance', label: 'Finanțe' },
     { href: '/compliance', label: 'AI Compliance' },
   ],
   [ROLES.ARTIST]: [
-    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/dashboard', label: 'Acasă' },
     { href: '/my-music', label: 'Catalog' },
     { href: '/my-contract', label: 'Contracte' },
     { href: '/my-revenues', label: 'Finanțe' },
@@ -58,9 +58,11 @@ type Props = {
   initials: string
   displayName: string
   roleDisplay: string
+  email: string
+  avatarUrl?: string
 }
 
-export function TopNav({ role, initials, displayName, roleDisplay }: Props) {
+export function TopNav({ role, initials, displayName, roleDisplay, email, avatarUrl }: Props) {
   const pathname = usePathname()
   const links = NAV_LINKS[role] ?? []
 
@@ -165,7 +167,9 @@ export function TopNav({ role, initials, displayName, roleDisplay }: Props) {
           initials={initials}
           displayName={displayName}
           roleDisplay={roleDisplay}
+          email={email}
           role={role}
+          avatarUrl={avatarUrl}
         />
       </div>
     </header>

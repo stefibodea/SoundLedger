@@ -125,7 +125,7 @@ export default function LandingPage() {
             <img src="/LOGO/logo3.svg" alt="SoundLedger" height={160} style={{ objectFit: 'contain', display: 'block', marginTop: 14.5 }} />
           </div>
           <p className={styles.footerText}>
-            © 2026 SoundLedger. Platformă de management pentru case de discuri.
+            © 2026 SoundLedger.
           </p>
         </div>
       </footer>

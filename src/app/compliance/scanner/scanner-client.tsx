@@ -258,7 +258,7 @@ export function ScannerClient({ detections, canManage, serviceOnline, fingerprin
             </button>
             {serviceOnline && (
               <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                Sistemul ML va extrage features audio (MFCC, chroma, tempo) și le va compara cu catalogul tău de{' '}
+                Sistemul ML va analiza piesa prin Chromaprint (detecție copiere directă) și OpenL3 (similaritate semantică) și o va compara cu catalogul tău de{' '}
                 <strong>{fingerprintCount}</strong>{' '}
                 {fingerprintCount === 1 ? 'piesă cu amprentă calculată' : 'piese cu amprentă calculată'}
               </span>

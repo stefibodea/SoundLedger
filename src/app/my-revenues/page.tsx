@@ -7,21 +7,45 @@ import { getArtistProfile } from '@/lib/artist-profile'
 import { ArtistRevenueChart } from '@/components/artist-revenue-chart'
 
 const SOURCE_LABELS: Record<string, string> = {
-  STREAMING:   'Streaming',
-  LICENSING:   'Licențiere',
-  PHYSICAL:    'Vânzări fizice',
-  SYNC:        'Sync',
-  YOUTUBE:     'YouTube',
-  APPLE_MUSIC: 'Apple Music',
+  SPOTIFY:             'Spotify',
+  APPLE_MUSIC:         'Apple Music',
+  YOUTUBE_MUSIC:       'YouTube Music',
+  YOUTUBE_CONTENT_ID:  'YouTube Content ID',
+  TIKTOK:              'TikTok',
+  DEEZER:              'Deezer',
+  RADIO_TV:            'Radio & TV',
+  SYNC_LICENSING:      'Sync Licensing',
+  LICENTIERE:          'Licențiere',
+  VANZARI_FIZICE:      'Vânzări fizice',
+  MERCHANDISE:         'Merchandise',
+  ALTE_SURSE:          'Alte surse',
+  // legacy
+  STREAMING:           'Streaming',
+  LICENSING:           'Licențiere',
+  PHYSICAL:            'Vânzări fizice',
+  SYNC:                'Sync',
+  YOUTUBE:             'YouTube',
 }
 
 const SOURCE_COLORS: Record<string, { bg: string; color: string }> = {
-  STREAMING:   { bg: 'var(--role-ar-light)',      color: 'var(--role-ar-dark)' },
-  LICENSING:   { bg: 'var(--role-label-light)',    color: 'var(--role-label-dark)' },
-  PHYSICAL:    { bg: 'var(--role-finance-light)',  color: 'var(--role-finance-dark)' },
-  SYNC:        { bg: 'var(--role-artist-light)',   color: 'var(--role-artist-dark)' },
-  YOUTUBE:     { bg: '#1a0f00',                    color: '#fdba74' },
-  APPLE_MUSIC: { bg: '#1a0a1a',                    color: '#e879f9' },
+  SPOTIFY:             { bg: 'var(--role-ar-light)',      color: 'var(--role-ar-dark)' },
+  APPLE_MUSIC:         { bg: '#1a0a1a',                   color: '#e879f9' },
+  YOUTUBE_MUSIC:       { bg: '#1a0f00',                   color: '#fdba74' },
+  YOUTUBE_CONTENT_ID:  { bg: '#1a1500',                   color: '#fde68a' },
+  TIKTOK:              { bg: '#001a2e',                   color: '#7dd3fc' },
+  DEEZER:              { bg: '#1a0f2e',                   color: '#c4b5fd' },
+  RADIO_TV:            { bg: 'var(--role-finance-light)',  color: 'var(--role-finance-dark)' },
+  SYNC_LICENSING:      { bg: 'var(--role-ar-light)',       color: 'var(--role-ar-dark)' },
+  LICENTIERE:          { bg: 'var(--role-label-light)',    color: 'var(--role-label-dark)' },
+  VANZARI_FIZICE:      { bg: 'var(--role-finance-light)',  color: 'var(--role-finance-dark)' },
+  MERCHANDISE:         { bg: '#2d0a1a',                   color: '#f9a8d4' },
+  ALTE_SURSE:          { bg: 'var(--bg-tertiary)',         color: 'var(--text-secondary)' },
+  // legacy
+  STREAMING:           { bg: 'var(--role-ar-light)',      color: 'var(--role-ar-dark)' },
+  LICENSING:           { bg: 'var(--role-label-light)',    color: 'var(--role-label-dark)' },
+  PHYSICAL:            { bg: 'var(--role-finance-light)',  color: 'var(--role-finance-dark)' },
+  SYNC:                { bg: 'var(--role-artist-light)',   color: 'var(--role-artist-dark)' },
+  YOUTUBE:             { bg: '#1a0f00',                   color: '#fdba74' },
 }
 
 export default async function MyRevenuesPage() {
@@ -84,7 +108,7 @@ export default async function MyRevenuesPage() {
           </div>
         )}
         <div className="card card-stat">
-          <div className="stat-value">{bySource['STREAMING'] ? `${bySource['STREAMING'].toFixed(0)} €` : '—'}</div>
+          <div className="stat-value">{(bySource['SPOTIFY'] ?? bySource['STREAMING']) ? `${((bySource['SPOTIFY'] ?? 0) + (bySource['STREAMING'] ?? 0)).toFixed(0)} €` : '—'}</div>
           <div className="stat-label">Din streaming</div>
         </div>
         <div className="card card-stat">

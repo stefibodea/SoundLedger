@@ -63,11 +63,11 @@ console.log('✓ Artiști adăugați')
 
 // ── Piese ──────────────────────────────────────────────────────────────────
 const tracks = [
-  { id: cuid(), title: 'Dimineți albastre', type: 'SINGLE', genre: 'Pop', isrc: 'ROSL12500001', bpm: 98, key: 'C minor', duration: 214, status: 'RELEASED', releaseDate: '2025-03-15', artistIdx: 0 },
-  { id: cuid(), title: 'Nopți de vară', type: 'SINGLE', genre: 'Pop', isrc: 'ROSL12500002', bpm: 112, key: 'G major', duration: 187, status: 'RELEASED', releaseDate: '2025-06-01', artistIdx: 0 },
-  { id: cuid(), title: 'Umbre', type: 'SINGLE', genre: 'R&B', isrc: 'ROSL12500003', bpm: 78, key: 'F minor', duration: 243, status: 'RELEASED', releaseDate: '2025-01-20', artistIdx: 1 },
+  { id: cuid(), title: 'Dimineți albastre', type: 'SINGLE', genre: 'Pop', isrc: 'ROSL12500001', bpm: 98, key: 'C minor', duration: 214, status: 'RELEASED', releaseDate: '2026-03-15', artistIdx: 0 },
+  { id: cuid(), title: 'Nopți de vară', type: 'SINGLE', genre: 'Pop', isrc: 'ROSL12500002', bpm: 112, key: 'G major', duration: 187, status: 'RELEASED', releaseDate: '2026-06-01', artistIdx: 0 },
+  { id: cuid(), title: 'Umbre', type: 'SINGLE', genre: 'R&B', isrc: 'ROSL12500003', bpm: 78, key: 'F minor', duration: 243, status: 'RELEASED', releaseDate: '2026-01-20', artistIdx: 1 },
   { id: cuid(), title: 'Rădăcini', type: 'SINGLE', genre: 'R&B', isrc: 'ROSL12500004', bpm: 85, key: 'D minor', duration: 198, status: 'UNRELEASED', artistIdx: 1 },
-  { id: cuid(), title: 'Munte și vale', type: 'SINGLE', genre: 'Hip-Hop', isrc: 'ROSL12500005', bpm: 90, key: 'A minor', duration: 225, status: 'RELEASED', releaseDate: '2025-04-10', artistIdx: 2 },
+  { id: cuid(), title: 'Munte și vale', type: 'SINGLE', genre: 'Hip-Hop', isrc: 'ROSL12500005', bpm: 90, key: 'A minor', duration: 225, status: 'RELEASED', releaseDate: '2026-04-10', artistIdx: 2 },
   { id: cuid(), title: 'Codrul verde', type: 'SINGLE', genre: 'Hip-Hop', isrc: 'ROSL12500006', bpm: 87, key: 'E minor', duration: 201, status: 'UNRELEASED', artistIdx: 2 },
 ]
 
@@ -83,15 +83,15 @@ console.log('✓ Piese adăugate')
 
 // ── Venituri ───────────────────────────────────────────────────────────────
 const revenues = [
-  { source: 'STREAMING', amount: 1240.50, period: '2025-01', artistIdx: 0, trackIdx: 0 },
-  { source: 'STREAMING', amount: 980.00, period: '2025-02', artistIdx: 0, trackIdx: 0 },
-  { source: 'STREAMING', amount: 1580.75, period: '2025-03', artistIdx: 0, trackIdx: 0 },
-  { source: 'STREAMING', amount: 2100.20, period: '2025-04', artistIdx: 0, trackIdx: 1 },
-  { source: 'STREAMING', amount: 890.00, period: '2025-01', artistIdx: 1, trackIdx: 2 },
-  { source: 'STREAMING', amount: 1320.40, period: '2025-02', artistIdx: 1, trackIdx: 2 },
-  { source: 'LICENSING', amount: 3500.00, period: '2025-02', artistIdx: 1, trackIdx: 2 },
-  { source: 'STREAMING', amount: 760.10, period: '2025-04', artistIdx: 2, trackIdx: 4 },
-  { source: 'SYNC', amount: 2200.00, period: '2025-03', artistIdx: 2, trackIdx: 4 },
+  { source: 'STREAMING', amount: 1240.50, period: '2026-01', artistIdx: 0, trackIdx: 0 },
+  { source: 'STREAMING', amount: 980.00, period: '2026-02', artistIdx: 0, trackIdx: 0 },
+  { source: 'STREAMING', amount: 1580.75, period: '2026-03', artistIdx: 0, trackIdx: 0 },
+  { source: 'STREAMING', amount: 2100.20, period: '2026-04', artistIdx: 0, trackIdx: 1 },
+  { source: 'STREAMING', amount: 890.00, period: '2026-01', artistIdx: 1, trackIdx: 2 },
+  { source: 'STREAMING', amount: 1320.40, period: '2026-02', artistIdx: 1, trackIdx: 2 },
+  { source: 'LICENSING', amount: 3500.00, period: '2026-02', artistIdx: 1, trackIdx: 2 },
+  { source: 'STREAMING', amount: 760.10, period: '2026-04', artistIdx: 2, trackIdx: 4 },
+  { source: 'SYNC', amount: 2200.00, period: '2026-03', artistIdx: 2, trackIdx: 4 },
 ]
 
 const insertRevenue = db.prepare(`
@@ -108,7 +108,7 @@ console.log('✓ Venituri adăugate')
 const contracts = [
   { artistIdx: 0, royaltyPercent: 18.5, advance: 5000, duration: '2 ani', status: 'ACTIVE', startDate: '2024-01-15', endDate: '2026-01-15', specialClauses: 'Exclusivitate pe piața română și moldoveană. Label deține drepturile de distribuție digitală pe 5 ani.' },
   { artistIdx: 1, royaltyPercent: 22, advance: 8000, duration: '3 ani', status: 'ACTIVE', startDate: '2024-06-01', endDate: '2027-06-01', specialClauses: 'Artist primește 50% din veniturile sync licensing. Clauză de exit după 18 luni cu penalizare de 15%.' },
-  { artistIdx: 2, royaltyPercent: 15, advance: null, duration: '1 an', status: 'EXPIRING', startDate: '2024-04-01', endDate: '2025-04-01', specialClauses: null },
+  { artistIdx: 2, royaltyPercent: 15, advance: null, duration: '1 an', status: 'EXPIRING', startDate: '2024-04-01', endDate: '2026-04-01', specialClauses: null },
 ]
 
 const insertContract = db.prepare(`
@@ -154,8 +154,8 @@ const insertRelease = db.prepare(`
   VALUES (@id, @releaseDate, @status, @checklist, @trackId, @labelId, @createdAt, @updatedAt)
 `)
 
-insertRelease.run({ id: cuid(), releaseDate: '2025-05-20', status: 'PLANNING', checklist, trackId: tracks[3].id, labelId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
-insertRelease.run({ id: cuid(), releaseDate: '2025-06-15', status: 'READY', checklist, trackId: tracks[5].id, labelId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+insertRelease.run({ id: cuid(), releaseDate: '2026-05-20', status: 'PLANNING', checklist, trackId: tracks[3].id, labelId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+insertRelease.run({ id: cuid(), releaseDate: '2026-06-15', status: 'READY', checklist, trackId: tracks[5].id, labelId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
 console.log('✓ Lansări adăugate')
 
 // ── AI Compliance — Permisiuni ─────────────────────────────────────────────
@@ -165,11 +165,11 @@ const insertPermission = db.prepare(`
 `)
 
 // Piesa 0 (Dimineți albastre): artist a consimțit, permite research, necesită licență
-insertPermission.run({ id: cuid(), trackId: tracks[0].id, labelId, allowAITraining: 0, allowResearchOnly: 1, requiresLicense: 1, artistConsent: 1, minCompensation: 500, consentDate: '2025-01-10T00:00:00.000Z', notes: 'Consimțit verbal și în scris. Exclus din dataset-uri comerciale.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+insertPermission.run({ id: cuid(), trackId: tracks[0].id, labelId, allowAITraining: 0, allowResearchOnly: 1, requiresLicense: 1, artistConsent: 1, minCompensation: 500, consentDate: '2026-01-10T00:00:00.000Z', notes: 'Consimțit verbal și în scris. Exclus din dataset-uri comerciale.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
 // Piesa 2 (Umbre): artistă refuză orice utilizare AI
 insertPermission.run({ id: cuid(), trackId: tracks[2].id, labelId, allowAITraining: 0, allowResearchOnly: 0, requiresLicense: 1, artistConsent: 0, minCompensation: null, consentDate: null, notes: 'Elena Voicu a refuzat explicit orice formă de utilizare AI. A se respecta decizia artistei.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
 // Piesa 4 (Munte și vale): permite training cu compensație minimă
-insertPermission.run({ id: cuid(), trackId: tracks[4].id, labelId, allowAITraining: 1, allowResearchOnly: 0, requiresLicense: 1, artistConsent: 1, minCompensation: 1200, consentDate: '2025-03-01T00:00:00.000Z', notes: 'Subcarpați a aprobat cu condiția compensației minime de 1200 EUR per utilizare comercială.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+insertPermission.run({ id: cuid(), trackId: tracks[4].id, labelId, allowAITraining: 1, allowResearchOnly: 0, requiresLicense: 1, artistConsent: 1, minCompensation: 1200, consentDate: '2026-03-01T00:00:00.000Z', notes: 'Subcarpați a aprobat cu condiția compensației minime de 1200 EUR per utilizare comercială.', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
 console.log('✓ Permisiuni AI adăugate')
 
 // ── AI Compliance — Detecții ───────────────────────────────────────────────
@@ -224,7 +224,7 @@ const insertCert = db.prepare(`
 insertCert.run({
   id: cuid(), trackId: tracks[0].id, labelId,
   certificateCode: `HM-${year}-A1B2C3`,
-  issuedAt: new Date('2025-02-01').toISOString(),
+  issuedAt: new Date('2026-02-01').toISOString(),
   issuedById: 'seed-label-manager',
   declaration: 'Certific prin prezenta că piesa "Dimineți albastre" este 100% creație umană. Niciun element al acestei piese (melodie, versuri, aranjament, producție) nu a fost generat sau asistat de sisteme de inteligență artificială. Toate drepturile de autor aparțin creatorilor umani implicați în realizarea acestei opere.',
   isRevoked: 0,
@@ -234,11 +234,11 @@ insertCert.run({
 insertCert.run({
   id: cuid(), trackId: tracks[2].id, labelId,
   certificateCode: `HM-${year}-D4E5F6`,
-  issuedAt: new Date('2025-01-25').toISOString(),
+  issuedAt: new Date('2026-01-25').toISOString(),
   issuedById: 'seed-label-manager',
   declaration: 'Certific prin prezenta că piesa "Umbre" este 100% creație umană. Niciun element al acestei piese (melodie, versuri, aranjament, producție) nu a fost generat sau asistat de sisteme de inteligență artificială. Toate drepturile de autor aparțin creatorilor umani implicați în realizarea acestei opere.',
   isRevoked: 0,
-  createdAt: new Date('2025-01-25').toISOString(),
+  createdAt: new Date('2026-01-25').toISOString(),
 })
 console.log('✓ Certificate Human Made adăugate')
 

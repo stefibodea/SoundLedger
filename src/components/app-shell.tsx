@@ -18,7 +18,7 @@ export async function AppShell({ session, title, subtitle, children }: AppShellP
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { firstName: true, lastName: true },
+    select: { firstName: true, lastName: true, email: true, avatar: true },
   })
 
   const initials = [user?.firstName?.[0], user?.lastName?.[0]]
@@ -28,6 +28,8 @@ export async function AppShell({ session, title, subtitle, children }: AppShellP
 
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Utilizator'
   const roleDisplay = getRoleDisplayName(session.role)
+  const email       = user?.email ?? session.userId
+  const avatarUrl   = user?.avatar ? `/uploads/avatars/${user.avatar}` : undefined
 
   if (isSuperAdmin) {
     return (
@@ -65,7 +67,9 @@ export async function AppShell({ session, title, subtitle, children }: AppShellP
             initials={initials}
             displayName={displayName}
             roleDisplay={roleDisplay}
+            email={email}
             role={session.role}
+            avatarUrl={avatarUrl}
           />
         </header>
 
@@ -94,6 +98,8 @@ export async function AppShell({ session, title, subtitle, children }: AppShellP
         initials={initials}
         displayName={displayName}
         roleDisplay={roleDisplay}
+        email={email}
+        avatarUrl={avatarUrl}
       />
       <div style={{ paddingTop: 56, minHeight: '100vh' }}>
         <main

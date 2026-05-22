@@ -422,7 +422,6 @@ export function ArtistsClient({ artists, genreOptions, canManage }: Props) {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, padding: '8px 0' }}>
             {filtered.map((a, i) => {
-              const hasContract = a.contracts.length > 0
               const delay = Math.min(i * 0.05, 0.4)
               return (
                 <Link
@@ -453,12 +452,6 @@ export function ArtistsClient({ artists, genreOptions, canManage }: Props) {
                     )}
                     {/* Overlay gradient la hover */}
                     <div className="artist-photo-overlay" />
-                    {/* Bara colorată jos */}
-                    <div style={{
-                      position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, zIndex: 2,
-                      background: hasContract ? '#6ee7b7' : 'rgba(255,255,255,0.1)',
-                      boxShadow: hasContract ? '0 0 8px rgba(110,231,183,0.5)' : 'none',
-                    }} />
                   </div>
 
                   {/* Info sub foto */}
@@ -474,23 +467,6 @@ export function ArtistsClient({ artists, genreOptions, canManage }: Props) {
                         {a._count.tracks} piese
                       </span>
                     </div>
-                    {hasContract ? (
-                      <span style={{
-                        background: 'rgba(110,231,183,0.12)',
-                        color: '#6ee7b7',
-                        fontSize: 11,
-                        padding: '2px 8px',
-                        borderRadius: 4,
-                        display: 'inline-block',
-                        boxShadow: '0 0 8px rgba(110,231,183,0.3)',
-                      }}>
-                        ✓ Activ
-                      </span>
-                    ) : (
-                      <span style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', fontSize: 11, padding: '2px 8px', borderRadius: 4, display: 'inline-block' }}>
-                        Fără contract
-                      </span>
-                    )}
                   </div>
                 </Link>
               )

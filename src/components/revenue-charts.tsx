@@ -9,15 +9,27 @@ export type MonthlyRevenue = { period: string; total: number }
 export type SourceRevenue  = { source: string; total: number }
 
 const SOURCE_LABELS: Record<string, string> = {
-  STREAMING:   'Spotify',
-  YOUTUBE:     'YouTube',
-  APPLE_MUSIC: 'Apple Music',
-  LICENSING:   'Licențiere',
-  PHYSICAL:    'Vânzări fizice',
-  SYNC:        'Sync',
+  SPOTIFY:             'Spotify',
+  APPLE_MUSIC:         'Apple Music',
+  YOUTUBE_MUSIC:       'YouTube Music',
+  YOUTUBE_CONTENT_ID:  'YT Content ID',
+  TIKTOK:              'TikTok',
+  DEEZER:              'Deezer',
+  RADIO_TV:            'Radio & TV',
+  SYNC_LICENSING:      'Sync Licensing',
+  LICENTIERE:          'Licențiere',
+  VANZARI_FIZICE:      'Vânzări fizice',
+  MERCHANDISE:         'Merchandise',
+  ALTE_SURSE:          'Alte surse',
+  // legacy
+  STREAMING:           'Spotify',
+  YOUTUBE:             'YouTube',
+  LICENSING:           'Licențiere',
+  PHYSICAL:            'Vânzări fizice',
+  SYNC:                'Sync',
 }
 
-const COLORS = ['#22c55e', '#ef4444', '#ec4899', '#6366f1', '#94a3b8', '#f59e0b']
+const COLORS = ['#22c55e', '#ef4444', '#ec4899', '#6366f1', '#94a3b8', '#f59e0b', '#06b6d4', '#8b5cf6', '#f97316', '#84cc16', '#14b8a6', '#a78bfa']
 
 export function RevenueCharts({ monthly, bySource }: { monthly: MonthlyRevenue[]; bySource: SourceRevenue[] }) {
   return (

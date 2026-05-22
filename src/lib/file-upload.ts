@@ -149,6 +149,22 @@ export async function deleteSuspectAudioFile(filename: string): Promise<void> {
   }
 }
 
+// ── Poze de profil (avatare utilizatori) ──────────────────────────────────────
+
+export async function saveAvatarFile(file: File, userId: string): Promise<string> {
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+  const allowedExts = ['jpg', 'jpeg', 'png', 'webp']
+  if (!allowedExts.includes(ext)) throw new Error('Format nesuportat. Folosește JPG, PNG sau WebP.')
+  if (file.size > 5 * 1024 * 1024) throw new Error('Fișierul depășește 5MB.')
+
+  const filename = `${userId}-${Date.now()}.${ext}`
+  const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'avatars')
+  await fs.mkdir(uploadDir, { recursive: true })
+  const buffer = Buffer.from(await file.arrayBuffer())
+  await fs.writeFile(path.join(uploadDir, filename), buffer)
+  return filename
+}
+
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
