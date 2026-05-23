@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
-import { KPICard } from '@/components/ui/KPICard'
+import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
 import { RevenueCharts } from '@/components/revenue-charts'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
@@ -179,39 +179,27 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
         <SuccessBanner amount={successAmount} artist={successArtist} percent={successPercent} />
       )}
 
-      {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 16, marginBottom: 20 }}>
-        <KPICard
-          label="Total venituri"
-          value={`${totalAll.toFixed(2)} €`}
-          accentColor="green"
-        />
-        <KPICard
-          label="Luna aceasta"
-          value={`${thisMonthTotal.toFixed(2)} €`}
-          accentColor={thisMonthTotal > 0 ? 'blue' : 'gray'}
-        />
-        <KPICard
-          label="Sursa principală"
-          value={dominantSource ? SOURCE_LABELS[dominantSource.source] ?? dominantSource.source : '—'}
-          accentColor="purple"
-          subtitle={dominantSource ? `${dominantSource.total.toFixed(0)} €` : undefined}
-        />
-        <KPICard
-          label="Artiști cu venituri"
-          value={perArtist.filter((a) => a.name !== '(fără artist)').length}
-          accentColor="yellow"
-        />
-        <KPICard
-          label="Royalties neplatite"
-          value={`${(royaltiesNeplatite._sum.amount ?? 0).toFixed(2)} €`}
-          accentColor={royaltiesNeplatite._count > 0 ? 'yellow' : 'gray'}
-          subtitle={`${royaltiesNeplatite._count} plăți în așteptare`}
-        />
-      </div>
-
       {/* Charts */}
       <RevenueCharts monthly={monthly} bySource={bySource} />
+
+      {/* Royalties card */}
+      <section className="card" style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h3 style={{ margin: '0 0 4px' }}>Royalty Payments</h3>
+          {royaltiesNeplatite._count > 0 ? (
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>
+              <span style={{ color: '#fde68a', fontWeight: 600 }}>{royaltiesNeplatite._count} plăți în așteptare</span>
+              {' '}·{' '}
+              <span style={{ color: '#fde68a' }}>{(royaltiesNeplatite._sum.amount ?? 0).toFixed(2)} € de plătit</span>
+            </p>
+          ) : (
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Toate plățile sunt la zi.</p>
+          )}
+        </div>
+        <Link href="/finance/royalties" className="btn btn-secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
+          Gestionează royalties →
+        </Link>
+      </section>
 
       {/* AI Finance Report */}
       <section className="card" style={{ marginBottom: 20 }}>
@@ -236,7 +224,7 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
                 const body  = section.replace(/^\*\*.+?\*\*\n?/, '').trim()
                 if (!body) return null
                 return (
-                  <div key={i} style={{ borderLeft: '3px solid var(--role-finance-light)', paddingLeft: 12 }}>
+                  <div key={i} style={{ paddingLeft: 12, borderLeft: '1px solid rgba(255,255,255,0.09)' }}>
                     {title && <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--role-finance-dark)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</p>}
                     <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, whiteSpace: 'pre-line' }}>{body}</p>
                   </div>
@@ -484,6 +472,27 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
           </table>
         </div>
       </section>
+
+      <KpiVinylSidebar kpis={[
+        {
+          value: totalAll >= 1000 ? `${(totalAll / 1000).toFixed(1)}k €` : `${totalAll.toFixed(0)} €`,
+          label: 'Venituri', accentColor: 'green',
+        },
+        {
+          value: thisMonthTotal >= 1000 ? `${(thisMonthTotal / 1000).toFixed(1)}k €` : `${thisMonthTotal.toFixed(0)} €`,
+          label: 'Luna curentă', accentColor: thisMonthTotal > 0 ? 'blue' : 'gray',
+        },
+        {
+          value: dominantSource
+            ? (dominantSource.total >= 1000 ? `${(dominantSource.total / 1000).toFixed(1)}k €` : `${dominantSource.total.toFixed(0)} €`)
+            : '—',
+          label: 'Sursa principală', accentColor: 'purple',
+        },
+        {
+          value: (() => { const v = royaltiesNeplatite._sum.amount ?? 0; return v >= 1000 ? `${(v / 1000).toFixed(1)}k €` : `${v.toFixed(0)} €` })(),
+          label: 'Royalties', accentColor: royaltiesNeplatite._count > 0 ? 'yellow' : 'gray',
+        },
+      ]} />
     </AppShell>
   )
 }

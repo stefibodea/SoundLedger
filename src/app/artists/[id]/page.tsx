@@ -172,15 +172,15 @@ export default async function ArtistDetailPage({ params }: PageProps) {
 
       {/* ── Statistici ─────────────────────────────────────────────────────── */}
       <div className="grid grid-3" style={{ marginBottom: 20 }}>
-        <div className="card card-stat" style={{ borderTop: '3px solid #9B94F0', background: 'linear-gradient(145deg, rgba(255,255,255,0.025) 0%, rgba(0,0,0,0.12) 100%)', boxShadow: '0 0 28px rgba(155,148,240,0.12)' }}>
+        <div className="card card-stat">
           <div className="stat-value">{artist.tracks.length}</div>
           <div className="stat-label">Piese în catalog</div>
         </div>
-        <div className="card card-stat" style={{ borderTop: '3px solid #4ade80', background: 'linear-gradient(145deg, rgba(255,255,255,0.025) 0%, rgba(0,0,0,0.12) 100%)', boxShadow: '0 0 28px rgba(74,222,128,0.10)' }}>
+        <div className="card card-stat">
           <div className="stat-value">{totalRevenue.toFixed(0)} €</div>
           <div className="stat-label">Venituri totale</div>
         </div>
-        <div className="card card-stat" style={{ borderTop: '3px solid #60a5fa', background: 'linear-gradient(145deg, rgba(255,255,255,0.025) 0%, rgba(0,0,0,0.12) 100%)', boxShadow: '0 0 28px rgba(96,165,250,0.10)' }}>
+        <div className="card card-stat">
           <div className="stat-value">{activeContract ? `${activeContract.royaltyPercent}%` : '—'}</div>
           <div className="stat-label">Royalty contract activ</div>
         </div>

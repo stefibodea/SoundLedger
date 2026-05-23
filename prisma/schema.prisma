@@ -35,10 +35,11 @@ model Label {
   city        String
   genre       String
   logo        String?
-  plan        String   @default("FREE_TRIAL") // FREE_TRIAL, INDIE, PRO, ENTERPRISE
+  plan        String    @default("FREE_TRIAL") // FREE_TRIAL, INDIE, PRO, ENTERPRISE
   planExpiry  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  suspendedAt DateTime? // null = activ, non-null = suspendat
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   // Owner
   ownerId     String   @unique
@@ -181,7 +182,6 @@ model Contract {
   endDate         String?
   signedAt        DateTime?
   documentUrl     String?
-  aiAnalysis      String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -217,7 +217,7 @@ model RoyaltyPayment {
   id          String   @id @default(cuid())
   amount      Float
   period      String
-  status      String   @default("PENDING") // PENDING, PAID
+  status      String   @default("PENDING") // PENDING, PAID, CANCELLED
   paidAt      DateTime?
   notes       String?
   createdAt   DateTime @default(now())

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
-import { KPICard } from '@/components/ui/KPICard'
+import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canViewCompliance, canManageCompliance } from '@/lib/roles'
@@ -68,7 +68,7 @@ export default async function CompliancePage({
       )}
 
       {/* Scor conformitate */}
-      <section className="card" style={{ marginBottom: 20, borderLeft: '3px solid var(--primary)' }}>
+      <section className="card" style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h3 style={{ marginBottom: 4 }}>Scor conformitate AI</h3>
@@ -91,31 +91,6 @@ export default async function CompliancePage({
           </div>
         </div>
       </section>
-
-      {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
-        <KPICard
-          label="Total piese catalog"
-          value={totalTracks}
-          accentColor="purple"
-        />
-        <KPICard
-          label="Cu permisiuni AI"
-          value={withPermissions}
-          accentColor="blue"
-          subtitle={totalTracks > 0 ? `${Math.round((withPermissions / totalTracks) * 100)}% din catalog` : undefined}
-        />
-        <KPICard
-          label="Certificate Human Made"
-          value={withCerts}
-          accentColor="green"
-        />
-        <KPICard
-          label="Detecții deschise"
-          value={openDetections}
-          accentColor={openDetections > 0 ? 'red' : 'gray'}
-        />
-      </div>
 
       {/* Acțiuni principale */}
       <section className="grid grid-3" style={{ marginBottom: 20 }}>
@@ -168,7 +143,7 @@ export default async function CompliancePage({
             </form>
           </div>
           {lastReport ? (
-            <div style={{ padding: '14px 16px', background: 'var(--bg-secondary)', borderRadius: 10, borderLeft: '3px solid var(--primary)' }}>
+            <div style={{ padding: '14px 16px', background: 'var(--bg-secondary)', borderRadius: 10 }}>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.8, whiteSpace: 'pre-wrap', margin: 0 }}>
                 {lastReport.message}
               </p>
@@ -218,6 +193,13 @@ export default async function CompliancePage({
           </div>
         </section>
       )}
+
+      <KpiVinylSidebar kpis={[
+        { value: totalTracks,    label: 'Piese',         accentColor: 'purple' },
+        { value: withPermissions, label: 'Permisiuni AI', accentColor: 'blue' },
+        { value: withCerts,      label: 'Certificate',   accentColor: 'green' },
+        { value: openDetections, label: 'Detecții',      accentColor: openDetections > 0 ? 'red' : 'gray' },
+      ]} />
     </AppShell>
   )
 }

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useMemo, useTransition, useRef } from 'react'
+import { useState, useMemo, useTransition, useRef, type ReactNode } from 'react'
 import Link from 'next/link'
-import { Eye } from 'lucide-react'
+import { Eye, Search, Shield, User, ArrowUpDown, ChevronDown } from 'lucide-react'
 import { issueCertificateAction, revokeCertificateAction, bulkIssueCertificatesAction } from '@/app/actions/compliance'
 
 // ── Tipuri ─────────────────────────────────────────────────────────────────────
@@ -34,6 +34,26 @@ const PER_PAGE = 25
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+// ── FilterSection collapsible ─────────────────────────────────────────────────
+
+function FilterSection({ label, icon, children }: { label: string; icon: ReactNode; children: ReactNode }) {
+  const [open, setOpen] = useState(true)
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        style={{ display: 'flex', alignItems: 'center', gap: 5, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 8px', marginTop: 20 }}
+      >
+        <span style={{ color: 'rgba(200,198,188,0.40)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.50)', flex: 1, textAlign: 'left' }}>{label}</span>
+        <ChevronDown size={12} style={{ color: 'rgba(200,198,188,0.30)', transition: 'transform 0.2s ease', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
+      </button>
+      <div style={{ overflow: 'hidden', maxHeight: open ? 500 : 0, transition: 'max-height 0.2s ease' }}>{children}</div>
+    </div>
+  )
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -193,138 +213,174 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
 
   return (
     <>
-      {/* ── Bara de filtre ─────────────────────────────────────────────────── */}
-      <section className="card" style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+      <style>{`
+        .filter-search-input {
+          display: block; width: 100%; height: 40px; border-radius: 20px;
+          border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05);
+          color: var(--text-primary); font-size: 13px;
+          padding: 0 16px 0 40px; outline: none; font-family: inherit;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease; box-sizing: border-box;
+        }
+        .filter-search-input:focus {
+          border-color: rgba(155,148,240,0.5); box-shadow: 0 0 0 3px rgba(155,148,240,0.10);
+        }
+        .filter-search-input::placeholder { color: rgba(200,198,188,0.5); }
+        .cert-table-row { transition: background 0.12s ease; }
+        .cert-table-row:hover { background: rgba(255,255,255,0.03); }
+        .cert-view-btn {
+          display: inline-flex; align-items: center; padding: 4px 8px; borderRadius: 6px;
+          border: 1px solid rgba(255,255,255,0.12); color: var(--text-secondary);
+          text-decoration: none; transition: all 0.12s ease;
+        }
+        .cert-view-btn:hover { border-color: rgba(155,148,240,0.4); color: #9B94F0; }
+        .revoke-btn:hover { color: var(--role-artist-dark); }
+      `}</style>
 
-          {/* Search + autocomplete */}
-          <div style={{ flex: 1, minWidth: 220, position: 'relative' }}>
-            <input
-              className="form-input cert-search-input"
-              type="text"
-              placeholder="Caută după titlu sau artist..."
-              value={search}
-              onChange={(e) => changeSearch(e.target.value)}
-              onFocus={() => { if (search) setShowSugg(true) }}
-              onBlur={() => setTimeout(() => setShowSugg(false), 150)}
-              style={{ width: '100%' }}
-            />
-            {showSugg && suggestions.length > 0 && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200,
-                background: 'var(--bg-primary)', border: '1px solid var(--border-medium)',
-                borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.35)', overflow: 'hidden',
-              }}>
-                {suggestions.map((s, i) => (
-                  <button
-                    key={`${s.kind}-${s.label}`}
-                    type="button"
-                    onMouseDown={() => { setSearch(s.label); setShowSugg(false); resetPage() }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      width: '100%', padding: '8px 12px',
-                      background: 'none', border: 'none',
-                      borderBottom: i < suggestions.length - 1 ? '1px solid var(--border-light)' : 'none',
-                      cursor: 'pointer', textAlign: 'left', color: 'var(--text-primary)',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-secondary)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-                  >
-                    <span style={{ width: 20, textAlign: 'center', flexShrink: 0 }}>
-                      {s.kind === 'title' ? '♪' : '👤'}
-                    </span>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: s.kind === 'title' ? 600 : 400 }}>{s.label}</div>
-                      {s.sub && <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{s.sub}</div>}
-                    </div>
+      {/* ── Layout: filtre absolute stânga + conținut full-width ───────── */}
+      <div style={{ position: 'relative' }}>
+
+        {/* Filtre: absolute în stânga conținutului */}
+        <div style={{ position: 'absolute', right: 'calc(100% + 24px)', top: 0, width: 200, height: '100%' }}>
+          <div style={{ position: 'sticky', top: 80 }}>
+            <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', margin: 0 }}>Filtre</p>
+
+            <FilterSection label="Caută" icon={<Search size={11} />}>
+              <div style={{ position: 'relative' }}>
+                <Search size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', pointerEvents: 'none', zIndex: 1 }} />
+                <input
+                  className="filter-search-input"
+                  type="text"
+                  placeholder="Titlu sau artist..."
+                  value={search}
+                  onChange={(e) => changeSearch(e.target.value)}
+                  onFocus={() => { if (search) setShowSugg(true) }}
+                  onBlur={() => setTimeout(() => setShowSugg(false), 150)}
+                />
+                {showSugg && suggestions.length > 0 && (
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200,
+                    background: 'var(--bg-primary)', border: '1px solid var(--border-medium)',
+                    borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.35)', overflow: 'hidden',
+                  }}>
+                    {suggestions.map((s, i) => (
+                      <button
+                        key={`${s.kind}-${s.label}`}
+                        type="button"
+                        onMouseDown={() => { setSearch(s.label); setShowSugg(false); resetPage() }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          width: '100%', padding: '7px 10px',
+                          background: 'none', border: 'none',
+                          borderBottom: i < suggestions.length - 1 ? '1px solid var(--border-light)' : 'none',
+                          cursor: 'pointer', textAlign: 'left', color: 'var(--text-primary)',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-secondary)' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+                      >
+                        <span style={{ flexShrink: 0 }}>{s.kind === 'title' ? '♪' : '👤'}</span>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: s.kind === 'title' ? 600 : 400 }}>{s.label}</div>
+                          {s.sub && <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{s.sub}</div>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </FilterSection>
+
+            <FilterSection label="Certificare" icon={<Shield size={11} />}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {([
+                  ['all',          'Toate'],
+                  ['uncertified',  'Necert.'],
+                  ['certified',    'Certif.'],
+                  ['revoked',      'Revocate'],
+                ] as [StatusFilter, string][]).map(([val, label]) => (
+                  <button key={val} type="button" onClick={() => changeStatus(val)} style={{
+                    padding: '4px 10px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
+                    transition: 'all 0.15s ease', fontFamily: 'inherit',
+                    background: statusFilter === val ? 'rgba(155,148,240,0.15)' : 'rgba(255,255,255,0.04)',
+                    border: statusFilter === val ? '1px solid rgba(155,148,240,0.35)' : '1px solid rgba(255,255,255,0.08)',
+                    color: statusFilter === val ? '#9B94F0' : 'rgba(200,198,188,0.60)',
+                    fontWeight: statusFilter === val ? 500 : 400,
+                  }}>
+                    {label}
                   </button>
                 ))}
               </div>
-            )}
-          </div>
+            </FilterSection>
 
-          {/* Butoane status */}
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {([
-              ['all',          'Toate'],
-              ['uncertified',  'Necertificate'],
-              ['certified',    'Certificate'],
-              ['revoked',      'Revocate'],
-            ] as [StatusFilter, string][]).map(([val, label]) => (
-              <button
-                key={val}
-                type="button"
-                onClick={() => changeStatus(val)}
-                className={`cert-filter-chip${statusFilter === val ? ' active' : ''}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+            <FilterSection label="Artist" icon={<User size={11} />}>
+              <select value={artistFilter} onChange={(e) => changeArtist(e.target.value)} style={{
+                width: '100%', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(255,255,255,0.04)', padding: '8px 28px 8px 12px',
+                fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit',
+                outline: 'none', cursor: 'pointer', appearance: 'none',
+                backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b6a62'/%3E%3C/svg%3E\")",
+                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center',
+              }}>
+                <option value="">Toți artiștii</option>
+                {artistOptions.map(([id, name]) => (
+                  <option key={id} value={id}>{name}</option>
+                ))}
+              </select>
+            </FilterSection>
 
-          {/* Dropdown artist */}
-          <select
-            className="form-input form-select"
-            value={artistFilter}
-            onChange={(e) => changeArtist(e.target.value)}
-            style={{ width: 'auto', minWidth: 160 }}
-          >
-            <option value="">Toți artiștii</option>
-            {artistOptions.map(([id, name]) => (
-              <option key={id} value={id}>{name}</option>
-            ))}
-          </select>
-        </div>
+            <FilterSection label="Sortare" icon={<ArrowUpDown size={11} />}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {(['title', 'artist', 'date'] as SortKey[]).map((key) => (
+                  <button key={key} type="button" onClick={() => handleSort(key)} style={{
+                    padding: '4px 10px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
+                    transition: 'all 0.15s ease', fontFamily: 'inherit',
+                    background: sortKey === key ? 'rgba(155,148,240,0.15)' : 'rgba(255,255,255,0.04)',
+                    border: sortKey === key ? '1px solid rgba(155,148,240,0.35)' : '1px solid rgba(255,255,255,0.08)',
+                    color: sortKey === key ? '#9B94F0' : 'rgba(200,198,188,0.60)',
+                    fontWeight: sortKey === key ? 500 : 400,
+                  }}>
+                    {{ title: 'Titlu', artist: 'Artist', date: 'Dată' }[key]}{sortArrow(key)}
+                  </button>
+                ))}
+              </div>
+            </FilterSection>
 
-        {/* Rezultate + sortare */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, flexWrap: 'wrap', gap: 8 }}>
-          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            <strong style={{ color: 'var(--text-primary)' }}>{filtered.length}</strong>{' '}
-            {filtered.length === 1 ? 'piesă găsită' : 'piese găsite'}
-            {(search || statusFilter !== 'all' || artistFilter) && (
-              <button
-                type="button"
-                onClick={() => { setSearch(''); setStatusFilter('all'); setArtistFilter(''); resetPage() }}
-                style={{ marginLeft: 10, fontSize: 11, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-              >
-                ✕ Resetează filtrele
-              </button>
-            )}
-          </span>
-          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Sortare:</span>
-            {(['title', 'artist', 'date'] as SortKey[]).map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => handleSort(key)}
-                className={sortKey === key ? 'btn btn-secondary' : 'btn btn-ghost'}
-                style={{ fontSize: 11, padding: '4px 8px' }}
-              >
-                {{ title: 'Titlu', artist: 'Artist', date: 'Dată' }[key]}{sortArrow(key)}
-              </button>
-            ))}
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 20, paddingTop: 14 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: (search || statusFilter !== 'all' || artistFilter) ? 8 : 0 }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{filtered.length}</span>
+                {' '}{filtered.length === 1 ? 'piesă' : 'piese'}
+              </div>
+              {(search || statusFilter !== 'all' || artistFilter) && (
+                <button type="button" className="btn btn-ghost"
+                  style={{ fontSize: 12, padding: '4px 10px', width: '100%' }}
+                  onClick={() => { setSearch(''); setStatusFilter('all'); setArtistFilter(''); resetPage() }}
+                >
+                  Resetează filtrele
+                </button>
+              )}
+            </div>
+
           </div>
         </div>
-      </section>
 
-      {/* ── Bara bulk actions ───────────────────────────────────────────────── */}
-      {canManage && activeSelected.size > 0 && (
-        <div className="card" style={{
-          marginBottom: 16, borderLeft: '3px solid var(--primary)',
-          display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
-        }}>
-          <span style={{ fontSize: 14, fontWeight: 600 }}>
-            {activeSelected.size} {activeSelected.size === 1 ? 'piesă selectată' : 'piese selectate'}
-          </span>
-          <button type="button" className="btn btn-primary" onClick={openBulk} disabled={isPending} style={{ fontSize: 13 }}>
-            {isPending ? '⏳ Se procesează...' : `Certifică toate (${activeSelected.size})`}
-          </button>
-          <button type="button" className="btn btn-ghost" onClick={() => setSelected(new Set())} style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            Anulează selecția
-          </button>
-        </div>
-      )}
+        {/* Conținut */}
+
+          {/* Bara bulk actions */}
+          {canManage && activeSelected.size > 0 && (
+            <div className="card" style={{
+              marginBottom: 16,
+              display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 600 }}>
+                {activeSelected.size} {activeSelected.size === 1 ? 'piesă selectată' : 'piese selectate'}
+              </span>
+              <button type="button" className="btn btn-primary" onClick={openBulk} disabled={isPending} style={{ fontSize: 13 }}>
+                {isPending ? '⏳ Se procesează...' : `Certifică toate (${activeSelected.size})`}
+              </button>
+              <button type="button" className="btn btn-ghost" onClick={() => setSelected(new Set())} style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                Anulează selecția
+              </button>
+            </div>
+          )}
 
       {/* ── Tabel ──────────────────────────────────────────────────────────── */}
       <section className="card">
@@ -392,7 +448,7 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
                         <td>
                           <strong style={{ fontSize: 14 }}>{track.title}</strong>
                           {track.cert && (
-                            <div style={{ fontSize: 11, fontFamily: 'monospace', color: 'var(--text-secondary)', marginTop: 2 }}>
+                            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
                               {track.cert.certificateCode}
                             </div>
                           )}
@@ -517,6 +573,8 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
           </>
         )}
       </section>
+
+      </div>{/* end relative */}
 
       {/* ── Modal certificare ───────────────────────────────────────────────── */}
       {modalOpen && (

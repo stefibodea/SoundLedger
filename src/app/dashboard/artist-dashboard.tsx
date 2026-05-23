@@ -100,14 +100,14 @@ export async function ArtistDashboard({ session }: { session: SessionPayload }) 
       {/* ── KPI cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
 
-        <div className="card card-stat" style={{ borderTop: '3px solid #9b94f0' }}>
+        <div className="card card-stat">
           <div>
             <div className="stat-value" style={{ fontSize: 32 }}>{tracksCount}</div>
             <div className="stat-label">Piese în catalog</div>
           </div>
         </div>
 
-        <div className="card card-stat" style={{ borderTop: `3px solid ${contractBadgeColor}` }}>
+        <div className="card card-stat">
           <div>
             <div className="stat-value" style={{ fontSize: 22, color: contractBadgeColor }}>
               {contractStatusLabel}
@@ -121,7 +121,7 @@ export async function ArtistDashboard({ session }: { session: SessionPayload }) 
           </div>
         </div>
 
-        <div className="card card-stat" style={{ borderTop: '3px solid #4ade80' }}>
+        <div className="card card-stat">
           <div>
             <div className="stat-value" style={{ fontSize: 28, color: totalRevenue > 0 ? 'var(--role-ar-dark)' : undefined }}>
               {totalRevenue >= 1000
@@ -132,7 +132,7 @@ export async function ArtistDashboard({ session }: { session: SessionPayload }) 
           </div>
         </div>
 
-        <div className="card card-stat" style={{ borderTop: '3px solid #60a5fa' }}>
+        <div className="card card-stat">
           <div>
             <div className="stat-value" style={{ fontSize: 28 }}>
               {thisMonth >= 1000
@@ -168,7 +168,7 @@ export async function ArtistDashboard({ session }: { session: SessionPayload }) 
                       padding: '10px 14px',
                       background: 'var(--bg-secondary)',
                       borderRadius: 8,
-                      borderLeft: `3px solid ${r.status === 'READY' ? 'var(--role-ar-dark)' : '#9b94f0'}`,
+                      border: '1px solid rgba(255,255,255,0.07)',
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: total > 0 ? 8 : 0 }}>

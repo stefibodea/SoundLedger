@@ -91,7 +91,7 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
       {/* ── KPI cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
 
-        <div className="card card-stat" style={{ borderTop: '3px solid #4ade80' }}>
+        <div className="card card-stat">
           <div>
             <div className="stat-value" style={{ fontSize: 28, color: totalRevenue > 0 ? 'var(--role-ar-dark)' : undefined }}>
               {totalRevenue >= 1000
@@ -102,7 +102,7 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
           </div>
         </div>
 
-        <div className="card card-stat" style={{ borderTop: '3px solid #9b94f0' }}>
+        <div className="card card-stat">
           <div>
             <div className="stat-value" style={{ fontSize: 28 }}>
               {thisMonth >= 1000
@@ -113,7 +113,7 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
           </div>
         </div>
 
-        <div className="card card-stat" style={{ borderTop: `3px solid ${pendingRoyalties > 0 ? '#fbbf24' : '#4ade80'}` }}>
+        <div className="card card-stat">
           <div>
             <div className="stat-value" style={{ fontSize: 28, color: pendingRoyalties > 0 ? 'var(--role-finance-dark)' : undefined }}>
               {pendingRoyalties >= 1000
@@ -128,7 +128,6 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
           <div
             className="card card-stat"
             style={{
-              borderTop: `3px solid ${pendingDetectionsCount > 0 ? '#f87171' : '#22d3ee'}`,
               cursor: 'pointer',
               height: '100%',
             }}
@@ -170,7 +169,7 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
                     padding: '10px 12px',
                     background: 'var(--bg-secondary)',
                     borderRadius: 8,
-                    borderLeft: '3px solid var(--role-finance-dark)',
+                    border: '1px solid rgba(255,255,255,0.07)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',

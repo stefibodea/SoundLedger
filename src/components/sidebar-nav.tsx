@@ -17,6 +17,7 @@ import {
   User,
   Music2,
   DollarSign,
+  Building2,
   ChevronLeft,
   ChevronRight,
   type LucideIcon,
@@ -263,7 +264,12 @@ export function SidebarNav({ role, isArtist }: Props) {
 
       {/* ── Navigation ── */}
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {isArtist ? (
+        {role === 'SUPER_ADMIN' ? (
+          <>
+            <SectionHeader label="Platformă" first isCollapsed={isCollapsed} />
+            <NavItem href="/admin" icon={Building2} label="Case de discuri" pathname={pathname} isCollapsed={isCollapsed} />
+          </>
+        ) : isArtist ? (
           <>
             <NavItem href="/dashboard"   icon={LayoutDashboard} label="Acasă"       pathname={pathname} isCollapsed={isCollapsed} />
             <NavItem href="/my-profile"  icon={User}            label="Profilul meu"    pathname={pathname} isCollapsed={isCollapsed} />

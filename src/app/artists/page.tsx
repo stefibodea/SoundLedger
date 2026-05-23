@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
-import { KPICard } from '@/components/ui/KPICard'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canManageArtists } from '@/lib/roles'
@@ -83,36 +82,14 @@ export default async function ArtistsPage({
         </div>
       )}
 
-      {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
-        <KPICard
-          label="Total artiști"
-          value={totalArtists}
-          accentColor="purple"
-        />
-        <KPICard
-          label="Cu contract activ"
-          value={withContract}
-          accentColor="green"
-          subtitle={totalArtists > 0 ? `${Math.round((withContract / totalArtists) * 100)}% din catalog` : undefined}
-        />
-        <KPICard
-          label="Adăugați luna aceasta"
-          value={addedThisMonth}
-          accentColor="blue"
-        />
-        <KPICard
-          label="Fără contract"
-          value={withoutContract}
-          accentColor={withoutContract > 0 ? 'yellow' : 'gray'}
-        />
-      </div>
-
-      {/* ── Client Component: filtre + tabel/grid + modal ─────────────────── */}
+      {/* ── Client Component: KPI + filtre + tabel/grid + modal ──────────── */}
       <ArtistsClient
         artists={artists}
         genreOptions={genreOptions}
-        canManage={canManageArtists(session.role)}
+        totalArtists={totalArtists}
+        withContract={withContract}
+        addedThisMonth={addedThisMonth}
+        withoutContract={withoutContract}
       />
 
     </AppShell>

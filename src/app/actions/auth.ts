@@ -78,6 +78,7 @@ export async function loginAction(formData: FormData): Promise<void> {
   const labelId = user.ownedLabel?.id || user.labelId || undefined
   await createSession(user.id, user.role, labelId)
   if (user.mustResetPassword) redirect('/change-password')
+  if (user.role === 'SUPER_ADMIN') redirect('/admin')
   redirect('/dashboard')
 }
 

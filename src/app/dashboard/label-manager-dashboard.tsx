@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
 import { prisma } from '@/lib/prisma'
 import { SessionPayload } from '@/lib/session'
 import { AppShell } from '@/components/app-shell'
@@ -91,67 +92,6 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
   return (
     <AppShell session={session} title={greeting} >
 
-      {/* ── Rândul 1: KPI-uri ── */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
-        gap: 16,
-        marginBottom: 20,
-      }}>
-
-        <div className="card card-stat" style={{ borderTop: '3px solid #9b94f0' }}>
-          <div>
-            <div className="stat-value" style={{ fontSize: 32 }}>{artistsCount}</div>
-            <div className="stat-label">Artiști activi</div>
-          </div>
-        </div>
-
-        <div className="card card-stat" style={{ borderTop: '3px solid #9b94f0' }}>
-          <div>
-            <div className="stat-value" style={{ fontSize: 32 }}>{tracksCount}</div>
-            <div className="stat-label">Piese în catalog</div>
-          </div>
-        </div>
-
-        <div className="card card-stat" style={{ borderTop: '3px solid #4ade80' }}>
-          <div>
-            <div className="stat-value" style={{ fontSize: 28, color: revenueTotal > 0 ? 'var(--role-ar-dark)' : undefined }}>
-              {revenueTotal >= 1000
-                ? `${(revenueTotal / 1000).toFixed(1)}k €`
-                : `${revenueTotal.toFixed(0)} €`}
-            </div>
-            <div className="stat-label">Venituri totale</div>
-          </div>
-        </div>
-
-        <div className="card card-stat" style={{ borderTop: '3px solid #facc15' }}>
-          <div>
-            <div className="stat-value" style={{ fontSize: 32, color: contractsActiveCount > 0 ? 'var(--role-finance-dark)' : undefined }}>
-              {contractsActiveCount}
-            </div>
-            <div className="stat-label">Contracte active</div>
-          </div>
-        </div>
-
-        {canViewCompliance(session.role) && (
-          <Link href="/compliance" style={{ textDecoration: 'none' }}>
-            <div className="card card-stat" style={{ borderTop: '3px solid #22d3ee', cursor: 'pointer', height: '100%' }}>
-              <div>
-                <div className="stat-value" style={{ fontSize: 32, color: pendingDetectionsCount > 0 ? 'var(--role-artist-dark)' : '#22d3ee' }}>
-                  {certifiedCount}
-                </div>
-                <div className="stat-label">Certificate HM</div>
-                {pendingDetectionsCount > 0 && (
-                  <div style={{ fontSize: 11, color: 'var(--role-artist-dark)', marginTop: 4 }}>
-                    ⚠ {pendingDetectionsCount} detecție{pendingDetectionsCount > 1 ? 'i' : ''}
-                  </div>
-                )}
-              </div>
-            </div>
-          </Link>
-        )}
-      </div>
-
       {/* ── Rândul 2: Grafic + Notificări ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16, marginBottom: 20 }}>
 
@@ -198,7 +138,7 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
                     padding: '10px 12px',
                     background: 'var(--bg-secondary)',
                     borderRadius: 8,
-                    borderLeft: `3px solid ${n.color}`,
+                    border: '1px solid rgba(255,255,255,0.07)',
                   }}
                 >
                   <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>{n.icon}</span>
@@ -224,7 +164,7 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
 
       {/* ── Widget AI Compliance detaliat ── */}
       {canViewCompliance(session.role) && (
-        <div className="card" style={{ marginBottom: 20, borderLeft: '3px solid #22d3ee' }}>
+        <div className="card" style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <h3 style={{ margin: 0 }}>🛡️ AI Compliance Status</h3>
             <Link href="/compliance" className="btn btn-ghost" style={{ fontSize: 12 }}>
@@ -281,6 +221,19 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
           </p>
         )}
       </div>
+
+      <KpiVinylSidebar kpis={[
+        { value: artistsCount,        label: 'Artiști',    accentColor: 'purple' },
+        { value: tracksCount,         label: 'Piese',      accentColor: 'green' },
+        { value: revenueTotal >= 1000 ? `${(revenueTotal / 1000).toFixed(1)}k €` : `${revenueTotal.toFixed(0)} €`, label: 'Venituri', accentColor: 'yellow' },
+        { value: contractsActiveCount, label: 'Contracte', accentColor: 'blue' },
+        ...(canViewCompliance(session.role) ? [{
+          value: certifiedCount,
+          label: 'Certificate',
+          accentColor: 'red' as const,
+          sublabel: pendingDetectionsCount > 0 ? `⚠ ${pendingDetectionsCount} detecți${pendingDetectionsCount > 1 ? 'i' : 'e'}` : undefined,
+        }] : []),
+      ]} />
 
     </AppShell>
   )

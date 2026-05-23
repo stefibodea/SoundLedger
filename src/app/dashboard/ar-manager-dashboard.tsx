@@ -66,14 +66,14 @@ export async function ARManagerDashboard({ session }: { session: SessionPayload 
       {/* ── KPI cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
 
-        <div className="card card-stat" style={{ borderTop: '3px solid #9b94f0' }}>
+        <div className="card card-stat">
           <div>
             <div className="stat-value" style={{ fontSize: 32 }}>{totalProspects}</div>
             <div className="stat-label">Total candidați</div>
           </div>
         </div>
 
-        <div className="card card-stat" style={{ borderTop: '3px solid #4ade80' }}>
+        <div className="card card-stat">
           <div>
             <div className="stat-value" style={{ fontSize: 32, color: highScoreCount > 0 ? 'var(--role-ar-dark)' : undefined }}>
               {highScoreCount}
@@ -82,7 +82,7 @@ export async function ARManagerDashboard({ session }: { session: SessionPayload 
           </div>
         </div>
 
-        <div className="card card-stat" style={{ borderTop: '3px solid #60a5fa' }}>
+        <div className="card card-stat">
           <div>
             <div className="stat-value" style={{ fontSize: 32 }}>{artistsCount}</div>
             <div className="stat-label">Artiști activi</div>
@@ -93,7 +93,6 @@ export async function ARManagerDashboard({ session }: { session: SessionPayload 
           <div
             className="card card-stat"
             style={{
-              borderTop: `3px solid ${fingerprintsLacking > 0 ? '#f87171' : '#4ade80'}`,
               cursor: 'pointer',
               height: '100%',
             }}
@@ -130,7 +129,7 @@ export async function ARManagerDashboard({ session }: { session: SessionPayload 
                   padding: '12px 14px',
                   background: 'var(--bg-secondary)',
                   borderRadius: 8,
-                  borderLeft: `3px solid ${color}`,
+                  border: '1px solid rgba(255,255,255,0.07)',
                 }}
               >
                 <div style={{ fontSize: 24, fontWeight: 700, color }}>{statusCountMap[key] ?? 0}</div>

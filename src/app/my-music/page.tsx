@@ -164,7 +164,7 @@ export default async function MyMusicPage() {
                   {track.isrc && (
                     <div>
                       <span style={{ fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>ISRC </span>
-                      <span style={{ fontFamily: 'monospace', fontSize: 13 }}>{track.isrc}</span>
+                      <span style={{ fontSize: 13 }}>{track.isrc}</span>
                     </div>
                   )}
                   {track.bpm && (

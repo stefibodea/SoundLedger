@@ -187,7 +187,7 @@ export default async function MyRevenuesPage() {
                   const sc = SOURCE_COLORS[revenue.source] ?? { bg: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }
                   return (
                     <tr key={revenue.id}>
-                      <td style={{ fontFamily: 'monospace', fontSize: 13 }}>{revenue.period}</td>
+                      <td style={{ fontSize: 13 }}>{revenue.period}</td>
                       <td>
                         <span className="badge" style={{ background: sc.bg, color: sc.color }}>
                           {SOURCE_LABELS[revenue.source] ?? revenue.source}

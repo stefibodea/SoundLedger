@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
-import { KPICard } from '@/components/ui/KPICard'
+import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canManageContracts, canViewContracts } from '@/lib/roles'
@@ -45,7 +45,6 @@ export default async function ContractsPage({
     duration:       c.duration,
     startDate:      c.startDate ?? null,
     endDate:        c.endDate   ?? null,
-    aiAnalysis:     c.aiAnalysis,
     createdAt:      c.createdAt.toISOString(),
     artist: {
       id:    c.artist.id,
@@ -65,36 +64,19 @@ export default async function ContractsPage({
         </div>
       )}
 
-      {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
-        <KPICard
-          label="Contracte active"
-          value={activeCount}
-          accentColor="green"
-        />
-        <KPICard
-          label="Expiră curând"
-          value={expiringCount}
-          accentColor={expiringCount > 0 ? 'yellow' : 'gray'}
-        />
-        <KPICard
-          label="Draft-uri"
-          value={draftCount}
-          accentColor="blue"
-        />
-        <KPICard
-          label="În negociere"
-          value={negotiationCount}
-          accentColor="purple"
-        />
-      </div>
-
       {/* ── Client Component: filtre + tabel + modal ──────────────────────── */}
       <ContractsClient
         contracts={contracts}
         artists={artists}
         canManage={canManageContracts(session.role)}
       />
+
+      <KpiVinylSidebar kpis={[
+        { value: activeCount,      label: 'Active',    accentColor: 'green' },
+        { value: expiringCount,    label: 'Expiră',    accentColor: expiringCount > 0 ? 'yellow' : 'gray' },
+        { value: draftCount,       label: 'Draft',     accentColor: 'blue' },
+        { value: negotiationCount, label: 'Negociere', accentColor: 'purple' },
+      ]} />
 
     </AppShell>
   )

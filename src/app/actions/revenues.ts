@@ -148,3 +148,43 @@ export async function reconcileRevenueAction(formData: FormData) {
 
   revalidatePath('/finance')
 }
+
+export async function markRoyaltyPaidAction(formData: FormData) {
+  const session = await requireSession()
+  if (!session.labelId || !canManageFinance(session.role)) redirect('/finance/royalties')
+
+  const royaltyId = String(formData.get('royaltyId') || '').trim()
+  if (!royaltyId) redirect('/finance/royalties')
+
+  const royalty = await prisma.royaltyPayment.findUnique({ where: { id: royaltyId } })
+  if (!royalty || royalty.labelId !== session.labelId) redirect('/finance/royalties')
+
+  await prisma.royaltyPayment.update({
+    where: { id: royaltyId },
+    data: { status: 'PAID', paidAt: new Date() },
+  })
+
+  revalidatePath('/finance/royalties')
+  revalidatePath('/finance')
+}
+
+export async function cancelRoyaltyAction(formData: FormData) {
+  const session = await requireSession()
+  if (!session.labelId || !canManageFinance(session.role)) redirect('/finance/royalties')
+
+  const royaltyId = String(formData.get('royaltyId') || '').trim()
+  if (!royaltyId) redirect('/finance/royalties')
+
+  const royalty = await prisma.royaltyPayment.findUnique({ where: { id: royaltyId } })
+  if (!royalty || royalty.labelId !== session.labelId || royalty.status !== 'PENDING') {
+    redirect('/finance/royalties')
+  }
+
+  await prisma.royaltyPayment.update({
+    where: { id: royaltyId },
+    data: { status: 'CANCELLED' },
+  })
+
+  revalidatePath('/finance/royalties')
+  revalidatePath('/finance')
+}

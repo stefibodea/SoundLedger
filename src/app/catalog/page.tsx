@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
-import { KPICard } from '@/components/ui/KPICard'
+import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canViewCatalog, canManageArtists } from '@/lib/roles'
@@ -63,16 +63,6 @@ export default async function CatalogPage({
   return (
     <AppShell session={session} title="Catalog Muzical">
 
-      {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
-        <KPICard label="Total piese"          value={totalTracks}    accentColor="purple" bgIcon="🎵" />
-        <KPICard label="Lansate"               value={releasedCount}  accentColor="green"  bgIcon="💿"
-          subtitle={totalTracks > 0 ? `${Math.round((releasedCount / totalTracks) * 100)}% din catalog` : undefined}
-        />
-        <KPICard label="Albume & EP-uri"       value={albumsCount}    accentColor="blue"   bgIcon="📀" />
-        <KPICard label="Adăugate luna aceasta" value={addedThisMonth} accentColor="yellow" bgIcon="✨" />
-      </div>
-
       {/* ── Client Component: filtre + tabel + modal ──────────────────────── */}
       <CatalogClient
         tracks={tracks}
@@ -80,6 +70,13 @@ export default async function CatalogPage({
         canWrite={canWrite}
         initialArtistFilter={initialArtistFilter}
       />
+
+      <KpiVinylSidebar kpis={[
+        { value: totalTracks,    label: 'Piese',        accentColor: 'purple' },
+        { value: releasedCount,  label: 'Lansate',      accentColor: 'green' },
+        { value: albumsCount,    label: 'Albume',       accentColor: 'blue' },
+        { value: addedThisMonth, label: 'Luna aceasta', accentColor: 'yellow' },
+      ]} />
 
     </AppShell>
   )

@@ -4,7 +4,8 @@ import { AppShell } from '@/components/app-shell'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canManageFinance } from '@/lib/roles'
-import { updateRevenueAction, deleteRevenueAction } from '@/app/actions/revenues'
+import { updateRevenueAction } from '@/app/actions/revenues'
+import { DeleteRevenueSection } from './DeleteRevenueSection'
 
 const SOURCE_LABELS: Record<string, string> = {
   SPOTIFY:             'Spotify',
@@ -118,16 +119,7 @@ export default async function EditRevenuePage({ params, searchParams }: Props) {
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 14 }}>
             Ștergerea este permanentă și nu poate fi anulată.
           </p>
-          <form action={deleteRevenueAction} onSubmit={undefined}>
-            <input type="hidden" name="id" value={revenue.id} />
-            <button
-              className="btn btn-secondary"
-              type="submit"
-              style={{ color: 'var(--status-expired)', borderColor: 'var(--status-expired)' }}
-            >
-              Șterge înregistrarea
-            </button>
-          </form>
+          <DeleteRevenueSection revenueId={revenue.id} />
           <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border-light)' }}>
             <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
               Adăugat: {new Date(revenue.createdAt).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' })}

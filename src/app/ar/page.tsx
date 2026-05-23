@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
+import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canUseScouting } from '@/lib/roles'
@@ -35,6 +36,15 @@ export default async function ARPage({
     createdAt:  p.createdAt.toISOString(),
   }))
 
+  const total       = rawProspects.length
+  const signed      = rawProspects.filter((p) => p.status === 'SIGNED').length
+  const negotiation = rawProspects.filter((p) => p.status === 'NEGOTIATION').length
+  const rejected    = rawProspects.filter((p) => p.status === 'REJECTED').length
+  const withScore   = rawProspects.filter((p) => p.aiScore != null)
+  const avgScore    = withScore.length > 0
+    ? Math.round(withScore.reduce((s, p) => s + (p.aiScore ?? 0), 0) / withScore.length)
+    : null
+
   return (
     <AppShell session={session} title="A&R Scouting">
 
@@ -44,8 +54,15 @@ export default async function ARPage({
         </div>
       )}
 
-      {/* ── Client Component: filtre + kanban/tabel + modal ───────────────── */}
+      {/* ── Client Component: filtre + kanban + modal ────────────────────── */}
       <ARClient prospects={prospects} />
+
+      <KpiVinylSidebar kpis={[
+        { value: total,       label: 'Candidați', accentColor: 'purple' },
+        { value: signed,      label: 'Semnați',   accentColor: 'green' },
+        { value: negotiation, label: 'Negociere', accentColor: 'yellow' },
+        { value: rejected,    label: 'Respinși',  accentColor: rejected > 0 ? 'red' : 'gray' },
+      ]} />
 
     </AppShell>
   )

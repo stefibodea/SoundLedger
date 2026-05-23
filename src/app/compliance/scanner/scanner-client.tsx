@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { FilterBar } from '@/components/ui/FilterBar'
+import { useState, useMemo, type ReactNode } from 'react'
+import { Search, Circle, ChevronDown } from 'lucide-react'
 import { StatusBadge, detectionStatusVariant } from '@/components/ui/StatusBadge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { DataTable, type Column } from '@/components/ui/DataTable'
@@ -40,6 +40,26 @@ type Props = {
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+// ── FilterSection collapsible ─────────────────────────────────────────────────
+
+function FilterSection({ label, icon, children }: { label: string; icon: ReactNode; children: ReactNode }) {
+  const [open, setOpen] = useState(true)
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        style={{ display: 'flex', alignItems: 'center', gap: 5, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 8px', marginTop: 20 }}
+      >
+        <span style={{ color: 'rgba(200,198,188,0.40)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.50)', flex: 1, textAlign: 'left' }}>{label}</span>
+        <ChevronDown size={12} style={{ color: 'rgba(200,198,188,0.30)', transition: 'transform 0.2s ease', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
+      </button>
+      <div style={{ overflow: 'hidden', maxHeight: open ? 500 : 0, transition: 'max-height 0.2s ease' }}>{children}</div>
+    </div>
+  )
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -148,6 +168,78 @@ export function ScannerClient({ detections, canManage, serviceOnline, fingerprin
 
   return (
     <>
+      <style>{`
+        .filter-search-input {
+          display: block; width: 100%; height: 40px; border-radius: 20px;
+          border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05);
+          color: var(--text-primary); font-size: 13px;
+          padding: 0 16px 0 40px; outline: none; font-family: inherit;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease; box-sizing: border-box;
+        }
+        .filter-search-input:focus {
+          border-color: rgba(155,148,240,0.5); box-shadow: 0 0 0 3px rgba(155,148,240,0.10);
+        }
+        .filter-search-input::placeholder { color: rgba(200,198,188,0.5); }
+      `}</style>
+
+      {/* ── Layout: filtre absolute stânga + conținut full-width ───────── */}
+      <div style={{ position: 'relative' }}>
+
+        {/* ── Filtre: absolute în stânga conținutului ──────────────────── */}
+        <div style={{ position: 'absolute', right: 'calc(100% + 24px)', top: 0, width: 200, height: '100%' }}>
+          <div style={{ position: 'sticky', top: 80 }}>
+            <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', margin: 0 }}>Filtre</p>
+
+            <FilterSection label="Caută" icon={<Search size={11} />}>
+              <div style={{ position: 'relative' }}>
+                <Search size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', pointerEvents: 'none' }} />
+                <input className="filter-search-input" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Artist sau titlu..." />
+              </div>
+            </FilterSection>
+
+            <FilterSection label="Status" icon={<Circle size={11} />}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {([
+                  { value: 'all',       label: 'Toate' },
+                  { value: 'PENDING',   label: 'Analiză' },
+                  { value: 'CONFIRMED', label: 'Confirmat' },
+                  { value: 'RESOLVED',  label: 'Rezolvat' },
+                  { value: 'DISMISSED', label: 'Respins' },
+                ] as { value: StatusFilter; label: string }[]).map(({ value, label }) => (
+                  <button key={value} type="button" onClick={() => setStatusFilter(value)} style={{
+                    padding: '4px 10px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
+                    transition: 'all 0.15s ease', fontFamily: 'inherit',
+                    background: statusFilter === value ? 'rgba(155,148,240,0.15)' : 'rgba(255,255,255,0.04)',
+                    border: statusFilter === value ? '1px solid rgba(155,148,240,0.35)' : '1px solid rgba(255,255,255,0.08)',
+                    color: statusFilter === value ? '#9B94F0' : 'rgba(200,198,188,0.60)',
+                    fontWeight: statusFilter === value ? 500 : 400,
+                  }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </FilterSection>
+
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 20, paddingTop: 14 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: hasActiveFilters ? 8 : 0 }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{filtered.length}</span>
+                {' '}{filtered.length === 1 ? 'detecție' : 'detecții'}
+              </div>
+              {hasActiveFilters && (
+                <button type="button" className="btn btn-ghost"
+                  style={{ fontSize: 12, padding: '4px 10px', width: '100%' }}
+                  onClick={resetFilters}
+                >
+                  Resetează filtrele
+                </button>
+              )}
+            </div>
+
+          </div>
+        </div>
+
+        {/* ── Conținut ────────────────────────────────────────────────── */}
+
       {/* ── Formular upload piesă suspectă ─────────────────────────────── */}
       <section className="card" style={{ marginBottom: 20 }}>
         <h3 style={{ marginBottom: 16 }}>Raportează o piesă suspectă</h3>
@@ -268,28 +360,6 @@ export function ScannerClient({ detections, canManage, serviceOnline, fingerprin
       </section>
 
       {/* ── Tabel detecții ─────────────────────────────────────────────── */}
-      <FilterBar
-        searchQuery={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Caută după artist sau titlu..."
-        chips={{
-          value:       statusFilter,
-          activeValue: statusFilter,
-          onChange:    (v) => setStatusFilter(v as StatusFilter),
-          options: [
-            { value: 'all',       label: 'Toate' },
-            { value: 'PENDING',   label: 'În analiză' },
-            { value: 'CONFIRMED', label: 'Confirmate' },
-            { value: 'RESOLVED',  label: 'Rezolvate' },
-            { value: 'DISMISSED', label: 'Respinse' },
-          ],
-        }}
-        resultsCount={filtered.length}
-        resultsLabel={filtered.length === 1 ? 'detecție' : 'detecții'}
-        hasActiveFilters={hasActiveFilters}
-        onReset={resetFilters}
-      />
-
       <section className="card">
         <DataTable
           data={filtered}
@@ -314,6 +384,8 @@ export function ScannerClient({ detections, canManage, serviceOnline, fingerprin
           }
         />
       </section>
+
+      </div>{/* end relative */}
     </>
   )
 }

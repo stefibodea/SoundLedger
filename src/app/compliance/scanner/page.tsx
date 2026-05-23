@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
-import { KPICard } from '@/components/ui/KPICard'
+import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canViewCompliance, canManageCompliance } from '@/lib/roles'
@@ -81,20 +81,19 @@ export default async function ScannerPage({
         </div>
       )}
 
-      {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
-        <KPICard label="Total detecții" value={totalCount}     accentColor="purple" />
-        <KPICard label="În analiză"     value={pendingCount}   accentColor={pendingCount > 0 ? 'yellow' : 'gray'} />
-        <KPICard label="Confirmate"     value={confirmedCount} accentColor={confirmedCount > 0 ? 'red' : 'gray'} />
-        <KPICard label="Rezolvate"      value={resolvedCount}  accentColor="green" />
-      </div>
-
       <ScannerClient
         detections={detections}
         canManage={canManage}
         serviceOnline={serviceHealth.ok}
         fingerprintCount={fingerprintCount}
       />
+
+      <KpiVinylSidebar kpis={[
+        { value: totalCount,     label: 'Total detecții', accentColor: 'purple' },
+        { value: pendingCount,   label: 'În analiză',     accentColor: pendingCount > 0 ? 'yellow' : 'gray' },
+        { value: confirmedCount, label: 'Confirmate',     accentColor: confirmedCount > 0 ? 'red' : 'gray' },
+        { value: resolvedCount,  label: 'Rezolvate',      accentColor: 'green' },
+      ]} />
     </AppShell>
   )
 }

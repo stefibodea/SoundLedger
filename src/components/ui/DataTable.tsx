@@ -103,7 +103,7 @@ export function DataTable<T>({
       {/* Bara bulk actions */}
       {hasBulk && selected.size > 0 && (
         <div className="card" style={{
-          marginBottom: 12, borderLeft: '3px solid var(--primary)',
+          marginBottom: 12,
           display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
         }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>

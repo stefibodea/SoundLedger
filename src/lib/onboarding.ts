@@ -34,6 +34,20 @@ export async function getOnboardingState(labelId: string): Promise<OnboardingSta
 }
 
 export async function enforceOnboarding(session: SessionPayload, currentPath: string) {
+  // SUPER_ADMIN nu are label — sare complet
+  if (session.role === ROLES.SUPER_ADMIN) return
+
+  // Verifică dacă labelul e suspendat (pentru toți userii cu labelId)
+  if (session.labelId) {
+    const label = await prisma.label.findUnique({
+      where: { id: session.labelId },
+      select: { suspendedAt: true },
+    })
+    if (label?.suspendedAt && currentPath !== '/suspended') {
+      redirect('/suspended')
+    }
+  }
+
   if (session.role !== ROLES.LABEL_MANAGER || !session.labelId) {
     return
   }

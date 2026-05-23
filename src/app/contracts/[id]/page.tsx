@@ -72,7 +72,6 @@ export default async function ContractDetailPage({
       : contract.specialClauses.trim()
     : null
 
-  const hasAIAnalysis = Boolean(contract.aiAnalysis?.trim())
 
   return (
     <AppShell
@@ -240,23 +239,7 @@ export default async function ContractDetailPage({
         )}
       </div>
 
-      {/* ── SECȚIUNEA 4 — ANALIZĂ AI (opțional) ─────────────────────────────── */}
-      {hasAIAnalysis && (
-        <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <h3 style={{ margin: 0 }}>✦ Analiză AI contract</h3>
-            <span className="badge" style={{ background: 'rgba(155,148,240,0.12)', color: 'var(--primary)', border: '1px solid rgba(155,148,240,0.3)', fontSize: 11 }}>
-              Generat de AI
-            </span>
-          </div>
-          <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', margin: '0 0 16px' }}>
-            {contract.aiAnalysis}
-          </p>
-          <p style={{ fontSize: 12, color: 'var(--text-secondary)', fontStyle: 'italic', margin: 0 }}>
-            Această analiză a fost generată automat și nu constituie consultanță juridică.
-          </p>
-        </div>
-      )}
+
     </AppShell>
   )
 }

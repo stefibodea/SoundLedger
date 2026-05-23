@@ -66,10 +66,10 @@ function RoyaltyGauge({ percent }: { percent: number }) {
         transform="rotate(-90 50 50)"
         style={{ transition: 'stroke-dasharray 0.6s ease' }}
       />
-      <text x="50" y="46" textAnchor="middle" fill="var(--role-ar-dark)" fontSize="19" fontWeight="700" fontFamily="Inter, sans-serif">
+      <text x="50" y="46" textAnchor="middle" fill="var(--role-ar-dark)" fontSize="19" fontWeight="700" fontFamily="inherit">
         {percent}%
       </text>
-      <text x="50" y="62" textAnchor="middle" fill="var(--text-tertiary)" fontSize="10" fontFamily="Inter, sans-serif">
+      <text x="50" y="62" textAnchor="middle" fill="var(--text-tertiary)" fontSize="10" fontFamily="inherit">
         royalty
       </text>
     </svg>
@@ -245,7 +245,7 @@ export default async function MyContractPage({ searchParams }: PageProps) {
         </section>
 
         {/* ── AI Contract Explanation ── */}
-        <section className="card" style={{ marginBottom: 20, borderLeft: '3px solid var(--primary)' }}>
+        <section className="card" style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: latestExplanation ? 14 : 0 }}>
             <div>
               <h3 style={{ marginBottom: 4 }}>✨ Explică-mi contractul</h3>

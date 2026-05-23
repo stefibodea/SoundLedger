@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
-import { KPICard } from '@/components/ui/KPICard'
+import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canManageReleases } from '@/lib/roles'
@@ -59,32 +59,15 @@ export default async function ReleasesPage() {
   return (
     <AppShell session={session} title="Lansări">
 
-      {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
-        <KPICard
-          label="Total lansări"
-          value={totalReleases}
-          accentColor="purple"
-        />
-        <KPICard
-          label="Lansate"
-          value={releasedCount}
-          accentColor="green"
-        />
-        <KPICard
-          label="Urmează (30 zile)"
-          value={upcomingCount}
-          accentColor={upcomingCount > 0 ? 'yellow' : 'gray'}
-        />
-        <KPICard
-          label="În planificare"
-          value={planningCount}
-          accentColor="blue"
-        />
-      </div>
-
       {/* ── Client Component: filtre + carduri + modal ─────────────────────── */}
       <ReleasesClient releases={releases} tracks={tracks} />
+
+      <KpiVinylSidebar kpis={[
+        { value: totalReleases, label: 'Total lansări',    accentColor: 'purple' },
+        { value: releasedCount, label: 'Lansate',          accentColor: 'green' },
+        { value: upcomingCount, label: 'Urmează 30 zile',  accentColor: upcomingCount > 0 ? 'yellow' : 'gray' },
+        { value: planningCount, label: 'În planificare',   accentColor: 'blue' },
+      ]} />
 
     </AppShell>
   )

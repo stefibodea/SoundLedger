@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react'
 import { useFormStatus } from 'react-dom'
+import { Search, Filter, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { Avatar } from '@/components/ui/Avatar'
-import { KPICard } from '@/components/ui/KPICard'
+import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
 import { DataTable, type Column } from '@/components/ui/DataTable'
 import { EmptyState } from '@/components/ui/EmptyState'
 import {
@@ -203,6 +204,26 @@ function SubmitBtn({ label, disabled }: { label: string; disabled?: boolean }) {
   )
 }
 
+// ── FilterSection collapsible ─────────────────────────────────────────────────
+
+function FilterSection({ label, icon, children }: { label: string; icon: ReactNode; children: ReactNode }) {
+  const [open, setOpen] = useState(true)
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        style={{ display: 'flex', alignItems: 'center', gap: 5, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 8px', marginTop: 20 }}
+      >
+        <span style={{ color: 'rgba(200,198,188,0.40)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.50)', flex: 1, textAlign: 'left' }}>{label}</span>
+        <ChevronDown size={12} style={{ color: 'rgba(200,198,188,0.30)', transition: 'transform 0.2s ease', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
+      </button>
+      <div style={{ overflow: 'hidden', maxHeight: open ? 500 : 0, transition: 'max-height 0.2s ease' }}>{children}</div>
+    </div>
+  )
+}
+
 // ── Component principal ───────────────────────────────────────────────────────
 
 export function FingerprintsClient({
@@ -217,7 +238,6 @@ export function FingerprintsClient({
   const [filter,        setFilter]        = useState<FilterType>('all')
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds,   setSelectedIds]   = useState<Set<string>>(new Set())
-  const [searchFocused, setSearchFocused] = useState(false)
 
   const masterCheckboxRef = useRef<HTMLInputElement>(null)
 
@@ -342,7 +362,7 @@ export function FingerprintsClient({
       width: '160px',
       render: (r) =>
         r.tempo && r.duration ? (
-          <span style={{ fontSize: 13, whiteSpace: 'nowrap', fontFamily: 'JetBrains Mono, Roboto Mono, Consolas, monospace' }}>
+          <span style={{ fontSize: 13, whiteSpace: 'nowrap', }}>
             {r.tempo.toFixed(1)} BPM · {fmtDuration(r.duration)}
           </span>
         ) : (
@@ -355,7 +375,7 @@ export function FingerprintsClient({
       width: '120px',
       render: (r) =>
         r.computedAt ? (
-          <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono, Roboto Mono, Consolas, monospace' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)', }}>
             {fmtDate(r.computedAt)}
           </span>
         ) : (
@@ -391,6 +411,17 @@ export function FingerprintsClient({
   return (
     <>
       <style>{`
+        .filter-search-input {
+          display: block; width: 100%; height: 40px; border-radius: 20px;
+          border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05);
+          color: var(--text-primary); font-size: 13px;
+          padding: 0 16px 0 40px; outline: none; font-family: inherit;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease; box-sizing: border-box;
+        }
+        .filter-search-input:focus {
+          border-color: rgba(155,148,240,0.5); box-shadow: 0 0 0 3px rgba(155,148,240,0.10);
+        }
+        .filter-search-input::placeholder { color: rgba(200,198,188,0.5); }
         @keyframes fp-spin {
           to { transform: rotate(360deg); }
         }
@@ -403,20 +434,6 @@ export function FingerprintsClient({
           border-left: 3px solid #38bdf8;
         }
       `}</style>
-
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
-        <KPICard label="Total piese"       value={stats.total}              accentColor="purple" />
-        <KPICard label="Cu audio"          value={stats.withAudio}          accentColor="blue"
-          subtitle={stats.total > 0 ? `${Math.round(stats.withAudio / stats.total * 100)}% din catalog` : undefined}
-        />
-        <KPICard label="Cu fingerprint"    value={stats.withFingerprint}    accentColor="green"
-          subtitle={stats.withAudio > 0 ? `${Math.round(stats.withFingerprint / stats.withAudio * 100)}% din cu audio` : undefined}
-        />
-        <KPICard label="Lipsă fingerprint" value={stats.missingFingerprint} accentColor="yellow"
-          subtitle={stats.missingFingerprint > 0 ? 'au audio, necesită calcul' : undefined}
-        />
-      </div>
 
       {/* Alerte rezultat */}
       {hasResult && (
@@ -531,106 +548,97 @@ export function FingerprintsClient({
         </div>
       )}
 
-      {/* Filter Bar custom */}
-      <div style={{ marginBottom: 16 }}>
-        {/* Search */}
-        <div style={{ position: 'relative', marginBottom: 12 }}>
-          <span style={{
-            position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
-            color: searchFocused ? '#38bdf8' : 'var(--text-tertiary)',
-            pointerEvents: 'none',
-            transition: 'color 0.15s ease',
-          }}>
-            <IconSearch />
-          </span>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => setSearchFocused(false)}
-            placeholder="Caută după titlu sau artist..."
-            className="form-input"
-            style={{
-              paddingLeft: 36,
-              borderColor: searchFocused ? 'rgba(56,189,248,0.6)' : undefined,
-              boxShadow: searchFocused ? '0 0 0 3px rgba(56,189,248,0.12)' : undefined,
-              transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-            }}
-          />
-        </div>
+      {/* ── Layout: filtre absolute stânga + tabel full-width ──────────── */}
+      <div style={{ position: 'relative' }}>
 
-        {/* Chips filtre */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          {filterOptions.map((opt) => {
-            const active = filter === opt.value
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setFilter(opt.value)}
-                style={{
-                  padding: '5px 14px', borderRadius: 999, fontSize: 12, fontWeight: active ? 600 : 400,
-                  cursor: 'pointer', fontFamily: 'inherit',
-                  border: active ? '1px solid rgba(56,189,248,0.5)' : '1px solid var(--border-light)',
-                  background: active ? 'rgba(56,189,248,0.10)' : 'transparent',
-                  color: active ? '#38bdf8' : 'var(--text-secondary)',
-                  boxShadow: active ? '0 0 10px rgba(56,189,248,0.18), inset 0 0 6px rgba(56,189,248,0.06)' : 'none',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                {opt.label}
-              </button>
-            )
-          })}
-          <span style={{ marginLeft: 'auto', fontSize: 13, color: 'var(--text-tertiary)' }}>
-            {filtered.length} {filtered.length === 1 ? 'piesă' : 'piese'}
-          </span>
-          {hasActiveFilters && (
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => { setSearch(''); setFilter('all') }}
-              style={{ fontSize: 12 }}
-            >
-              Resetează
-            </button>
-          )}
-        </div>
-      </div>
+        {/* Filtre: absolute în stânga conținutului */}
+        <div style={{ position: 'absolute', right: 'calc(100% + 24px)', top: 0, width: 200, height: '100%' }}>
+          <div style={{ position: 'sticky', top: 80 }}>
+            <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', margin: 0 }}>Filtre</p>
 
-      {/* DataTable */}
-      <section className="card fp-table">
-        <DataTable
-          key={`${filter}|${search}|${selectionMode}`}
-          data={filtered}
-          columns={columns}
-          getRowKey={(r) => r.id}
-          pageSize={25}
-          emptyState={
-            <EmptyState
-              icon="🎵"
-              title={items.length === 0 ? 'Niciun catalog' : 'Nicio piesă găsită'}
-              description={
-                items.length === 0
-                  ? 'Adaugă piese în catalog pentru a începe.'
-                  : 'Nicio piesă nu corespunde filtrelor curente.'
-              }
-              action={
-                hasActiveFilters ? (
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => { setSearch(''); setFilter('all') }}
-                  >
-                    Resetează filtrele
+            <FilterSection label="Caută" icon={<Search size={11} />}>
+              <div style={{ position: 'relative' }}>
+                <Search size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', pointerEvents: 'none' }} />
+                <input className="filter-search-input" type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Titlu sau artist..." />
+              </div>
+            </FilterSection>
+
+            <FilterSection label="Filtrare" icon={<Filter size={11} />}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {filterOptions.map((opt) => (
+                  <button key={opt.value} type="button" onClick={() => setFilter(opt.value)} style={{
+                    padding: '4px 10px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
+                    transition: 'all 0.15s ease', fontFamily: 'inherit',
+                    background: filter === opt.value ? 'rgba(155,148,240,0.15)' : 'rgba(255,255,255,0.04)',
+                    border: filter === opt.value ? '1px solid rgba(155,148,240,0.35)' : '1px solid rgba(255,255,255,0.08)',
+                    color: filter === opt.value ? '#9B94F0' : 'rgba(200,198,188,0.60)',
+                    fontWeight: filter === opt.value ? 500 : 400,
+                  }}>
+                    {opt.label}
                   </button>
-                ) : undefined
+                ))}
+              </div>
+            </FilterSection>
+
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 20, paddingTop: 14 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: hasActiveFilters ? 8 : 0 }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{filtered.length}</span>
+                {' '}{filtered.length === 1 ? 'piesă' : 'piese'}
+              </div>
+              {hasActiveFilters && (
+                <button type="button" className="btn btn-ghost"
+                  style={{ fontSize: 12, padding: '4px 10px', width: '100%' }}
+                  onClick={() => { setSearch(''); setFilter('all') }}
+                >
+                  Resetează filtrele
+                </button>
+              )}
+            </div>
+
+          </div>
+        </div>
+
+        {/* Tabel */}
+          <section className="card fp-table">
+            <DataTable
+              key={`${filter}|${search}|${selectionMode}`}
+              data={filtered}
+              columns={columns}
+              getRowKey={(r) => r.id}
+              pageSize={25}
+              emptyState={
+                <EmptyState
+                  icon="🎵"
+                  title={items.length === 0 ? 'Niciun catalog' : 'Nicio piesă găsită'}
+                  description={
+                    items.length === 0
+                      ? 'Adaugă piese în catalog pentru a începe.'
+                      : 'Nicio piesă nu corespunde filtrelor curente.'
+                  }
+                  action={
+                    hasActiveFilters ? (
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => { setSearch(''); setFilter('all') }}
+                      >
+                        Resetează filtrele
+                      </button>
+                    ) : undefined
+                  }
+                />
               }
             />
-          }
-        />
-      </section>
+          </section>
+
+      </div>
+
+      <KpiVinylSidebar kpis={[
+        { value: stats.total,              label: 'Piese',             accentColor: 'purple' },
+        { value: stats.withAudio,          label: 'Cu audio',          accentColor: 'blue' },
+        { value: stats.withFingerprint,    label: 'Cu fingerprint',    accentColor: 'green' },
+        { value: stats.missingFingerprint, label: 'Lipsă fingerprint', accentColor: 'yellow' },
+      ]} />
     </>
   )
 }

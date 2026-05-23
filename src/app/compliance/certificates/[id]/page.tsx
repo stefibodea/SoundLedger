@@ -45,7 +45,7 @@ export default async function CertificateDetailPage({ params }: { params: Promis
       flexDirection: 'column',
       alignItems: 'center',
       padding: '40px 20px',
-      fontFamily: 'Georgia, "Times New Roman", serif',
+      fontFamily: 'inherit',
     }}>
 
       {/* Bară navigare — ascunsă la print */}
@@ -85,10 +85,10 @@ export default async function CertificateDetailPage({ params }: { params: Promis
 
           {/* Antet */}
           <div style={{ textAlign: 'center', marginBottom: 44 }}>
-            <div style={{ fontSize: 13, letterSpacing: 5, color: '#2e7d32', textTransform: 'uppercase', marginBottom: 6, fontFamily: 'system-ui, sans-serif' }}>
+            <div style={{ fontSize: 13, letterSpacing: 5, color: '#2e7d32', textTransform: 'uppercase', marginBottom: 6, }}>
               {cert.label.name}
             </div>
-            <div style={{ fontSize: 10, letterSpacing: 3, color: '#aaa', textTransform: 'uppercase', marginBottom: 20, fontFamily: 'system-ui, sans-serif' }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: '#aaa', textTransform: 'uppercase', marginBottom: 20, }}>
               Certificat de Autenticitate · SoundLedger
             </div>
             <h1 style={{ fontSize: 34, fontWeight: 400, color: '#111', margin: '0 0 4px', letterSpacing: 2, textTransform: 'uppercase' }}>
@@ -102,10 +102,10 @@ export default async function CertificateDetailPage({ params }: { params: Promis
             <p style={{ fontSize: 14, color: '#555', lineHeight: 2, margin: 0, fontStyle: 'italic' }}>
               Prin prezentul document se atestă că opera muzicală
             </p>
-            <h2 style={{ fontSize: 26, fontWeight: 700, color: '#111', margin: '10px 0 6px', fontFamily: 'system-ui, sans-serif' }}>
+            <h2 style={{ fontSize: 26, fontWeight: 700, color: '#111', margin: '10px 0 6px', }}>
               „{cert.track.title}"
             </h2>
-            <p style={{ fontSize: 16, color: '#2e7d32', margin: 0, fontFamily: 'system-ui, sans-serif' }}>
+            <p style={{ fontSize: 16, color: '#2e7d32', margin: 0, }}>
               de {cert.track.artist.name}
             </p>
           </div>
@@ -132,10 +132,10 @@ export default async function CertificateDetailPage({ params }: { params: Promis
               { label: 'Emis de',        value: issuerName },
             ].map(({ label, value, mono }) => (
               <div key={label} style={{ padding: '16px 20px', background: '#fff', borderBottom: '1px solid #e8e8e8' }}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: '#2e7d32', textTransform: 'uppercase', marginBottom: 5, fontFamily: 'system-ui, sans-serif' }}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: '#2e7d32', textTransform: 'uppercase', marginBottom: 5, }}>
                   {label}
                 </div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#111', fontFamily: mono ? 'monospace' : 'system-ui, sans-serif' }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#111' }}>
                   {value}
                 </div>
               </div>
@@ -143,14 +143,14 @@ export default async function CertificateDetailPage({ params }: { params: Promis
 
             {/* Status — full width */}
             <div style={{ gridColumn: '1 / -1', padding: '16px 20px', background: cert.isRevoked ? '#fff8f8' : '#f7fff7' }}>
-              <div style={{ fontSize: 10, letterSpacing: 2, color: '#2e7d32', textTransform: 'uppercase', marginBottom: 5, fontFamily: 'system-ui, sans-serif' }}>
+              <div style={{ fontSize: 10, letterSpacing: 2, color: '#2e7d32', textTransform: 'uppercase', marginBottom: 5, }}>
                 Status
               </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: cert.isRevoked ? '#c62828' : '#2e7d32', fontFamily: 'system-ui, sans-serif' }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: cert.isRevoked ? '#c62828' : '#2e7d32', }}>
                 {cert.isRevoked ? '⚠ REVOCAT' : '✓ VALID — Certificat activ'}
               </div>
               {cert.isRevoked && revokedDate && (
-                <div style={{ fontSize: 13, color: '#c62828', marginTop: 4, fontFamily: 'system-ui, sans-serif' }}>
+                <div style={{ fontSize: 13, color: '#c62828', marginTop: 4, }}>
                   Revocat la {revokedDate}{cert.revokedReason ? ` — ${cert.revokedReason}` : ''}
                 </div>
               )}
@@ -160,21 +160,21 @@ export default async function CertificateDetailPage({ params }: { params: Promis
           {/* Sigiliu / Footer documentar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: 28, borderTop: '1px solid #e0e0e0' }}>
             <div>
-              <div style={{ fontSize: 10, color: '#bbb', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4, fontFamily: 'system-ui, sans-serif' }}>
+              <div style={{ fontSize: 10, color: '#bbb', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4, }}>
                 Emis prin platforma
               </div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#333', fontFamily: 'system-ui, sans-serif' }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#333', }}>
                 SoundLedger
               </div>
-              <div style={{ fontSize: 10, color: '#bbb', marginTop: 2, fontFamily: 'system-ui, sans-serif' }}>
+              <div style={{ fontSize: 10, color: '#bbb', marginTop: 2, }}>
                 Protecția drepturilor artiștilor în era AI
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 11, color: '#bbb', fontFamily: 'system-ui, sans-serif', marginBottom: 2 }}>
+              <div style={{ fontSize: 11, color: '#bbb', marginBottom: 2 }}>
                 Cod unic de verificare
               </div>
-              <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'monospace', color: '#2e7d32', letterSpacing: 1 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#2e7d32', letterSpacing: 1 }}>
                 {cert.certificateCode}
               </div>
             </div>

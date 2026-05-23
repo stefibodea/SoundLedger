@@ -26,7 +26,7 @@ export default function GlobalError({
       padding: 24,
       background: '#0f0f0f',
       color: '#e0e0e0',
-      fontFamily: 'system-ui, sans-serif'
+      fontFamily: 'inherit'
     }}>
       <div style={{
         maxWidth: 480,
@@ -48,7 +48,7 @@ export default function GlobalError({
             : 'Ceva nu a funcționat corect. Dacă problema persistă, contactează administratorul.'}
         </p>
         {error.digest && (
-          <p style={{ margin: '0 0 20px', fontSize: 11, color: '#555', fontFamily: 'monospace' }}>
+          <p style={{ margin: '0 0 20px', fontSize: 11, color: '#555' }}>
             Cod eroare: {error.digest}
           </p>
         )}

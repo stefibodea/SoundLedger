@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import styles from './landing.module.css'
 
-const CARD_ACCENTS = ['#9B94F0', '#6ee7b7', '#fde68a', '#93c5fd', '#f9a8d4', '#93c5fd']
 
 export default function LandingPage() {
   return (
@@ -79,7 +78,6 @@ export default function LandingPage() {
             <div
               key={i}
               className={styles.featureCard}
-              style={{ borderTop: `2px solid ${CARD_ACCENTS[i % CARD_ACCENTS.length]}` }}
             >
               <h3 className={styles.featureTitle}>{f.title}</h3>
               <p className={styles.featureDesc}>{f.desc}</p>
