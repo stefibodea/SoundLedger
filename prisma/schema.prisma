@@ -241,7 +241,8 @@ model ARProspect {
   soundcloudUrl String?
   instagram     String?
   tiktok        String?
-  status        String   @default("IDENTIFIED") // IDENTIFIED, ANALYZING, CONTACTED, NEGOTIATION, SIGNED, REJECTED
+  status        String   @default("ANALYZING") // ANALYZING, CONTACTED, NEGOTIATION, SIGNED, REJECTED
+  source        String?  // Unde a fost identificat: Spotify, YouTube, Instagram, TikTok, SoundCloud, Recomandare, Demo primit prin email, Live / Concert, sau text liber
   aiScore       Int?
   aiReport      String?
   notes         String?
@@ -258,7 +259,6 @@ model Release {
   releaseDate   String
   status        String   @default("PLANNING") // PLANNING, READY, RELEASED
   checklist     String?  // JSON string
-  pressRelease  String?
   socialPlan    String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

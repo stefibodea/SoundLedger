@@ -73,7 +73,6 @@ export default function LandingPage() {
             { title: 'Contracte Smart', desc: 'Creează contracte asistate de AI care evidențiază clauze neobișnuite și sugerează termeni echitabili.' },
             { title: 'Royalties & Finanțe', desc: 'Calcul automat al royalties, rapoarte de plată, predicții de venituri cu AI.' },
             { title: 'A&R Scouting', desc: 'Descoperă artiști noi cu pipeline Kanban și rapoarte AI de scouting automate.' },
-            { title: 'Lansări Planificate', desc: 'Calendar de lansări cu checklist automat, generator de press kit AI.' },
           ].map((f, i) => (
             <div
               key={i}

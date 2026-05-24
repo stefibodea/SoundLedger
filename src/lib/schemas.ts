@@ -176,6 +176,7 @@ export const createRevenueSchema = z.object({
 
 export const createProspectSchema = z.object({
   name:         requiredString('Numele artistului este obligatoriu').max(100),
+  source:       requiredString('Sursa de identificare este obligatorie').max(200),
   spotifyUrl:   optionalUrl,
   youtubeUrl:   optionalUrl,
   soundcloudUrl: optionalUrl,
@@ -184,7 +185,16 @@ export const createProspectSchema = z.object({
   notes:        z.string().transform((v) => v.trim() || null),
 })
 
-export const updateProspectSchema = createProspectSchema
+export const updateProspectSchema = z.object({
+  name:         requiredString('Numele artistului este obligatoriu').max(100),
+  source:       z.string().transform((v) => v.trim() || null),
+  spotifyUrl:   optionalUrl,
+  youtubeUrl:   optionalUrl,
+  soundcloudUrl: optionalUrl,
+  instagram:    z.string().transform((v) => v.trim() || null),
+  tiktok:       z.string().transform((v) => v.trim() || null),
+  notes:        z.string().transform((v) => v.trim() || null),
+})
 
 // ── Lansări ────────────────────────────────────────────────────────────────────
 

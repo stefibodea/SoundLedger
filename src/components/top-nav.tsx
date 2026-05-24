@@ -8,6 +8,9 @@ import { UserMenu } from '@/components/user-menu'
 type NavLink = { href: string; label: string }
 
 const NAV_LINKS: Record<string, NavLink[]> = {
+  [ROLES.SUPER_ADMIN]: [
+    { href: '/admin', label: 'Case de discuri' },
+  ],
   [ROLES.LABEL_MANAGER]: [
     { href: '/dashboard', label: 'Acasă' },
     { href: '/artists', label: 'Artiști' },

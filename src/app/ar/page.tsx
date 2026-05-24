@@ -33,6 +33,7 @@ export default async function ARPage({
     instagram:  p.instagram,
     spotifyUrl: p.spotifyUrl,
     youtubeUrl: p.youtubeUrl,
+    source:     p.source,
     createdAt:  p.createdAt.toISOString(),
   }))
 

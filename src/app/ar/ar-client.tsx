@@ -19,10 +19,11 @@ export type ProspectRow = {
   instagram: string | null
   spotifyUrl: string | null
   youtubeUrl: string | null
+  source: string | null
   createdAt: string
 }
 
-type StatusFilter = 'all' | 'IDENTIFIED' | 'ANALYZING' | 'CONTACTED' | 'NEGOTIATION' | 'SIGNED' | 'REJECTED'
+type StatusFilter = 'all' | 'ANALYZING' | 'CONTACTED' | 'NEGOTIATION' | 'SIGNED' | 'REJECTED'
 type SortKey     = 'date' | 'name' | 'score'
 
 type Props = {
@@ -30,15 +31,35 @@ type Props = {
 }
 
 const COLUMNS: { key: string; label: string; headerBg: string; bodyBg: string; textColor: string; borderColor: string }[] = [
-  { key: 'IDENTIFIED',  label: 'Identificat', headerBg: 'rgba(100,100,130,0.35)',   bodyBg: 'rgba(28,27,34,0.55)',   textColor: '#a8a6bc', borderColor: 'rgba(100,100,130,0.25)' },
   { key: 'ANALYZING',   label: 'În analiză',  headerBg: 'rgba(147,197,253,0.18)',   bodyBg: 'rgba(28,27,34,0.55)',   textColor: '#93c5fd', borderColor: 'rgba(147,197,253,0.2)'  },
   { key: 'CONTACTED',   label: 'Contactat',   headerBg: 'rgba(253,230,138,0.18)',   bodyBg: 'rgba(28,27,34,0.55)',   textColor: '#fde68a', borderColor: 'rgba(253,230,138,0.2)'  },
   { key: 'NEGOTIATION', label: 'Negociere',   headerBg: 'rgba(155,148,240,0.22)',   bodyBg: 'rgba(28,27,34,0.55)',   textColor: '#c4bef8', borderColor: 'rgba(155,148,240,0.25)' },
-  { key: 'SIGNED',      label: 'Semnat',      headerBg: 'rgba(22,101,52,0.55)',     bodyBg: 'rgba(16,46,30,0.6)',    textColor: '#6ee7b7', borderColor: 'rgba(110,231,183,0.25)' },
+  { key: 'SIGNED',      label: 'De semnat',   headerBg: 'rgba(22,101,52,0.55)',     bodyBg: 'rgba(16,46,30,0.6)',    textColor: '#6ee7b7', borderColor: 'rgba(110,231,183,0.25)' },
   { key: 'REJECTED',    label: 'Respins',     headerBg: 'rgba(252,165,165,0.15)',   bodyBg: 'rgba(28,27,34,0.55)',   textColor: '#fca5a5', borderColor: 'rgba(252,165,165,0.2)'  },
 ]
-const STATUS_ORDER = ['IDENTIFIED', 'ANALYZING', 'CONTACTED', 'NEGOTIATION', 'SIGNED', 'REJECTED']
+
 const STATUS_LABELS: Record<string, string> = Object.fromEntries(COLUMNS.map((c) => [c.key, c.label]))
+
+// Tranziția principală forward pentru fiecare status
+const NEXT_STATUS: Record<string, string | null> = {
+  ANALYZING:   'CONTACTED',
+  CONTACTED:   'NEGOTIATION',
+  NEGOTIATION: 'SIGNED',
+  SIGNED:      null,
+  REJECTED:    null,
+}
+
+const SOURCE_OPTIONS = [
+  'Spotify',
+  'YouTube',
+  'Instagram',
+  'TikTok',
+  'SoundCloud',
+  'Recomandare',
+  'Demo primit prin email',
+  'Live / Concert',
+  'Altele',
+]
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -64,6 +85,41 @@ function FilterSection({ label, icon, children }: { label: string; icon: ReactNo
   )
 }
 
+// ── SourceSelect — dropdown + câmp text pentru "Altele" ──────────────────────
+
+function SourceSelect({ defaultValue }: { defaultValue?: string | null }) {
+  const isCustom = defaultValue != null && !SOURCE_OPTIONS.slice(0, -1).includes(defaultValue)
+  const [selected, setSelected] = useState(isCustom ? 'Altele' : (defaultValue ?? ''))
+  const [custom, setCustom] = useState(isCustom ? (defaultValue ?? '') : '')
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <select
+        name="sourceOption"
+        className="form-select"
+        value={selected}
+        onChange={(e) => setSelected(e.target.value)}
+        required
+      >
+        <option value="" disabled>Selectează sursa...</option>
+        {SOURCE_OPTIONS.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+      {selected === 'Altele' && (
+        <input
+          name="sourceCustom"
+          className="form-input"
+          placeholder="Descrie sursa..."
+          value={custom}
+          onChange={(e) => setCustom(e.target.value)}
+          required
+        />
+      )}
+    </div>
+  )
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function ARClient({ prospects }: Props) {
@@ -71,11 +127,6 @@ export function ARClient({ prospects }: Props) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [sortBy,       setSortBy]       = useState<SortKey>('date')
   const [modalOpen,    setModalOpen]    = useState(false)
-
-  const suggestions = useMemo(() =>
-    [...new Set(prospects.map((p) => p.name))],
-    [prospects],
-  )
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
@@ -94,8 +145,6 @@ export function ARClient({ prospects }: Props) {
 
   const hasActiveFilters = Boolean(search || statusFilter !== 'all')
   const resetFilters = () => { setSearch(''); setStatusFilter('all') }
-
-  // ── Render ───────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -138,15 +187,12 @@ export function ARClient({ prospects }: Props) {
         .score-bar-fill  { height: 4px; border-radius: 3px; transition: width 0.4s ease; }
       `}</style>
 
-
       {/* ── Layout: filtre absolute stânga + conținut full-width ───────── */}
       <div style={{ position: 'relative' }}>
 
         {/* ── Filtre: absolute în stânga conținutului ──────────────────── */}
         <div style={{ position: 'absolute', right: 'calc(100% + 24px)', top: 0, width: 200, height: '100%' }}>
           <div style={{ position: 'sticky', top: 80 }}>
-            <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', margin: 0 }}>Filtre</p>
-
             <FilterSection label="Caută" icon={<Search size={11} />}>
               <div style={{ position: 'relative' }}>
                 <Search size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', pointerEvents: 'none' }} />
@@ -158,11 +204,10 @@ export function ARClient({ prospects }: Props) {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {([
                   { value: 'all',         label: 'Toate' },
-                  { value: 'IDENTIFIED',  label: 'Identificat' },
                   { value: 'ANALYZING',   label: 'Analiză' },
                   { value: 'CONTACTED',   label: 'Contactat' },
                   { value: 'NEGOTIATION', label: 'Negociere' },
-                  { value: 'SIGNED',      label: 'Semnat' },
+                  { value: 'SIGNED',      label: 'De semnat' },
                   { value: 'REJECTED',    label: 'Respins' },
                 ] as { value: StatusFilter; label: string }[]).map(({ value, label }) => (
                   <button key={value} type="button" onClick={() => setStatusFilter(value)} style={{
@@ -195,10 +240,6 @@ export function ARClient({ prospects }: Props) {
             </FilterSection>
 
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 20, paddingTop: 14 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: hasActiveFilters ? 8 : 0 }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{filtered.length}</span>
-                {' '}{filtered.length === 1 ? 'candidat' : 'candidați'}
-              </div>
               {hasActiveFilters && (
                 <button type="button" className="btn btn-ghost"
                   style={{ fontSize: 12, padding: '4px 10px', width: '100%' }}
@@ -213,15 +254,14 @@ export function ARClient({ prospects }: Props) {
         </div>
 
         {/* ── Conținut ────────────────────────────────────────────────── */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+          <button type="button" className="btn btn-primary" onClick={() => setModalOpen(true)} style={{ fontSize: 13 }}>
+            + Adaugă candidat
+          </button>
+        </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-            <button type="button" className="btn btn-primary" onClick={() => setModalOpen(true)} style={{ fontSize: 13 }}>
-              + Adaugă candidat
-            </button>
-          </div>
-
-          {/* ── Kanban ─────────────────────────────────────────────────── */}
-          {filtered.length === 0 ? (
+        {/* ── Kanban ─────────────────────────────────────────────────── */}
+        {filtered.length === 0 ? (
           <div className="card">
             <EmptyState
               icon="🎤"
@@ -238,9 +278,6 @@ export function ARClient({ prospects }: Props) {
           <div className="kanban-scroll-container">
             {COLUMNS.map((col) => {
               const items = filtered.filter((p) => p.status === col.key)
-              const currentIdx = STATUS_ORDER.indexOf(col.key)
-              const nextStatus = STATUS_ORDER[currentIdx + 1]
-              const prevStatus = STATUS_ORDER[currentIdx - 1]
 
               return (
                 <div key={col.key} style={{ minWidth: 0 }}>
@@ -275,9 +312,12 @@ export function ARClient({ prospects }: Props) {
                       items.map((prospect) => {
                         const score = prospect.aiScore
                         const scoreColor = score == null ? null
-                          : score >= 70 ? { bg: 'var(--role-ar-light)', fg: 'var(--role-ar-dark)' }
-                          : score >= 40 ? { bg: 'var(--role-finance-light)', fg: 'var(--role-finance-dark)' }
-                          : { bg: 'var(--bg-tertiary)', fg: 'var(--text-secondary)' }
+                          : score >= 70 ? { bar: '#22d3ee', shadow: 'rgba(34,211,238,0.7)' }
+                          : score >= 40 ? { bar: '#facc15', shadow: 'rgba(250,204,21,0.6)' }
+                          : { bar: '#ff7b7b', shadow: 'rgba(255,123,123,0.7)' }
+
+                        const mainNext = NEXT_STATUS[prospect.status]
+                        const canReject = prospect.status === 'NEGOTIATION'
 
                         return (
                           <div
@@ -320,22 +360,15 @@ export function ARClient({ prospects }: Props) {
                             {score != null ? (
                               <div style={{ marginBottom: 8 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                                  <span style={{ fontSize: 11, fontWeight: 600, color: scoreColor?.fg }}>✦ {score}/100</span>
-                                  <span style={{ fontSize: 10, color: scoreColor?.fg, background: scoreColor?.bg, padding: '2px 7px', borderRadius: 8 }}>
-                                    {score >= 70 ? 'ridicat' : score >= 40 ? 'mediu' : 'scăzut'}
-                                  </span>
+                                  <span style={{ fontSize: 11, fontWeight: 600, color: scoreColor?.bar }}>✦ {score}/100</span>
                                 </div>
                                 <div className="score-bar-track">
                                   <div
                                     className="score-bar-fill"
                                     style={{
                                       width: `${score}%`,
-                                      background: score >= 80 ? '#22d3ee' : score < 50 ? '#ff7b7b' : '#facc15',
-                                      boxShadow: score >= 80
-                                        ? '0 0 8px rgba(34,211,238,0.7), 0 0 16px rgba(34,211,238,0.35)'
-                                        : score < 50
-                                        ? '0 0 8px rgba(255,123,123,0.7), 0 0 16px rgba(255,123,123,0.35)'
-                                        : '0 0 8px rgba(250,204,21,0.6), 0 0 14px rgba(250,204,21,0.3)',
+                                      background: scoreColor?.bar,
+                                      boxShadow: `0 0 8px ${scoreColor?.shadow}, 0 0 16px ${scoreColor?.shadow}`,
                                     }}
                                   />
                                 </div>
@@ -350,13 +383,6 @@ export function ARClient({ prospects }: Props) {
                             )}
 
                             <div className="card-actions" style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                              {prevStatus && (
-                                <form action={moveProspectAction}>
-                                  <input type="hidden" name="id" value={prospect.id} />
-                                  <input type="hidden" name="status" value={prevStatus} />
-                                  <button type="submit" className="btn btn-sm btn-secondary" style={{ fontSize: 11, padding: '2px 8px' }}>←</button>
-                                </form>
-                              )}
                               {prospect.status === 'SIGNED' ? (
                                 <Link
                                   href={`/ar/${prospect.id}`}
@@ -365,13 +391,25 @@ export function ARClient({ prospects }: Props) {
                                 >
                                   + Artist →
                                 </Link>
-                              ) : nextStatus ? (
+                              ) : mainNext ? (
                                 <form action={moveProspectAction}>
                                   <input type="hidden" name="id" value={prospect.id} />
-                                  <input type="hidden" name="status" value={nextStatus} />
-                                  <button type="submit" className="btn btn-sm btn-primary" style={{ fontSize: 11, padding: '2px 8px' }}>→</button>
+                                  <input type="hidden" name="status" value={mainNext} />
+                                  <button type="submit" className="btn btn-sm btn-primary" style={{ fontSize: 11, padding: '2px 8px' }}>
+                                    {STATUS_LABELS[mainNext]} →
+                                  </button>
                                 </form>
                               ) : null}
+
+                              {canReject && (
+                                <form action={moveProspectAction}>
+                                  <input type="hidden" name="id" value={prospect.id} />
+                                  <input type="hidden" name="status" value="REJECTED" />
+                                  <button type="submit" className="btn btn-sm btn-secondary" style={{ fontSize: 11, padding: '2px 8px', color: '#fca5a5', borderColor: 'rgba(252,165,165,0.4)' }}>
+                                    ✗ Respinge
+                                  </button>
+                                </form>
+                              )}
                             </div>
                           </div>
                         )
@@ -382,8 +420,7 @@ export function ARClient({ prospects }: Props) {
               )
             })}
           </div>
-        )
-      }
+        )}
 
       </div>{/* end relative */}
 
@@ -406,6 +443,10 @@ export function ARClient({ prospects }: Props) {
               <input id="m-instagram" name="instagram" className="form-input" placeholder="@username" />
             </div>
           </div>
+          <div className="form-group" style={{ marginBottom: 12 }}>
+            <label className="form-label">Unde a fost identificat *</label>
+            <SourceSelect />
+          </div>
           <div className="form-row" style={{ marginBottom: 12 }}>
             <div className="form-group">
               <label className="form-label" htmlFor="m-spotifyUrl">Spotify URL</label>
@@ -417,8 +458,8 @@ export function ARClient({ prospects }: Props) {
             </div>
           </div>
           <div className="form-group" style={{ marginBottom: 20 }}>
-            <label className="form-label" htmlFor="m-notes">Note</label>
-            <textarea id="m-notes" name="notes" className="form-input form-textarea" rows={3} />
+            <label className="form-label" htmlFor="m-notes">Note (analiză)</label>
+            <textarea id="m-notes" name="notes" className="form-input form-textarea" rows={3} placeholder="Observații despre potențialul artistului..." />
           </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button type="button" className="btn btn-ghost" onClick={() => setModalOpen(false)}>Anulează</button>

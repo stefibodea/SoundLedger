@@ -196,10 +196,6 @@ export function RoyaltiesClient({ royalties, canManage }: { royalties: RoyaltyRo
       {/* Filtre stânga */}
       <aside>
         <div className="card" style={{ padding: '16px 14px' }}>
-          <h4 style={{ margin: '0 0 14px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>
-            Filtre
-          </h4>
-
           <div className="form-group" style={{ marginBottom: 16 }}>
             <label className="form-label" style={{ fontSize: 11 }}>Caută artist</label>
             <input

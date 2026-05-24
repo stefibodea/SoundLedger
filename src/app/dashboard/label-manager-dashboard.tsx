@@ -222,7 +222,7 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
         )}
       </div>
 
-      <KpiVinylSidebar kpis={[
+      <KpiVinylSidebar compact kpis={[
         { value: artistsCount,        label: 'Artiști',    accentColor: 'purple' },
         { value: tracksCount,         label: 'Piese',      accentColor: 'green' },
         { value: revenueTotal >= 1000 ? `${(revenueTotal / 1000).toFixed(1)}k €` : `${revenueTotal.toFixed(0)} €`, label: 'Venituri', accentColor: 'yellow' },

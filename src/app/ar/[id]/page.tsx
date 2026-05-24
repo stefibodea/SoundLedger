@@ -1,23 +1,30 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
-import { DeleteProspectButton } from '@/components/delete-prospect-button'
+import { DeleteCandidateButton } from '@/components/delete-candidate-button'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canUseScouting, canManageContracts } from '@/lib/roles'
 import { updateProspectAction, moveProspectAction, signAndOnboardArtistAction } from '@/app/actions/ar'
 import { generateProspectAIScoreAction } from '@/app/actions/ai'
+import { SourceSelectDetail } from './SourceSelectDetail'
 
 const STATUS_LABELS: Record<string, string> = {
-  IDENTIFIED:  'Identificat',
   ANALYZING:   'În analiză',
   CONTACTED:   'Contactat',
   NEGOTIATION: 'Negociere',
-  SIGNED:      'Semnat',
+  SIGNED:      'De semnat',
   REJECTED:    'Respins',
 }
 
-const STATUS_ORDER = ['IDENTIFIED', 'ANALYZING', 'CONTACTED', 'NEGOTIATION', 'SIGNED', 'REJECTED']
+// Tranziția principală forward
+const NEXT_STATUS: Record<string, string | null> = {
+  ANALYZING:   'CONTACTED',
+  CONTACTED:   'NEGOTIATION',
+  NEGOTIATION: 'SIGNED',
+  SIGNED:      null,
+  REJECTED:    null,
+}
 
 type Props = {
   params:       Promise<{ id: string }>
@@ -36,20 +43,14 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
 
   const canOnboard = canManageContracts(session.role)
 
-  const currentIdx = STATUS_ORDER.indexOf(prospect.status)
-  const prevStatus = STATUS_ORDER[currentIdx - 1]
-  const nextStatus = STATUS_ORDER[currentIdx + 1]
+  const mainNextStatus = NEXT_STATUS[prospect.status] ?? null
+  const canReject = prospect.status === 'NEGOTIATION'
 
   const score = prospect.aiScore
   const scoreColor = score == null ? null
-    : score >= 70 ? { bg: 'var(--role-ar-light)',      fg: 'var(--role-ar-dark)' }
-    : score >= 40 ? { bg: 'var(--role-finance-light)', fg: 'var(--role-finance-dark)' }
-    : { bg: 'var(--bg-tertiary)', fg: 'var(--text-secondary)' }
-
-  const scoreLabel = score == null ? null
-    : score >= 70 ? 'Potențial ridicat'
-    : score >= 40 ? 'Potențial mediu'
-    : 'Potențial scăzut'
+    : score >= 70 ? { fg: '#22d3ee',  bar: '#22d3ee',  shadow: 'rgba(34,211,238,0.7)' }
+    : score >= 40 ? { fg: '#facc15',  bar: '#facc15',  shadow: 'rgba(250,204,21,0.6)' }
+    : { fg: '#ff7b7b', bar: '#ff7b7b', shadow: 'rgba(255,123,123,0.7)' }
 
   return (
     <AppShell session={session} title={prospect.name}>
@@ -73,7 +74,7 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
         {/* Coloana stânga: editare */}
         <div style={{ display: 'grid', gap: 16 }}>
           <section className="card">
-            <h3 style={{ marginBottom: 16 }}>Editează prospect</h3>
+            <h3 style={{ marginBottom: 16 }}>Editează candidat</h3>
             <form action={updateProspectAction}>
               <input type="hidden" name="id" value={prospect.id} />
               <div className="form-row">
@@ -85,6 +86,10 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
                   <label className="form-label">Instagram</label>
                   <input name="instagram" className="form-input" defaultValue={prospect.instagram ?? ''} placeholder="@username" />
                 </div>
+              </div>
+              <div className="form-group" style={{ marginBottom: 12 }}>
+                <label className="form-label">Unde a fost identificat</label>
+                <SourceSelectDetail defaultValue={prospect.source} />
               </div>
               <div className="form-row">
                 <div className="form-group">
@@ -107,7 +112,7 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
                 </div>
               </div>
               <div className="form-group">
-                <label className="form-label">Note</label>
+                <label className="form-label">Note (analiză)</label>
                 <textarea
                   name="notes"
                   className="form-input form-textarea"
@@ -126,7 +131,7 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>
               Ștergerea este permanentă și nu poate fi anulată.
             </p>
-            <DeleteProspectButton id={prospect.id} />
+            <DeleteCandidateButton id={prospect.id} />
           </section>
         </div>
 
@@ -145,30 +150,30 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
               </span>
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {prevStatus && (
+              {mainNextStatus && (
                 <form action={moveProspectAction}>
                   <input type="hidden" name="id" value={prospect.id} />
-                  <input type="hidden" name="status" value={prevStatus} />
+                  <input type="hidden" name="status" value={mainNextStatus} />
                   <input type="hidden" name="returnUrl" value={`/ar/${prospect.id}`} />
-                  <button className="btn btn-sm btn-secondary" type="submit">
-                    ← {STATUS_LABELS[prevStatus]}
+                  <button className="btn btn-sm btn-primary" type="submit">
+                    {STATUS_LABELS[mainNextStatus]} →
                   </button>
                 </form>
               )}
-              {nextStatus && (
+              {canReject && (
                 <form action={moveProspectAction}>
                   <input type="hidden" name="id" value={prospect.id} />
-                  <input type="hidden" name="status" value={nextStatus} />
+                  <input type="hidden" name="status" value="REJECTED" />
                   <input type="hidden" name="returnUrl" value={`/ar/${prospect.id}`} />
-                  <button className="btn btn-sm btn-primary" type="submit">
-                    {STATUS_LABELS[nextStatus]} →
+                  <button className="btn btn-sm btn-secondary" type="submit" style={{ color: '#fca5a5', borderColor: 'rgba(252,165,165,0.4)' }}>
+                    ✗ Respinge
                   </button>
                 </form>
               )}
             </div>
           </section>
 
-          {/* Onboarding — doar când e semnat și utilizatorul poate gestiona contracte */}
+          {/* Onboarding — doar când e de semnat și utilizatorul poate gestiona contracte */}
           {prospect.status === 'SIGNED' && canOnboard && (
             <section className="card" style={{ borderLeft: '3px solid #6ee7b7' }}>
               <h4 style={{ marginBottom: 4, color: '#6ee7b7' }}>✓ Creează artist + contract</h4>
@@ -209,16 +214,10 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
             <h4 style={{ marginBottom: 12 }}>Scor AI</h4>
             {score != null ? (
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
                   <span style={{ fontSize: 32, fontWeight: 700, color: scoreColor?.fg }}>
                     {score}
                     <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-secondary)' }}>/100</span>
-                  </span>
-                  <span style={{
-                    fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 12,
-                    background: scoreColor?.bg, color: scoreColor?.fg,
-                  }}>
-                    {scoreLabel}
                   </span>
                 </div>
 
@@ -227,12 +226,8 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
                   <div style={{
                     height: '100%', borderRadius: 4,
                     width: `${score}%`,
-                    background: score >= 80 ? '#22d3ee' : score < 50 ? '#ff7b7b' : '#facc15',
-                    boxShadow: score >= 80
-                      ? '0 0 10px rgba(34,211,238,0.7), 0 0 20px rgba(34,211,238,0.4)'
-                      : score < 50
-                      ? '0 0 10px rgba(255,123,123,0.7), 0 0 20px rgba(255,123,123,0.4)'
-                      : '0 0 10px rgba(250,204,21,0.6), 0 0 18px rgba(250,204,21,0.35)',
+                    background: scoreColor?.bar,
+                    boxShadow: `0 0 10px ${scoreColor?.shadow}, 0 0 20px ${scoreColor?.shadow}`,
                     transition: 'width 0.4s ease',
                   }} />
                 </div>

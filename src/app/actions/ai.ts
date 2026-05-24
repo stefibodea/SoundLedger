@@ -56,53 +56,6 @@ Răspunde în română. Prima linie trebuie să fie "SCOR: X" (număr de la 0 la
   redirect(returnUrl)
 }
 
-// ── Lansări: Generează comunicat de presă ─────────────────────────────────
-export async function generatePressReleaseAction(formData: FormData) {
-  const session = await requireSession()
-  const releaseId = formData.get('releaseId') as string
-
-  const release = await prisma.release.findUnique({
-    where: { id: releaseId },
-    include: { track: { include: { artist: true } }, album: { include: { artist: true } } },
-  })
-  if (!release || release.labelId !== session.labelId) redirect('/releases')
-
-  const trackName = release.track
-    ? `${release.track.title} de ${release.track.artist.name}`
-    : release.album
-    ? `albumul ${release.album.title} de ${release.album.artist.name}`
-    : 'lansare muzicală'
-
-  const genre = release.track?.genre ?? release.album?.artist?.genre ?? ''
-
-  const prompt = `Ești un specialist în PR muzical. Scrie un comunicat de presă profesional în română pentru următoarea lansare:
-
-Lansare: ${trackName}
-Data lansării: ${release.releaseDate}
-${genre ? `Gen muzical: ${genre}` : ''}
-${release.track?.isrc ? `ISRC: ${release.track.isrc}` : ''}
-
-Comunicatul trebuie să includă:
-- Un titlu captivant
-- 2-3 paragrafe despre lansare și artist
-- Un citat inventat dar plauzibil din partea artistului
-- O frază de încheiere
-
-Scrie în stil jurnalistic, profesional, în română.`
-
-  let errorMsg: string | null = null
-  try {
-    const pressRelease = await generateText(prompt)
-    await prisma.release.update({ where: { id: releaseId }, data: { pressRelease } })
-  } catch (e) {
-    if (isQuotaError(e)) errorMsg = 'AI+temporar+indisponibil.+Cota+API+epuizată.'
-    else throw e
-  }
-
-  if (errorMsg) redirect(`/releases?error=${errorMsg}`)
-  redirect('/releases')
-}
-
 // ── Finanțe: Generează raport financiar AI ────────────────────────────────
 export async function generateFinanceReportAction() {
   const session = await requireSession()

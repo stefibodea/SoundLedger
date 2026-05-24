@@ -5,7 +5,8 @@ import { KPICard } from '@/components/ui/KPICard'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { ROLES } from '@/lib/roles'
-import { suspendLabelAction, unsuspendLabelAction, deleteLabelAction } from '@/app/actions/admin'
+import { unsuspendLabelAction } from '@/app/actions/admin'
+import { SuspendLabelSection } from './SuspendLabelSection'
 import { DeleteLabelSection } from './DeleteLabelSection'
 
 const PLAN_LABELS: Record<string, string> = {
@@ -169,12 +170,7 @@ export default async function AdminLabelPage({ params, searchParams }: Props) {
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>
                 Utilizatorii labelului nu vor mai putea accesa aplicația.
               </p>
-              <form action={suspendLabelAction}>
-                <input type="hidden" name="labelId" value={label.id} />
-                <button type="submit" className="btn btn-secondary" style={{ width: '100%', color: '#fde68a', borderColor: '#fde68a', fontSize: 13 }}>
-                  ⏸ Suspendează
-                </button>
-              </form>
+              <SuspendLabelSection labelId={label.id} labelName={label.name} />
             </section>
           )}
 

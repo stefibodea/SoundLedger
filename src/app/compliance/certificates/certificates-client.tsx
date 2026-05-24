@@ -242,7 +242,6 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
         {/* Filtre: absolute în stânga conținutului */}
         <div style={{ position: 'absolute', right: 'calc(100% + 24px)', top: 0, width: 200, height: '100%' }}>
           <div style={{ position: 'sticky', top: 80 }}>
-            <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', margin: 0 }}>Filtre</p>
 
             <FilterSection label="Caută" icon={<Search size={11} />}>
               <div style={{ position: 'relative' }}>

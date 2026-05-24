@@ -6,7 +6,14 @@ import { requireSession } from '@/lib/auth-guards'
 import { canUseScouting, canManageContracts } from '@/lib/roles'
 import { createProspectSchema, updateProspectSchema } from '@/lib/schemas'
 
-const VALID_STATUSES = ['IDENTIFIED', 'ANALYZING', 'CONTACTED', 'NEGOTIATION', 'SIGNED', 'REJECTED']
+// Tranziții permise: doar înainte, REJECTED doar din NEGOTIATION
+const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+  ANALYZING:   ['CONTACTED'],
+  CONTACTED:   ['NEGOTIATION'],
+  NEGOTIATION: ['SIGNED', 'REJECTED'],
+  SIGNED:      [],
+  REJECTED:    [],
+}
 
 export async function moveProspectAction(formData: FormData) {
   const session = await requireSession()
@@ -16,10 +23,13 @@ export async function moveProspectAction(formData: FormData) {
   const status = String(formData.get('status') || '').trim()
   const returnUrl = String(formData.get('returnUrl') || '').trim() || '/ar'
 
-  if (!id || !VALID_STATUSES.includes(status)) redirect('/ar')
+  if (!id || !Object.keys(ALLOWED_TRANSITIONS).includes(status)) redirect('/ar')
 
   const prospect = await prisma.aRProspect.findUnique({ where: { id } })
   if (!prospect || prospect.labelId !== session.labelId) redirect('/ar')
+
+  const allowed = ALLOWED_TRANSITIONS[prospect.status] ?? []
+  if (!allowed.includes(status)) redirect(returnUrl)
 
   await prisma.aRProspect.update({ where: { id }, data: { status } })
   redirect(returnUrl)
@@ -29,8 +39,13 @@ export async function createProspectAction(formData: FormData) {
   const session = await requireSession()
   if (!session.labelId || !canUseScouting(session.role)) redirect('/dashboard')
 
+  const sourceOption = String(formData.get('sourceOption') || '').trim()
+  const sourceCustom = String(formData.get('sourceCustom') || '').trim()
+  const source = sourceOption === 'Altele' ? (sourceCustom || 'Altele') : sourceOption
+
   const result = createProspectSchema.safeParse({
     name:          formData.get('name'),
+    source,
     spotifyUrl:    formData.get('spotifyUrl') ?? '',
     youtubeUrl:    formData.get('youtubeUrl') ?? '',
     soundcloudUrl: formData.get('soundcloudUrl') ?? '',
@@ -42,10 +57,10 @@ export async function createProspectAction(formData: FormData) {
     const msg = result.error.issues[0]?.message ?? 'Date invalide'
     redirect(`/ar?error=${encodeURIComponent(msg)}`)
   }
-  const { name, spotifyUrl, youtubeUrl, soundcloudUrl, instagram, tiktok, notes } = result.data
+  const { name, source: src, spotifyUrl, youtubeUrl, soundcloudUrl, instagram, tiktok, notes } = result.data
 
   await prisma.aRProspect.create({
-    data: { name, spotifyUrl, youtubeUrl, soundcloudUrl, instagram, tiktok, notes, status: 'IDENTIFIED', labelId: session.labelId },
+    data: { name, source: src, spotifyUrl, youtubeUrl, soundcloudUrl, instagram, tiktok, notes, status: 'ANALYZING', labelId: session.labelId },
   })
 
   redirect('/ar')
@@ -61,8 +76,13 @@ export async function updateProspectAction(formData: FormData) {
   const prospect = await prisma.aRProspect.findUnique({ where: { id } })
   if (!prospect || prospect.labelId !== session.labelId) redirect('/ar')
 
+  const sourceOption = String(formData.get('sourceOption') || '').trim()
+  const sourceCustom = String(formData.get('sourceCustom') || '').trim()
+  const source = sourceOption === 'Altele' ? (sourceCustom || 'Altele') : sourceOption || null
+
   const updateResult = updateProspectSchema.safeParse({
     name:          formData.get('name'),
+    source:        source ?? '',
     spotifyUrl:    formData.get('spotifyUrl') ?? '',
     youtubeUrl:    formData.get('youtubeUrl') ?? '',
     soundcloudUrl: formData.get('soundcloudUrl') ?? '',
@@ -74,11 +94,11 @@ export async function updateProspectAction(formData: FormData) {
     const msg = updateResult.error.issues[0]?.message ?? 'Date invalide'
     redirect(`/ar/${id}?error=${encodeURIComponent(msg)}`)
   }
-  const { name, spotifyUrl, youtubeUrl, soundcloudUrl, instagram, tiktok, notes } = updateResult.data
+  const { name, source: src, spotifyUrl, youtubeUrl, soundcloudUrl, instagram, tiktok, notes } = updateResult.data
 
   await prisma.aRProspect.update({
     where: { id },
-    data: { name, spotifyUrl, youtubeUrl, soundcloudUrl, instagram, tiktok, notes },
+    data: { name, source: src, spotifyUrl, youtubeUrl, soundcloudUrl, instagram, tiktok, notes },
   })
 
   redirect(`/ar/${id}?saved=1`)

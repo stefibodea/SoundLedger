@@ -12,9 +12,10 @@ export default async function ReleasesPage() {
   await enforceOnboarding(session, '/releases')
   if (!session.labelId || !canManageReleases(session.role)) redirect('/dashboard')
 
-  const today = new Date()
-  const in30Days = new Date(today)
-  in30Days.setDate(today.getDate() + 30)
+  const now = new Date()
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const in30Days = new Date(todayStart)
+  in30Days.setDate(todayStart.getDate() + 30)
 
   const [rawReleases, rawTracks] = await Promise.all([
     prisma.release.findMany({
@@ -35,7 +36,12 @@ export default async function ReleasesPage() {
   const totalReleases   = rawReleases.length
   const releasedCount   = rawReleases.filter((r) => r.status === 'RELEASED').length
   const upcomingCount   = rawReleases.filter((r) =>
-    r.status !== 'RELEASED' && new Date(r.releaseDate) <= in30Days,
+    r.status !== 'RELEASED' &&
+    new Date(r.releaseDate) >= todayStart &&
+    new Date(r.releaseDate) <= in30Days,
+  ).length
+  const overdueCount    = rawReleases.filter((r) =>
+    r.status !== 'RELEASED' && new Date(r.releaseDate) < todayStart,
   ).length
   const planningCount   = rawReleases.filter((r) => r.status === 'PLANNING').length
 
@@ -43,7 +49,6 @@ export default async function ReleasesPage() {
     id:           r.id,
     status:       r.status,
     releaseDate:  r.releaseDate,
-    pressRelease: r.pressRelease,
     checklist:    r.checklist,
     track: r.track
       ? { id: r.trackId ?? '', title: r.track.title, artist: { name: r.track.artist.name, photo: r.track.artist.photo ?? null } }
@@ -62,11 +67,12 @@ export default async function ReleasesPage() {
       {/* ── Client Component: filtre + carduri + modal ─────────────────────── */}
       <ReleasesClient releases={releases} tracks={tracks} />
 
-      <KpiVinylSidebar kpis={[
-        { value: totalReleases, label: 'Total lansări',    accentColor: 'purple' },
-        { value: releasedCount, label: 'Lansate',          accentColor: 'green' },
-        { value: upcomingCount, label: 'Urmează 30 zile',  accentColor: upcomingCount > 0 ? 'yellow' : 'gray' },
-        { value: planningCount, label: 'În planificare',   accentColor: 'blue' },
+      <KpiVinylSidebar compact kpis={[
+        { value: totalReleases, label: 'Total lansări',        accentColor: 'purple' },
+        { value: releasedCount, label: 'Lansate',              accentColor: 'green' },
+        { value: upcomingCount, label: 'Următoarele 30 zile',  accentColor: upcomingCount > 0 ? 'yellow' : 'gray' },
+        { value: overdueCount,  label: 'Trecute de termen',    accentColor: overdueCount  > 0 ? 'red'    : 'gray' },
+        { value: planningCount, label: 'Planificate',          accentColor: 'blue' },
       ]} />
 
     </AppShell>

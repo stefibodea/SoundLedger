@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canManageContracts, canViewContracts } from '@/lib/roles'
 import { enforceOnboarding } from '@/lib/onboarding'
-import { ContractsClient, type ContractRow, type ArtistOption } from './contracts-client'
+import { ContractsClient, type ContractRow } from './contracts-client'
 
 export default async function ContractsPage({
   searchParams,
@@ -19,18 +19,11 @@ export default async function ContractsPage({
   const params = await searchParams
   const error  = params.error
 
-  const [rawContracts, rawArtists] = await Promise.all([
-    prisma.contract.findMany({
-      where: { labelId: session.labelId },
-      include: { artist: { select: { id: true, name: true, photo: true } } },
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.artist.findMany({
-      where: { labelId: session.labelId },
-      select: { id: true, name: true },
-      orderBy: { name: 'asc' },
-    }),
-  ])
+  const rawContracts = await prisma.contract.findMany({
+    where: { labelId: session.labelId },
+    include: { artist: { select: { id: true, name: true, photo: true } } },
+    orderBy: { createdAt: 'desc' },
+  })
 
   const activeCount      = rawContracts.filter((c) => c.status === 'ACTIVE').length
   const expiringCount    = rawContracts.filter((c) => c.status === 'EXPIRING').length
@@ -53,8 +46,6 @@ export default async function ContractsPage({
     },
   }))
 
-  const artists: ArtistOption[] = rawArtists.map((a) => ({ id: a.id, name: a.name }))
-
   return (
     <AppShell session={session} title="Contracte">
 
@@ -67,7 +58,6 @@ export default async function ContractsPage({
       {/* ── Client Component: filtre + tabel + modal ──────────────────────── */}
       <ContractsClient
         contracts={contracts}
-        artists={artists}
         canManage={canManageContracts(session.role)}
       />
 

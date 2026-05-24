@@ -1,6 +1,7 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canManageReleases } from '@/lib/roles'
@@ -45,6 +46,34 @@ export async function createReleaseAction(formData: FormData) {
     },
   })
 
+  redirect('/releases')
+}
+
+export async function updateReleaseAction(formData: FormData) {
+  const session = await requireSession()
+  if (!session.labelId || !canManageReleases(session.role)) redirect('/releases')
+
+  const id           = String(formData.get('id') || '').trim()
+  const releaseDate  = String(formData.get('releaseDate') || '').trim()
+  const status       = String(formData.get('status') || '').trim()
+  const checklistRaw = (formData.get('checklist') as string | null)?.trim() || null
+
+  const validStatuses = ['PLANNING', 'READY', 'RELEASED']
+  if (!id || !releaseDate || !validStatuses.includes(status)) redirect('/releases')
+
+  const release = await prisma.release.findUnique({ where: { id } })
+  if (!release || release.labelId !== session.labelId) redirect('/releases')
+
+  await prisma.release.update({
+    where: { id },
+    data: {
+      releaseDate,
+      status,
+      checklist: checklistRaw || null,
+    },
+  })
+
+  revalidatePath('/releases')
   redirect('/releases')
 }
 
