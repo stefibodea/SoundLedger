@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
+import { Modal } from '@/components/ui/Modal'
 
 interface Artist {
   id: string
@@ -13,12 +14,17 @@ interface AddRevenueFormProps {
 }
 
 export function AddRevenueForm({ artists, createRevenueAction }: AddRevenueFormProps) {
+  const [isOpen, setIsOpen] = useState(false)
   const [source, setSource] = useState('')
   const [amount, setAmount] = useState('')
-  const [period, setPeriod] = useState('')
+  const [periodFrom, setPeriodFrom] = useState('')
+  const [periodTo, setPeriodTo] = useState('')
   const [streams, setStreams] = useState('')
   const [artistId, setArtistId] = useState('')
-  const [description, setDescription] = useState('')
+
+  const period = periodFrom && periodTo && periodFrom !== periodTo
+    ? `${periodFrom}/${periodTo}`
+    : periodFrom
 
   // CSV parsing status
   const [csvInfo, setCsvInfo] = useState<{
@@ -118,9 +124,10 @@ export function AddRevenueForm({ artists, createRevenueAction }: AddRevenueFormP
         // Set state for visual autocompletion feedback
         setSource(detectedSource)
         setAmount(totalAmount.toFixed(2))
-        setPeriod(detectedPeriod || new Date().toISOString().substring(0, 7))
+        const p = detectedPeriod || new Date().toISOString().substring(0, 7)
+        setPeriodFrom(p)
+        setPeriodTo(p)
         setStreams(totalStreams > 0 ? String(totalStreams) : '')
-        setDescription(`Import digital din fișierul ${file.name}`)
 
         // Map artist name to ID
         if (detectedArtistName) {
@@ -154,183 +161,162 @@ export function AddRevenueForm({ artists, createRevenueAction }: AddRevenueFormP
     setCsvInfo(null)
     setAmount('')
     setStreams('')
-    setDescription('')
     setArtistId('')
   }
 
   return (
-    <section className="card" style={{ marginBottom: 20, transition: 'all 0.3s ease' }}>
-      <h3 style={{ marginBottom: 12 }}>Adaugă venit</h3>
-
-      <form action={createRevenueAction}>
-        {/* CSV Autocompletion / Upload Field */}
-        <div style={{
-          background: csvInfo ? 'rgba(74,222,128,0.06)' : 'rgba(255,255,255,0.02)',
-          border: csvInfo ? '1px dashed #4ade80' : '1px dashed rgba(255,255,255,0.1)',
+    <>
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        style={{
+          background: 'linear-gradient(135deg, #9B94F0 0%, #38bdf8 100%)',
+          color: 'white',
+          border: 'none',
+          padding: '8px 18px',
           borderRadius: 8,
-          padding: '14px 16px',
-          marginBottom: 20,
-          transition: 'all 0.3s ease'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h4 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-              Încarcă raport distribuitor (CSV)
-            </h4>
-          </div>
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          transition: 'opacity 0.2s ease',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        + Adaugă venit
+      </button>
 
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-            <input
-              type="file"
-              id="file"
-              name="file"
-              accept=".csv"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="form-input"
-              style={{ flex: 1, minWidth: 200, paddingTop: 5, paddingBottom: 5 }}
-            />
-            {csvInfo && (
-              <button
-                type="button"
-                onClick={handleClearFile}
-                className="btn btn-secondary btn-sm"
-                style={{ height: 36, color: 'var(--status-expired)' }}
-              >
-                Anulează fișier
-              </button>
-            )}
-          </div>
-
-          {csvInfo && (
-            <div style={{ marginTop: 10, fontSize: 12, color: '#4ade80', lineHeight: 1.5 }}>
-              ✅ <strong>Fișier selectat:</strong> {csvInfo.fileName} ({csvInfo.rowCount} înregistrări).
-              <br />
-              Formularul a fost completat automat cu valoarea totală de <strong>{csvInfo.totalAmount.toFixed(2)} €</strong> și <strong>{csvInfo.totalStreams.toLocaleString()} stream-uri</strong>! Submite formularul pentru a finaliza importul.
+      <Modal isOpen={isOpen} onClose={() => { setIsOpen(false); handleClearFile() }} title="Adaugă venit" size="lg">
+        <form action={createRevenueAction}>
+          {/* CSV upload + Note */}
+          <div style={{ display: 'flex', gap: 16, marginBottom: 20, alignItems: 'stretch' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label className="form-label">Raport distribuitor</label>
+              <div style={{
+                flex: 1,
+                background: csvInfo ? 'rgba(74,222,128,0.06)' : 'rgba(255,255,255,0.03)',
+                border: csvInfo ? '1px solid #4ade80' : '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8,
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+              }}>
+                <input
+                  type="file"
+                  id="file"
+                  name="file"
+                  accept=".csv"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="form-input"
+                  style={{ width: '100%', paddingTop: 5, paddingBottom: 5, fontSize: 12 }}
+                />
+                {csvInfo ? (
+                  <div style={{ marginTop: 8, fontSize: 11, color: '#4ade80', lineHeight: 1.5 }}>
+                    ✅ {csvInfo.fileName} — {csvInfo.rowCount} rânduri, <strong>{csvInfo.totalAmount.toFixed(2)} €</strong>
+                    <button type="button" onClick={handleClearFile} style={{ marginLeft: 8, fontSize: 11, background: 'none', border: 'none', color: 'var(--status-expired)', cursor: 'pointer', padding: 0 }}>
+                      × anulează
+                    </button>
+                  </div>
+                ) : (
+                  <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--text-tertiary)' }}>Format acceptat: .csv</p>
+                )}
+              </div>
             </div>
-          )}
-        </div>
 
-        {/* Manual fields */}
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label" htmlFor="source">
-              Sursă <span style={{ color: 'var(--status-expired)' }}>*</span>
-            </label>
-            <select
-              className="form-input form-select"
-              id="source"
-              name="source"
-              required
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-            >
-              <option value="">Selectează o sursă...</option>
-              <option value="SPOTIFY">Spotify</option>
-              <option value="APPLE_MUSIC">Apple Music</option>
-              <option value="YOUTUBE_MUSIC">YouTube Music</option>
-              <option value="YOUTUBE_CONTENT_ID">YouTube Content ID</option>
-              <option value="TIKTOK">TikTok</option>
-              <option value="DEEZER">Deezer</option>
-              <option value="RADIO_TV">Radio &amp; TV (CREDIDAM/UCMR-ADA)</option>
-              <option value="SYNC_LICENSING">Sync Licensing</option>
-              <option value="LICENTIERE">Licențiere</option>
-              <option value="VANZARI_FIZICE">Vânzări fizice</option>
-              <option value="MERCHANDISE">Merchandise</option>
-              <option value="ALTE_SURSE">Alte surse</option>
-            </select>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label className="form-label" htmlFor="description">Note</label>
+              <textarea
+                id="description"
+                name="description"
+                placeholder="ex: Contract sync Netflix S3E4, decont CREDIDAM sem. I 2026..."
+                style={{
+                  flex: 1,
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 8,
+                  padding: '12px 16px',
+                  fontSize: 13,
+                  color: 'var(--text-primary)',
+                  fontFamily: 'inherit',
+                  resize: 'none',
+                  outline: 'none',
+                  lineHeight: 1.6,
+                  minHeight: 90,
+                }}
+              />
+            </div>
           </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="amount">
-              Suma (€) <span style={{ color: 'var(--status-expired)' }}>*</span>
-            </label>
-            <input
-              className="form-input"
-              id="amount"
-              name="amount"
-              type="text"
-              inputMode="decimal"
-              placeholder="ex: 1250.75"
-              required
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
-          </div>
-        </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label" htmlFor="period">
-              Perioadă <span style={{ color: 'var(--status-expired)' }}>*</span>
-            </label>
-            <input
-              className="form-input"
-              id="period"
-              name="period"
-              placeholder="ex: 2026-03"
-              required
-              value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-            />
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label" htmlFor="source">
+                Sursă <span style={{ color: 'var(--status-expired)' }}>*</span>
+              </label>
+              <select className="form-input form-select" id="source" name="source" required value={source} onChange={(e) => setSource(e.target.value)}>
+                <option value="">Selectează o sursă...</option>
+                <option value="SYNC_LICENSING">Sync Licensing</option>
+                <option value="RADIO_TV">Radio &amp; TV (CREDIDAM/UCMR-ADA)</option>
+                <option value="VANZARI_FIZICE">Vânzări fizice</option>
+                <option value="MERCHANDISE">Merchandise</option>
+                <option value="LICENTIERE">Licențiere</option>
+                <option value="ALTE_SURSE">Alte surse</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="amount">
+                Suma (€) <span style={{ color: 'var(--status-expired)' }}>*</span>
+              </label>
+              <input className="form-input" id="amount" name="amount" type="text" inputMode="decimal" placeholder="ex: 1250.75" required value={amount} onChange={(e) => setAmount(e.target.value)} />
+            </div>
           </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="streams">
-              Nr. streamuri <span style={{ color: 'var(--status-expired)' }}>*</span>
-            </label>
-            <input
-              className="form-input"
-              id="streams"
-              name="streams"
-              type="text"
-              inputMode="numeric"
-              placeholder="ex: 142500"
-              required
-              value={streams}
-              onChange={(e) => setStreams(e.target.value)}
-            />
-          </div>
-        </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label" htmlFor="artistId">
-              Artist <span style={{ color: 'var(--status-expired)' }}>*</span>
-            </label>
-            <select
-              className="form-input form-select"
-              id="artistId"
-              name="artistId"
-              required
-              value={artistId}
-              onChange={(e) => setArtistId(e.target.value)}
-            >
-              <option value="">Selectează un artist...</option>
-              {artists.map((a) => (
-                <option key={a.id} value={a.id}>{a.name}</option>
-              ))}
-            </select>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label" htmlFor="periodFrom">
+                Perioadă de la <span style={{ color: 'var(--status-expired)' }}>*</span>
+              </label>
+              <input className="form-input" id="periodFrom" type="month" required value={periodFrom} onChange={(e) => setPeriodFrom(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="periodTo">
+                Perioadă până la <span style={{ color: 'var(--status-expired)' }}>*</span>
+              </label>
+              <input className="form-input" id="periodTo" type="month" required value={periodTo} onChange={(e) => setPeriodTo(e.target.value)} />
+            </div>
           </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="description">
-              Descriere / notă <span style={{ color: 'var(--status-expired)' }}>*</span>
-            </label>
-            <input
-              className="form-input"
-              id="description"
-              name="description"
-              placeholder="ex: Factură sync sau licențiere"
-              required
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
+          <input type="hidden" name="period" value={period} />
+
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label" htmlFor="artistId">
+                Artist <span style={{ color: 'var(--status-expired)' }}>*</span>
+              </label>
+              <select className="form-input form-select" id="artistId" name="artistId" required value={artistId} onChange={(e) => setArtistId(e.target.value)}>
+                <option value="">Selectează un artist...</option>
+                {artists.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="streams">
+                Cantitate (unități / difuzări) <span style={{ color: 'var(--status-expired)' }}>*</span>
+              </label>
+              <input className="form-input" id="streams" name="streams" type="text" inputMode="numeric" placeholder="ex: 250" required value={streams} onChange={(e) => setStreams(e.target.value)} />
+            </div>
           </div>
-        </div>
 
-        <input type="hidden" name="revenueStatus" value="RECONCILIAT" />
+          <input type="hidden" name="revenueStatus" value="RECONCILIAT" />
 
-        <button className="btn btn-primary" type="submit" style={{ marginTop: 14 }}>
-          {csvInfo ? '🚀 Salvează și Importă Raport' : 'Salvează venit'}
-        </button>
-      </form>
-    </section>
+          <button className="btn btn-primary" type="submit" style={{ marginTop: 14, width: '100%' }}>
+            {csvInfo ? '🚀 Salvează și Importă Raport' : 'Salvează venit'}
+          </button>
+        </form>
+      </Modal>
+    </>
   )
 }

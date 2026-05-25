@@ -221,17 +221,13 @@ export function ArtistsClient({
               </select>
             </FilterSection>
 
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, marginTop: 20 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: hasActiveFilters ? 6 : 0 }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{filtered.length}</span>
-                {' '}{filtered.length === 1 ? 'artist' : 'artiști'}
-              </div>
-              {hasActiveFilters && (
+            {hasActiveFilters && (
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, marginTop: 20 }}>
                 <button type="button" className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 10px', width: '100%' }} onClick={resetFilters}>
                   Resetează filtrele
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
           </div>
         </div>

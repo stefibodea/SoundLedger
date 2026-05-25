@@ -163,13 +163,13 @@ export const createRevenueSchema = z.object({
       .refine((v) => v !== '' && !Number.isNaN(Number(v)) && Number(v) > 0, 'Suma trebuie să fie pozitivă')
       .transform(Number),
   ),
-  period:      requiredString('Perioada este obligatorie').regex(/^\d{4}-\d{2}$/, 'Formatul perioadei trebuie să fie YYYY-MM'),
+  period:      requiredString('Perioada este obligatorie').regex(/^\d{4}-\d{2}(\/\d{4}-\d{2})?$/, 'Formatul perioadei trebuie să fie YYYY-MM sau YYYY-MM/YYYY-MM'),
   artistId:    requiredString('Artistul este obligatoriu'),
   streams:     z.string().transform((v) => v.trim()).refine(
-    (v) => v !== '' && Number.isInteger(Number(v)) && Number(v) >= 0,
-    'Streamurile sunt obligatorii și trebuie să fie un număr întreg pozitiv',
-  ).transform(Number),
-  description: requiredString('Descrierea este obligatorie'),
+    (v) => v === '' || (Number.isInteger(Number(v)) && Number(v) >= 0),
+    'Cantitatea trebuie să fie un număr întreg pozitiv',
+  ).transform((v) => (v === '' ? null : Number(v))),
+  description: z.string().optional().default(''),
 })
 
 // ── A&R Prospects ──────────────────────────────────────────────────────────────

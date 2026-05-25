@@ -6,7 +6,7 @@ import { RevenueCharts } from '@/components/revenue-charts'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canViewFinance, canManageFinance } from '@/lib/roles'
-import { createRevenueAction, reconcileRevenueAction, importRevenueCsvAction } from '@/app/actions/revenues'
+import { createRevenueAction, reconcileRevenueAction } from '@/app/actions/revenues'
 import { generateFinanceReportAction } from '@/app/actions/ai'
 import { SuccessBanner } from './SuccessBanner'
 import { AddRevenueForm } from './add-revenue-form'
@@ -129,15 +129,25 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
     .filter((r) => r.period === currentPeriod)
     .reduce((s, r) => s + r.amount, 0)
 
-  // Chart data: monthly aggregation (from all revenues)
-  const monthlyMap = new Map<string, number>()
+  // Chart data: monthly breakdown by source for current year (stacked chart)
+  const currentYear = new Date().getFullYear().toString()
+  const monthlySourceMap = new Map<string, Map<string, number>>()
   for (const r of allRevenues) {
-    monthlyMap.set(r.period, (monthlyMap.get(r.period) ?? 0) + r.amount)
+    if (!r.period.startsWith(currentYear)) continue
+    if (!monthlySourceMap.has(r.period)) monthlySourceMap.set(r.period, new Map())
+    const srcMap = monthlySourceMap.get(r.period)!
+    srcMap.set(r.source, (srcMap.get(r.source) ?? 0) + r.amount)
   }
-  const monthly = Array.from(monthlyMap.entries())
+  const activeSources = Array.from(new Set(
+    allRevenues.filter((r) => r.period.startsWith(currentYear)).map((r) => r.source)
+  ))
+  const monthlyBySource = Array.from(monthlySourceMap.entries())
     .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-12)
-    .map(([period, total]) => ({ period, total }))
+    .map(([period, srcMap]) => {
+      const entry: Record<string, number | string> = { period }
+      for (const src of activeSources) entry[src] = srcMap.get(src) ?? 0
+      return entry
+    })
 
   // Chart data: by source
   const sourceMap = new Map<string, number>()
@@ -192,47 +202,24 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
       )}
 
       {/* Charts */}
-      <RevenueCharts monthly={monthly} bySource={bySource} />
+      <RevenueCharts monthlyBySource={monthlyBySource} activeSources={activeSources} bySource={bySource} />
 
-      {/* Royalties card */}
-      <section className="card" style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h3 style={{ margin: '0 0 4px' }}>Royalty Payments</h3>
-          {royaltiesNeplatite._count > 0 ? (
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>
-              <span style={{ color: '#fde68a', fontWeight: 600 }}>{royaltiesNeplatite._count} plăți în așteptare</span>
-              {' '}·{' '}
-              <span style={{ color: '#fde68a' }}>{(royaltiesNeplatite._sum.amount ?? 0).toFixed(2)} € de plătit</span>
-            </p>
-          ) : (
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Toate plățile sunt la zi.</p>
-          )}
-        </div>
-        <Link href="/finance/royalties" className="btn btn-secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
-          Gestionează royalties →
-        </Link>
-      </section>
-
-      {/* AI Finance Report */}
-      <AiReportPanel
-        latestAiReport={latestAiReport}
-        generateFinanceReportAction={generateFinanceReportAction}
-      />
-
-      {/* Add form — only for users who can manage */}
-      {canManage && (
-        <AddRevenueForm artists={artists} createRevenueAction={createRevenueAction} />
-      )}
-
-      {/* Filter bar + export */}
+      {/* Istoricul veniturilor — imediat după grafice */}
       <section className="card" style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+        {/* Header: titlu + buton adaugă + export */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
           <h3 style={{ margin: 0 }}>Istoric venituri</h3>
-          <a href={exportUrl} className="btn btn-secondary" style={{ fontSize: 13 }}>
-            ↓ Export CSV{hasFilters ? ' (filtrat)' : ''}
-          </a>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            {canManage && (
+              <AddRevenueForm artists={artists} createRevenueAction={createRevenueAction} />
+            )}
+            <a href={exportUrl} className="btn btn-secondary" style={{ fontSize: 13 }}>
+              ↓ Export CSV{hasFilters ? ' (filtrat)' : ''}
+            </a>
+          </div>
         </div>
 
+        {/* Filtre */}
         <form method="GET" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
           <div className="form-group" style={{ margin: 0, flex: '0 0 160px' }}>
             <label className="form-label">Sursă</label>
@@ -344,36 +331,50 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
             </tbody>
           </table>
         </div>
+
+        {perArtist.length > 0 && (
+          <>
+            <div style={{ margin: '24px 0 16px', borderTop: '1px solid var(--border-light)', paddingTop: 20 }}>
+              <h4 style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Sumar per artist
+              </h4>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
+              {perArtist.map((a, i) => (
+                <div key={i} style={{ background: 'var(--bg-tertiary)', borderRadius: 8, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{a.name}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginLeft: 12 }}>{a.total.toFixed(0)} €</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </section>
 
-      {/* Per-artist breakdown */}
-      <section className="card">
-        <h3 style={{ marginBottom: 16 }}>Venituri per artist</h3>
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Artist</th>
-                <th>Total venituri</th>
-                <th>Nr. înregistrări</th>
-              </tr>
-            </thead>
-            <tbody>
-              {perArtist.length === 0 ? (
-                <tr><td colSpan={3}>Nu există date.</td></tr>
-              ) : (
-                perArtist.map((a, i) => (
-                  <tr key={i}>
-                    <td style={{ fontWeight: 500 }}>{a.name}</td>
-                    <td><strong>{a.total.toFixed(2)} €</strong></td>
-                    <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{a.count}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* Royalties card */}
+      <section className="card" style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h3 style={{ margin: '0 0 4px' }}>Royalty Payments</h3>
+          {royaltiesNeplatite._count > 0 ? (
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>
+              <span style={{ color: '#fde68a', fontWeight: 600 }}>{royaltiesNeplatite._count} plăți în așteptare</span>
+              {' '}·{' '}
+              <span style={{ color: '#fde68a' }}>{(royaltiesNeplatite._sum.amount ?? 0).toFixed(2)} € de plătit</span>
+            </p>
+          ) : (
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Toate plățile sunt la zi.</p>
+          )}
         </div>
+        <Link href="/finance/royalties" className="btn btn-secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
+          Gestionează royalties →
+        </Link>
       </section>
+
+      {/* AI Finance Report */}
+      <AiReportPanel
+        latestAiReport={latestAiReport}
+        generateFinanceReportAction={generateFinanceReportAction}
+      />
 
       <KpiVinylSidebar kpis={[
         {

@@ -5,7 +5,8 @@
       "Bash(node -e ' *)",
       "Skill(claude-api)",
       "Skill(claude-api:*)",
-      "Bash(node --env-file=.env -e ' *)"
+      "Bash(node --env-file=.env -e ' *)",
+      "Bash(git push *)"
     ]
   }
 }

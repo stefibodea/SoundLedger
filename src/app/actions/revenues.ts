@@ -29,7 +29,8 @@ export async function createRevenueAction(formData: FormData) {
     const msg = result.error.issues[0]?.message ?? 'Date invalide'
     redirect(`/finance?error=${encodeURIComponent(msg)}`)
   }
-  const { source, amount, period, artistId: artistIdRaw, streams, description } = result.data
+  const { source, amount, period, artistId: artistIdRaw, streams, description: descRaw } = result.data
+  const description = descRaw?.trim() || `Venit manual — ${source} ${period}`
 
   const revenueStatus =
     formData.get('revenueStatus') === 'RECONCILIAT' ? 'RECONCILIAT' : 'ESTIMAT'
