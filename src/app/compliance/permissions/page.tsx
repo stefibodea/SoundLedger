@@ -40,7 +40,7 @@ export default async function CompliancePermissionsPage({
   const rawPerm        = selectedTrack?.aiPermission ?? null
   const selectedArtist = artists.find((a) => a.id === artistId) ?? null
 
-  // Serialize Prisma Dates → plain strings for the client component
+  // Serialize Prisma Dates plain strings for the client component
   const perm: PermData | null = rawPerm
     ? {
         allowAITraining:  rawPerm.allowAITraining,
@@ -57,17 +57,17 @@ export default async function CompliancePermissionsPage({
     : null
 
   return (
-    <AppShell session={session} title="⚙️ Permisiuni AI">
+    <AppShell session={session} title=" Permisiuni AI">
       {saved && (
         <div className="card" style={{ borderLeft: '3px solid var(--role-ar-dark)', marginBottom: 20 }}>
           <p style={{ color: 'var(--role-ar-dark)', margin: 0 }}>
-            ✓ Permisiunile pentru <strong>{selectedTrack?.title}</strong> au fost salvate.
+            Permisiunile pentru <strong>{selectedTrack?.title}</strong> au fost salvate.
           </p>
         </div>
       )}
       {error && (
         <div className="card" style={{ borderLeft: '3px solid var(--role-artist-dark)', marginBottom: 20 }}>
-          <p style={{ color: 'var(--role-artist-dark)', margin: 0 }}>⚠️ {decodeURIComponent(error)}</p>
+          <p style={{ color: 'var(--role-artist-dark)', margin: 0 }}>{decodeURIComponent(error)}</p>
         </div>
       )}
       {!canManage && (
@@ -110,7 +110,7 @@ export default async function CompliancePermissionsPage({
                     color: t.aiPermission ? 'var(--role-ar-dark)' : 'var(--text-secondary)',
                     fontSize: 11,
                   }}>
-                    {t.aiPermission ? '⚙ Configurat' : '○ Neconfigurat'}
+                    {t.aiPermission ? 'Configurat' : 'Neconfigurat'}
                   </span>
                 </div>
               </a>
@@ -150,7 +150,7 @@ export default async function CompliancePermissionsPage({
       {/* Placeholder când nu e nimic selectat */}
       {!artistId && (
         <div className="card" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-secondary)' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>⚙️</div>
+          <div style={{ fontSize: 40, marginBottom: 12 }}></div>
           <p style={{ margin: 0, fontSize: 14 }}>
             Selectează un artist din dropdown-ul de mai sus pentru a configura permisiunile melodiilor sale.
           </p>

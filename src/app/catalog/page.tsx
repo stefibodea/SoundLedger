@@ -24,12 +24,17 @@ export default async function CatalogPage({
   startOfMonth.setDate(1)
   startOfMonth.setHours(0, 0, 0, 0)
 
-  const [rawTracks, rawArtists, albumsCount, releasedCount, addedThisMonth] = await Promise.all([
+  const [rawTracks, label, rawArtists, albumsCount, releasedCount, addedThisMonth] = await Promise.all([
     prisma.track.findMany({
       where: { labelId: session.labelId },
-      include: { artist: { select: { id: true, name: true, photo: true } } },
+      include: {
+        artist:        { select: { id: true, name: true, photo: true } },
+        creativeRecord: { select: { aiCompozitie: true, aiVersuri: true, aiVoce: true, aiProductie: true, aiAltele: true, rolesCompozitie: true, rolesVersuri: true, rolesProductie: true, rolesMixaj: true } },
+        humanMadeCert: { select: { id: true, isRevoked: true, certificateCode: true, issuedAt: true, declaration: true } },
+      },
       orderBy: { createdAt: 'desc' },
     }),
+    prisma.label.findUnique({ where: { id: session.labelId }, select: { name: true } }),
     prisma.artist.findMany({
       where: { labelId: session.labelId },
       select: { id: true, name: true },
@@ -42,19 +47,40 @@ export default async function CatalogPage({
 
   const totalTracks = rawTracks.length
 
-  const tracks: TrackRow[] = rawTracks.map((t) => ({
-    id:        t.id,
-    title:     t.title,
-    type:      t.type,
-    status:    t.status,
-    genre:     t.genre,
-    isrc:      t.isrc,
-    bpm:       t.bpm,
-    duration:  t.duration,
-    coverArt:  t.coverArt,
-    createdAt: t.createdAt.toISOString(),
-    artist:    { id: t.artist.id, name: t.artist.name, photo: t.artist.photo ?? null },
-  }))
+  const tracks: TrackRow[] = rawTracks.map((t) => {
+    const cr = t.creativeRecord
+    let declaration: 'UMAN' | 'AI' | null = null
+    if (cr) {
+      const hasAI = cr.aiCompozitie || cr.aiVersuri || cr.aiVoce || cr.aiProductie || !!cr.aiAltele
+      declaration = hasAI ? 'AI' : 'UMAN'
+    }
+    return {
+      id:          t.id,
+      title:       t.title,
+      type:        t.type,
+      status:      t.status,
+      genre:       t.genre,
+      isrc:        t.isrc,
+      bpm:         t.bpm,
+      duration:    t.duration,
+      coverArt:    t.coverArt,
+      createdAt:   t.createdAt.toISOString(),
+      artist:      { id: t.artist.id, name: t.artist.name, photo: t.artist.photo ?? null },
+      declaration,
+      cert: t.humanMadeCert && !t.humanMadeCert.isRevoked
+        ? {
+            id:          t.humanMadeCert.id,
+            code:        t.humanMadeCert.certificateCode,
+            issuedAt:    t.humanMadeCert.issuedAt.toISOString(),
+            declaration: t.humanMadeCert.declaration,
+            rolesCompozitie: t.creativeRecord?.rolesCompozitie ?? null,
+            rolesVersuri:    t.creativeRecord?.rolesVersuri    ?? null,
+            rolesProductie:  t.creativeRecord?.rolesProductie  ?? null,
+            rolesMixaj:      t.creativeRecord?.rolesMixaj      ?? null,
+          }
+        : null,
+    }
+  })
 
   const artists: ArtistOption[] = rawArtists.map((a) => ({ id: a.id, name: a.name }))
 
@@ -68,6 +94,7 @@ export default async function CatalogPage({
         tracks={tracks}
         artists={artists}
         canWrite={canWrite}
+        labelName={label?.name ?? ''}
         initialArtistFilter={initialArtistFilter}
       />
 

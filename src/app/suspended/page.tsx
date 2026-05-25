@@ -14,7 +14,7 @@ export default async function SuspendedPage() {
       padding: 24,
     }}>
       <div style={{ maxWidth: 480, width: '100%', textAlign: 'center' }}>
-        <div style={{ fontSize: 56, marginBottom: 24 }}>⚠️</div>
+        <div style={{ fontSize: 56, marginBottom: 24 }}></div>
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12, color: '#fca5a5' }}>
           Cont suspendat
         </h1>

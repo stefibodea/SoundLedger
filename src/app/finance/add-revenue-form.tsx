@@ -216,7 +216,7 @@ export function AddRevenueForm({ artists, createRevenueAction }: AddRevenueFormP
                 />
                 {csvInfo ? (
                   <div style={{ marginTop: 8, fontSize: 11, color: '#4ade80', lineHeight: 1.5 }}>
-                    ✅ {csvInfo.fileName} — {csvInfo.rowCount} rânduri, <strong>{csvInfo.totalAmount.toFixed(2)} €</strong>
+                     {csvInfo.fileName} — {csvInfo.rowCount} rânduri, <strong>{csvInfo.totalAmount.toFixed(2)} €</strong>
                     <button type="button" onClick={handleClearFile} style={{ marginLeft: 8, fontSize: 11, background: 'none', border: 'none', color: 'var(--status-expired)', cursor: 'pointer', padding: 0 }}>
                       × anulează
                     </button>

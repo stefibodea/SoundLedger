@@ -5,13 +5,13 @@ import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canViewCatalog, canManageArtists, canManageCompliance } from '@/lib/roles'
 import { enforceOnboarding } from '@/lib/onboarding'
-import { toggleTrackStatusAction } from '@/app/actions/catalog'
+import { toggleTrackStatusAction, declareCreativeRecordAction } from '@/app/actions/catalog'
 import { computeFingerprintFromCatalogPage, deleteFingerprintForTrack } from '@/app/actions/fingerprints'
 import { getAudioFileUrl } from '@/lib/file-upload'
 
 type PageProps = {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ success?: string; error?: string; fpOk?: string; fpError?: string }>
+  searchParams: Promise<{ success?: string; error?: string; fpOk?: string; fpError?: string; declared?: string }>
 }
 
 function formatDuration(seconds: number): string {
@@ -25,249 +25,360 @@ export default async function TrackDetailPage({ params, searchParams }: PageProp
   const sp = await searchParams
   const successMsg = sp.success === 'audio_removed'
     ? 'Fișierul audio a fost șters.'
-    : sp.success === 'fingerprint_computed'
-    ? 'Fingerprint-ul a fost calculat cu succes.'
+    : sp.declared === '1'
+    ? 'Declarația creativă a fost salvată.'
+    : sp.fpOk === '1'
+    ? 'Amprenta audio a fost calculată și salvată.'
     : null
   const errorMsg = sp.error ? decodeURIComponent(sp.error) : (sp.fpError ? decodeURIComponent(sp.fpError) : null)
-  const fpOk = sp.fpOk === '1'
 
   const session = await requireSession()
   await enforceOnboarding(session, `/catalog/${id}`)
   if (!session.labelId || !canViewCatalog(session.role)) redirect('/dashboard')
 
-  const track = await prisma.track.findUnique({
-    where: { id },
-    include: {
-      artist: true,
-      album:  true,
-      revenues: { orderBy: { period: 'asc' } },
-      fingerprint: true,
-    },
-  })
+  const [track, composers] = await Promise.all([
+    prisma.track.findUnique({
+      where: { id },
+      include: {
+        artist: true,
+        album:  true,
+        revenues:       { orderBy: { period: 'asc' } },
+        fingerprint:    true,
+        creativeRecord: true,
+        humanMadeCert:  true,
+      },
+    }),
+    prisma.composer.findMany({
+      where: { labelId: session.labelId! },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, specialization: true },
+    }),
+  ])
 
   if (!track || track.labelId !== session.labelId) notFound()
 
-  const canWrite      = canManageArtists(session.role)
-  const canFP         = canManageCompliance(session.role)
-  const totalRevenue  = track.revenues.reduce((sum, r) => sum + r.amount, 0)
-  const audioUrl      = getAudioFileUrl(track.audioFile)
+  const canWrite   = canManageArtists(session.role)
+  const canFP      = canManageCompliance(session.role)
+  const canDeclare = canManageCompliance(session.role)
+  const totalRevenue = track.revenues.reduce((sum, r) => sum + r.amount, 0)
+  const audioUrl   = getAudioFileUrl(track.audioFile)
 
   const TYPE_LABELS: Record<string, string> = { SINGLE: 'Single', ALBUM_TRACK: 'Track album', EP_TRACK: 'Track EP' }
 
+  const cr = track.creativeRecord
+  const declarationType: 'UMAN' | 'AI' | null = cr
+    ? (cr.aiCompozitie || cr.aiVersuri || cr.aiVoce || cr.aiProductie || !!cr.aiAltele ? 'AI' : 'UMAN')
+    : null
+  const hasCert = track.humanMadeCert && !track.humanMadeCert.isRevoked
+
   return (
     <AppShell session={session} title={track.title}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
-        {track.coverArt ? (
-          <img src={track.coverArt} alt={track.title} style={{ width: 80, height: 80, borderRadius: 10, objectFit: 'cover', border: '1px solid var(--border-medium)' }} />
-        ) : (
-          <div style={{ width: 80, height: 80, borderRadius: 10, background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>
-            🎵
-          </div>
-        )}
-        <div style={{ flex: 1 }}>
-          <h2 style={{ fontSize: 22, fontWeight: 700 }}>{track.title}</h2>
-          <p style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>
-            <Link href={`/artists/${track.artist.id}`} style={{ color: 'var(--primary)' }}>{track.artist.name}</Link>
-            {track.genre && ` • ${track.genre}`}
-            {track.releaseDate && ` • ${track.releaseDate}`}
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          {canWrite && (
-            <form action={toggleTrackStatusAction}>
-              <input type="hidden" name="id" value={id} />
-              <input type="hidden" name="returnTo" value={`/catalog/${id}`} />
-              <button type="submit" className={`btn btn-sm ${track.status === 'RELEASED' ? 'btn-secondary' : 'btn-primary'}`}>
-                {track.status === 'RELEASED' ? 'Marchează nelansat' : 'Marchează lansat'}
-              </button>
-            </form>
-          )}
-          <Link href="/catalog" className="btn btn-secondary btn-sm">← Catalog</Link>
-          {canWrite && <Link href={`/catalog/${id}/edit`} className="btn btn-primary btn-sm">Editează</Link>}
-        </div>
-      </div>
 
-      {/* Notificări inline */}
-      {(successMsg || fpOk) && (
-        <div style={{ marginBottom: 16, padding: '12px 16px', background: 'rgba(110,231,183,0.1)', border: '1px solid var(--role-ar-dark)', borderRadius: 8, color: 'var(--role-ar-dark)', fontSize: 14 }}>
-          ✓ {successMsg ?? 'Amprenta audio a fost calculată și salvată cu succes.'}
+      {/* ── Notificări ─────────────────────────────────────────────────────── */}
+      {successMsg && (
+        <div style={{ marginBottom: 16, padding: '10px 16px', background: 'rgba(110,231,183,0.08)', border: '1px solid var(--role-ar-dark)', borderRadius: 8, color: 'var(--role-ar-dark)', fontSize: 13 }}>
+          {successMsg}
         </div>
       )}
       {errorMsg && (
-        <div style={{ marginBottom: 16, padding: '12px 16px', background: 'rgba(252,165,165,0.1)', border: '1px solid var(--role-artist-dark)', borderRadius: 8, color: 'var(--role-artist-dark)', fontSize: 14 }}>
-          ⚠️ {errorMsg}
+        <div style={{ marginBottom: 16, padding: '10px 16px', background: 'rgba(252,165,165,0.08)', border: '1px solid var(--role-artist-dark)', borderRadius: 8, color: 'var(--role-artist-dark)', fontSize: 13 }}>
+          {errorMsg}
         </div>
       )}
 
-      {/* Statistici */}
-      <div className="grid grid-3" style={{ marginBottom: 20 }}>
-        <div className="card card-stat">
-          <div className="stat-value" style={{ fontSize: 20 }}>
-            <span className="badge" style={{
-              background: track.status === 'RELEASED' ? 'var(--role-ar-light)' : 'var(--bg-tertiary)',
-              color: track.status === 'RELEASED' ? 'var(--role-ar-dark)' : 'var(--text-secondary)',
-              fontSize: 14, padding: '4px 12px',
+      {/* ── Hero ───────────────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', marginBottom: 28, padding: '24px', background: 'var(--bg-secondary)', borderRadius: 14, border: '1px solid var(--border-light)' }}>
+        {/* Cover */}
+        {track.coverArt ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={track.coverArt}
+            alt={track.title}
+            style={{ width: 160, height: 160, borderRadius: 12, objectFit: 'cover', flexShrink: 0, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
+          />
+        ) : (
+          <div style={{ width: 160, height: 160, borderRadius: 12, background: 'var(--bg-tertiary)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: 48, opacity: 0.3 }}>🎵</span>
+          </div>
+        )}
+
+        {/* Info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Badges row */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+            <span style={{
+              padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600,
+              background: track.status === 'RELEASED' ? 'rgba(74,222,128,0.12)' : 'rgba(255,255,255,0.05)',
+              color: track.status === 'RELEASED' ? '#4ade80' : 'var(--text-tertiary)',
+              border: `1px solid ${track.status === 'RELEASED' ? 'rgba(74,222,128,0.3)' : 'var(--border-light)'}`,
             }}>
               {track.status === 'RELEASED' ? 'Lansat' : 'Nelansat'}
             </span>
+            <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 500, background: 'rgba(155,148,240,0.1)', border: '1px solid rgba(155,148,240,0.25)', color: 'var(--primary)' }}>
+              {TYPE_LABELS[track.type] ?? track.type}
+            </span>
+            {track.genre && (
+              <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, background: 'var(--bg-tertiary)', border: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}>
+                {track.genre}
+              </span>
+            )}
+            {declarationType && (
+              <span style={{
+                padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: hasCert ? 'pointer' : 'default',
+                background: declarationType === 'UMAN' ? 'rgba(110,231,183,0.1)' : 'rgba(253,230,138,0.1)',
+                border: `1px solid ${declarationType === 'UMAN' ? 'rgba(110,231,183,0.3)' : 'rgba(253,230,138,0.3)'}`,
+                color: declarationType === 'UMAN' ? 'var(--role-ar-dark)' : 'var(--role-finance-dark)',
+              }}>
+                {declarationType === 'UMAN' ? 'Human Made' : 'Contine AI'}
+              </span>
+            )}
           </div>
-          <div className="stat-label">Status</div>
-        </div>
-        <div className="card card-stat">
-          <div className="stat-value">{totalRevenue > 0 ? `${totalRevenue.toFixed(0)} €` : '—'}</div>
-          <div className="stat-label">Venituri totale</div>
-        </div>
-        <div className="card card-stat">
-          <div className="stat-value">{track.duration ? formatDuration(track.duration) : '—'}</div>
-          <div className="stat-label">Durată</div>
+
+          {/* Title */}
+          <h1 style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.2, marginBottom: 8, wordBreak: 'break-word' }}>
+            {track.title}
+          </h1>
+
+          {/* Artist + meta */}
+          <div style={{ fontSize: 14, color: 'var(--text-tertiary)', marginBottom: 20 }}>
+            <Link href={`/artists/${track.artist.id}`} style={{ color: 'var(--primary)', fontWeight: 500 }}>
+              {track.artist.name}
+            </Link>
+            {track.album && <span> · {track.album.title}</span>}
+            {track.releaseDate && <span> · {track.releaseDate}</span>}
+            {track.duration && <span> · {formatDuration(track.duration)}</span>}
+            {totalRevenue > 0 && <span> · <strong style={{ color: 'var(--text-primary)' }}>{totalRevenue.toFixed(0)} €</strong> venituri</span>}
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {canWrite && track.status !== 'RELEASED' && (
+              <form action={toggleTrackStatusAction}>
+                <input type="hidden" name="id" value={id} />
+                <input type="hidden" name="returnTo" value={`/catalog/${id}`} />
+                <button type="submit" className="btn btn-primary btn-sm">Marchează lansat</button>
+              </form>
+            )}
+            {canWrite && <Link href={`/catalog/${id}/edit`} className="btn btn-primary btn-sm">Editează</Link>}
+            <Link href="/catalog" className="btn btn-secondary btn-sm">Catalog</Link>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-2" style={{ marginBottom: 20 }}>
-        {/* Metadata */}
-        <section className="card">
-          <h3 style={{ marginBottom: 14 }}>Informații tehnice</h3>
-          <dl style={{ display: 'grid', gap: 10 }}>
-            {[
-              { label: 'Tip',          value: TYPE_LABELS[track.type] ?? track.type },
-              { label: 'Gen',          value: track.genre },
-              { label: 'Subgen',       value: track.subgenre },
-              { label: 'ISRC',         value: track.isrc },
-              { label: 'BPM',          value: track.bpm?.toString() },
-              { label: 'Tonalitate',   value: track.key },
-              { label: 'Durată',       value: track.duration ? formatDuration(track.duration) : null },
-              { label: 'Data lansării', value: track.releaseDate },
-              { label: 'Album',        value: track.album?.title },
-            ].filter(({ value }) => value).map(({ label, value }) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-light)' }}>
-                <dt style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{label}</dt>
-                <dd style={{ fontSize: 13, fontWeight: 500 }}>{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
+      {/* ── Layout principal 70/30 ──────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20, alignItems: 'start' }}>
 
-        {/* Credite */}
-        <section className="card">
-          <h3 style={{ marginBottom: 14 }}>Credite</h3>
-          {track.composers || track.producers ? (
-            <dl style={{ display: 'grid', gap: 12 }}>
-              {track.composers && (
+        {/* ── Coloana principală ──────────────────────────────────────────── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* Player audio */}
+          <section className="card">
+            <h3 style={{ marginBottom: 14 }}>Fisier audio</h3>
+            {audioUrl ? (
+              // eslint-disable-next-line jsx-a11y/media-has-caption
+              <audio controls src={audioUrl} style={{ width: '100%' }} />
+            ) : (
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                Piesa nu are fisier audio asociat.
+                {canWrite && <> <Link href={`/catalog/${id}/edit`} style={{ color: 'var(--primary)' }}>Incarca din pagina de editare</Link></>}
+              </p>
+            )}
+          </section>
+
+          {/* Declaratie creativa */}
+          {canDeclare && (
+            <section className="card">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <h3>Declaratie creativa</h3>
+                {hasCert && (
+                  <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 999, background: 'rgba(110,231,183,0.1)', border: '1px solid rgba(110,231,183,0.3)', color: 'var(--role-ar-dark)', fontWeight: 500 }}>
+                    Certificat activ · {track.humanMadeCert!.certificateCode}
+                  </span>
+                )}
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 20 }}>
+                Specifica cine a creat piesa si daca a fost implicat AI in productie.
+              </p>
+
+              <form action={declareCreativeRecordAction} style={{ display: 'grid', gap: 20 }}>
+                <input type="hidden" name="trackId" value={id} />
+
+                {/* Echipa creativa */}
                 <div>
-                  <dt style={{ fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Compozitori</dt>
-                  <dd style={{ fontSize: 14 }}>{track.composers}</dd>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>
+                    Echipa creativa
+                  </div>
+                  {composers.length > 0 && (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+                      {composers.map((c) => (
+                        <span key={c.id} style={{ fontSize: 12, padding: '3px 10px', borderRadius: 999, background: 'var(--bg-tertiary)', border: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}>
+                          {c.name}{c.specialization ? ` · ${c.specialization}` : ''}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Compozitie melodica</label>
+                      <input type="text" name="rolesCompozitie" defaultValue={cr?.rolesCompozitie ?? ''} placeholder="Nume separate prin virgula" className="form-input" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Versuri</label>
+                      <input type="text" name="rolesVersuri" defaultValue={cr?.rolesVersuri ?? ''} placeholder="Autori versuri" className="form-input" />
+                    </div>
+                  </div>
+                  <div className="form-row" style={{ marginTop: 10 }}>
+                    <div className="form-group">
+                      <label className="form-label">Productie</label>
+                      <input type="text" name="rolesProductie" defaultValue={cr?.rolesProductie ?? ''} placeholder="Producatori, beat makers" className="form-input" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Mixaj &amp; Mastering</label>
+                      <input type="text" name="rolesMixaj" defaultValue={cr?.rolesMixaj ?? ''} placeholder="Sound engineers, mixeri" className="form-input" />
+                    </div>
+                  </div>
                 </div>
-              )}
-              {track.producers && (
+
+                {/* AI usage */}
                 <div>
-                  <dt style={{ fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Producători</dt>
-                  <dd style={{ fontSize: 14 }}>{track.producers}</dd>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>
+                    Utilizare AI
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                    {[
+                      { name: 'aiCompozitie', label: 'Compozitie melodica', checked: cr?.aiCompozitie ?? false },
+                      { name: 'aiVersuri',    label: 'Versuri / Lyrics',    checked: cr?.aiVersuri    ?? false },
+                      { name: 'aiVoce',       label: 'Voce sintetizata',    checked: cr?.aiVoce       ?? false },
+                      { name: 'aiProductie',  label: 'Productie / Beat',    checked: cr?.aiProductie  ?? false },
+                    ].map(({ name, label, checked }) => (
+                      <label key={name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 13px', background: 'var(--bg-secondary)', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}>
+                        <input type="checkbox" name={name} defaultChecked={checked} style={{ width: 15, height: 15, accentColor: 'var(--primary)', flexShrink: 0 }} />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: 10 }}>
+                    <input type="text" name="aiAltele" defaultValue={cr?.aiAltele ?? ''} placeholder="Alte utilizari AI (optional)" className="form-input" style={{ fontSize: 13 }} />
+                  </div>
                 </div>
-              )}
-            </dl>
-          ) : (
-            <p style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>
-              Niciun credit adăugat.{canWrite && <> <Link href={`/catalog/${id}/edit`} style={{ color: 'var(--primary)' }}>Adaugă →</Link></>}
-            </p>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 4 }}>
+                  <button type="submit" className="btn btn-primary btn-sm">Salveaza declaratia</button>
+                  <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+                    Fara AI bifat → certificat Human Made generat automat
+                  </span>
+                </div>
+              </form>
+            </section>
           )}
 
+          {/* Versuri */}
+          {track.lyrics && (
+            <section className="card">
+              <h3 style={{ marginBottom: 14 }}>Versuri</h3>
+              <pre style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.9, whiteSpace: 'pre-wrap', margin: 0 }}>
+                {track.lyrics}
+              </pre>
+            </section>
+          )}
+        </div>
+
+        {/* ── Sidebar ─────────────────────────────────────────────────────── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Metadata */}
+          <section className="card">
+            <h3 style={{ marginBottom: 14, fontSize: 14 }}>Informatii tehnice</h3>
+            <dl style={{ display: 'grid', gap: 8 }}>
+              {[
+                { label: 'Tip',           value: TYPE_LABELS[track.type] ?? track.type },
+                { label: 'Gen',           value: track.genre },
+                { label: 'Subgen',        value: track.subgenre },
+                { label: 'ISRC',          value: track.isrc },
+                { label: 'BPM',           value: track.bpm?.toString() },
+                { label: 'Tonalitate',    value: track.key },
+                { label: 'Durata',        value: track.duration ? formatDuration(track.duration) : null },
+                { label: 'Data lansarii', value: track.releaseDate },
+                { label: 'Album',         value: track.album?.title },
+              ].filter(({ value }) => value).map(({ label, value }) => (
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '5px 0', borderBottom: '1px solid var(--border-light)' }}>
+                  <dt style={{ fontSize: 12, color: 'var(--text-tertiary)', flexShrink: 0 }}>{label}</dt>
+                  <dd style={{ fontSize: 12, fontWeight: 500, textAlign: 'right', wordBreak: 'break-all' }}>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+
+          {/* Venituri */}
           {track.revenues.length > 0 && (
-            <div style={{ marginTop: 20 }}>
-              <h4 style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Venituri pe perioadă</h4>
+            <section className="card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+                <h3 style={{ fontSize: 14 }}>Venituri</h3>
+                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--role-finance-dark)' }}>{totalRevenue.toFixed(0)} €</span>
+              </div>
               <div style={{ display: 'grid', gap: 6 }}>
                 {track.revenues.slice(-5).map((r) => (
-                  <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>{r.period} — {r.source}</span>
-                    <strong>{r.amount.toFixed(2)} €</strong>
+                  <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0', borderBottom: '1px solid var(--border-light)' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>{r.period} · {r.source}</span>
+                    <strong>{r.amount.toFixed(0)} €</strong>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           )}
-        </section>
+
+          {/* Fingerprint audio */}
+          {canFP && (
+            <section className="card">
+              <h3 style={{ marginBottom: 12, fontSize: 14 }}>Fingerprint audio</h3>
+              {!track.audioFile ? (
+                <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+                  Adauga un fisier audio pentru a calcula amprenta ML.
+                </p>
+              ) : !track.fingerprint ? (
+                <>
+                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>
+                    Amprenta nu a fost calculata inca. Necesara pentru detectia similitudinii AI.
+                  </p>
+                  <form action={computeFingerprintFromCatalogPage}>
+                    <input type="hidden" name="trackId" value={id} />
+                    <button type="submit" className="btn btn-secondary btn-sm">Calculeaza amprenta</button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <div style={{ display: 'grid', gap: 6, marginBottom: 12 }}>
+                    {[
+                      { label: 'Tempo',       value: `${track.fingerprint.tempo.toFixed(1)} BPM` },
+                      { label: 'Durata',      value: formatDuration(Math.round(track.fingerprint.duration)) },
+                      { label: 'Sample rate', value: `${track.fingerprint.sampleRate} Hz` },
+                    ].map(({ label, value }) => (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0', borderBottom: '1px solid var(--border-light)' }}>
+                        <span style={{ color: 'var(--text-tertiary)' }}>{label}</span>
+                        <strong>{value}</strong>
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 10 }}>
+                    Calculat la {new Date(track.fingerprint.computedAt).toLocaleDateString('ro-RO', { day: '2-digit', month: 'long', year: 'numeric' })}
+                  </p>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <form action={computeFingerprintFromCatalogPage}>
+                      <input type="hidden" name="trackId" value={id} />
+                      <button type="submit" className="btn btn-secondary btn-sm">Recalculeaza</button>
+                    </form>
+                    <form action={deleteFingerprintForTrack}>
+                      <input type="hidden" name="trackId" value={id} />
+                      <button type="submit" className="btn btn-secondary btn-sm" style={{ color: 'var(--role-artist-dark)' }}>Sterge</button>
+                    </form>
+                  </div>
+                </>
+              )}
+            </section>
+          )}
+
+        </div>
       </div>
-
-      {/* Fișier Audio */}
-      <section className="card" style={{ marginBottom: 20 }}>
-        <h3 style={{ marginBottom: 14 }}>🎵 Fișier audio</h3>
-        {audioUrl ? (
-          // eslint-disable-next-line jsx-a11y/media-has-caption
-          <audio controls src={audioUrl} style={{ width: '100%' }} />
-        ) : (
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            Această piesă nu are fișier audio asociat.
-            {canWrite && (
-              <> <Link href={`/catalog/${id}/edit`} style={{ color: 'var(--primary)' }}>Încarcă un MP3 din pagina de editare →</Link></>
-            )}
-          </p>
-        )}
-      </section>
-
-      {/* Fingerprint Audio */}
-      {canFP && (
-        <section className="card" style={{ marginBottom: 20 }}>
-          <h3 style={{ marginBottom: 14 }}>🎯 Fingerprint audio</h3>
-
-          {!track.audioFile ? (
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              Adaugă un fișier audio pentru a calcula fingerprint-ul ML.{' '}
-              {canWrite && <Link href={`/catalog/${id}/edit`} style={{ color: 'var(--primary)' }}>Editează piesa →</Link>}
-            </p>
-          ) : !track.fingerprint ? (
-            <>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 14 }}>
-                Această piesă are audio, dar fingerprint-ul nu a fost calculat încă.
-                Fingerprint-ul (MFCC + chroma + tempo) e necesar pentru detecția similarității AI.
-              </p>
-              <form action={computeFingerprintFromCatalogPage}>
-                <input type="hidden" name="trackId" value={id} />
-                <button type="submit" className="btn btn-primary btn-sm">⊕ Calculează fingerprint</button>
-              </form>
-            </>
-          ) : (
-            <>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
-                {[
-                  { label: 'Tempo detectat',  value: `${track.fingerprint.tempo.toFixed(1)} BPM` },
-                  { label: 'Durată analizată', value: formatDuration(Math.round(track.fingerprint.duration)) },
-                  { label: 'Sample rate',     value: `${track.fingerprint.sampleRate} Hz` },
-                ].map(({ label, value }) => (
-                  <div key={label} style={{ padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 8 }}>
-                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, marginTop: 4 }}>{value}</div>
-                  </div>
-                ))}
-              </div>
-              <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 14 }}>
-                Calculat la {new Date(track.fingerprint.computedAt).toLocaleDateString('ro-RO', { day: '2-digit', month: 'long', year: 'numeric' })}
-              </p>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <form action={computeFingerprintFromCatalogPage}>
-                  <input type="hidden" name="trackId" value={id} />
-                  <button type="submit" className="btn btn-secondary btn-sm">↻ Recalculează</button>
-                </form>
-                <form action={deleteFingerprintForTrack}>
-                  <input type="hidden" name="trackId" value={id} />
-                  <button type="submit" className="btn btn-secondary btn-sm" style={{ color: 'var(--role-artist-dark)' }}>
-                    Șterge fingerprint
-                  </button>
-                </form>
-              </div>
-            </>
-          )}
-        </section>
-      )}
-
-      {/* Versuri */}
-      {track.lyrics && (
-        <section className="card">
-          <h3 style={{ marginBottom: 12 }}>Versuri</h3>
-          <pre style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-            {track.lyrics}
-          </pre>
-        </section>
-      )}
     </AppShell>
   )
 }

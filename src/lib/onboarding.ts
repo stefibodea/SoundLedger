@@ -16,7 +16,7 @@ export async function getOnboardingState(labelId: string): Promise<OnboardingSta
     prisma.label.findUnique({ where: { id: labelId }, select: { id: true } }),
     prisma.artist.count({ where: { labelId } }),
     prisma.track.count({ where: { labelId } }),
-    prisma.user.count({ where: { labelId, role: { in: [ROLES.AR_MANAGER, ROLES.FINANCIAL] } } }),
+    prisma.user.count({ where: { labelId, role: { in: [ROLES.LABEL_MANAGER, ROLES.FINANCIAL] } } }),
   ])
 
   const hasProfile = Boolean(label)

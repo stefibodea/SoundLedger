@@ -82,7 +82,7 @@ const CARDS: CardConfig[] = [
     Icon:        Brain,
     title:       'Antrenare AI permisă',
     description: 'Permite companiilor de inteligență artificială să folosească această piesă pentru antrenarea modelelor lor. Aceasta include platforme precum Suno, Udio sau ElevenLabs.',
-    implication: '⚠ Odată acordat, acest drept poate fi dificil de revocat. Recomandăm să activați și "Necesită licență plătită".',
+    implication: 'Odată acordat, acest drept poate fi dificil de revocat. Recomandăm să activați și "Necesită licență plătită".',
     onColor:     '#9B94F0',
     offBorder:   'rgba(252,165,165,0.2)',
     offBg:       'rgba(252,165,165,0.03)',
@@ -106,7 +106,7 @@ const CARDS: CardConfig[] = [
     Icon:        FileCheck,
     title:       'Necesită licență plătită',
     description: 'Orice utilizare comercială a acestei piese în sisteme AI necesită încheierea unui contract de licențiere și plata unei compensații către label și artist.',
-    implication: '✓ Recomandat puternic dacă antrenarea AI este activată. Protejează drepturile financiare ale artistului.',
+    implication: 'Recomandat puternic dacă antrenarea AI este activată. Protejează drepturile financiare ale artistului.',
     onColor:     '#6ee7b7',
     offBorder:   'rgba(255,255,255,0.06)',
     offBg:       'transparent',
@@ -118,7 +118,7 @@ const CARDS: CardConfig[] = [
     Icon:        UserCheck,
     title:       'Consimțământul artistului confirmat',
     description: 'Bifează dacă ai obținut acordul explicit al artistului pentru utilizarea piesei în sisteme AI. Aceasta este o cerință legală în multe jurisdicții.',
-    implication: '⚠ Fără consimțământul artistului, orice permisiune acordată poate fi contestată legal. Verifică contractul artistului.',
+    implication: 'Fără consimțământul artistului, orice permisiune acordată poate fi contestată legal. Verifică contractul artistului.',
     onColor:     '#fde68a',
     offBorder:   'rgba(255,255,255,0.06)',
     offBg:       'transparent',
@@ -143,7 +143,7 @@ function ViewMode({ perm }: { perm: PermData | null }) {
         { label: 'Antrenare AI',        value: perm.allowAITraining   ? 'Permis'    : 'Interzis',  ok: perm.allowAITraining },
         { label: 'Research academic',   value: perm.allowResearchOnly ? 'Permis'    : 'Nu',        ok: perm.allowResearchOnly },
         { label: 'Necesită licență',    value: perm.requiresLicense   ? 'Da'        : 'Nu',        ok: !perm.requiresLicense },
-        { label: 'Consimțământ artist', value: perm.artistConsent     ? 'Obținut ✓' : 'Lipsă ✗',  ok: perm.artistConsent },
+        { label: 'Consimțământ artist', value: perm.artistConsent     ? 'Obținut ' : 'Lipsă ✗',  ok: perm.artistConsent },
       ].map((row) => (
         <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 8 }}>
           <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{row.label}</span>
@@ -372,14 +372,14 @@ export function PermissionsForm({ trackId, artistId, perm, canManage }: Props) {
             <tbody>
               {([
                 ['Protecție totală',      '✗', '—', 'Nicio utilizare AI permisă'],
-                ['Licențiere comercială', '✓', '✓', 'Utilizare permisă contra cost'],
+                ['Licențiere comercială', '', '', 'Utilizare permisă contra cost'],
                 ['Research gratuit',      '✗', '✗', 'Doar research academic'],
-                ['Orice utilizare',       '✓', '✗', 'Permis fără compensație (evitați!)'],
+                ['Orice utilizare',       '', '✗', 'Permis fără compensație (evitați!)'],
               ] as const).map(([scenario, train, license, result]) => (
                 <tr key={scenario} style={{ borderBottom: '1px solid var(--border-light)' }}>
                   <td style={{ padding: '8px 12px', color: 'var(--text-primary)' }}>{scenario}</td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center', color: train === '✓' ? '#6ee7b7' : 'var(--role-artist-dark)' }}>{train}</td>
-                  <td style={{ padding: '8px 12px', textAlign: 'center', color: license === '✓' ? '#6ee7b7' : license === '—' ? 'var(--text-secondary)' : 'var(--role-artist-dark)' }}>{license}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'center', color: train === '' ? '#6ee7b7' : 'var(--role-artist-dark)' }}>{train}</td>
+                  <td style={{ padding: '8px 12px', textAlign: 'center', color: license === '' ? '#6ee7b7' : license === '—' ? 'var(--text-secondary)' : 'var(--role-artist-dark)' }}>{license}</td>
                   <td style={{ padding: '8px 12px', color: 'var(--text-secondary)' }}>{result}</td>
                 </tr>
               ))}

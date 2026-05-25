@@ -60,6 +60,9 @@ model Label {
   aiDetections      AIDetection[]
   humanMadeCerts    HumanMadeCertificate[]
   audioFingerprints AudioFingerprint[]
+  aiOptOutDecl      AIOptOutDeclaration?
+  creativeRecords   CreativeRecord[]
+  composers         Composer[]
 }
 
 model Invitation {
@@ -144,9 +147,10 @@ model Track {
   album         Album?   @relation(fields: [albumId], references: [id])
   revenues      Revenue[]
   releases      Release[]
-  aiPermission  AIPermission?
-  humanMadeCert HumanMadeCertificate?
-  fingerprint   AudioFingerprint?
+  aiPermission   AIPermission?
+  humanMadeCert  HumanMadeCertificate?
+  fingerprint    AudioFingerprint?
+  creativeRecord CreativeRecord?
 }
 
 model Album {
@@ -358,6 +362,75 @@ model AudioFingerprint {
   hopLength  Int   @default(512)
 
   computedAt DateTime @default(now())
+
+  labelId String
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@index([labelId])
+}
+
+// Declarație formală de Opt-Out AI la nivel de label (EU AI Act)
+model AIOptOutDeclaration {
+  id              String    @id @default(cuid())
+  labelId         String    @unique // un singur opt-out activ per label
+  label           Label     @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  declarationCode String    @unique // ex: OPT-2026-XXXX
+  issuedAt        DateTime  @default(now())
+  issuedById      String    // userId-ul celui care a emis declarația
+
+  isRevoked       Boolean   @default(false)
+  revokedAt       DateTime?
+  revokedReason   String?
+
+  legalBasis      String    @default("EU AI Act Art. 4(3) — Directiva UE privind drepturile de autor")
+  scope           String    @default("ALL_CATALOG") // acoperă întreg catalogul
+  notes           String?
+}
+
+// Declarație AI per piesă — documentează implicarea AI în procesul de creație
+model CreativeRecord {
+  id          String   @id @default(cuid())
+  trackId     String   @unique
+  track       Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  labelId     String
+  label       Label    @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  // Etape de producție unde a fost folosit AI
+  aiCompozitie  Boolean @default(false) // compoziție melodică, acorduri, progresii
+  aiVersuri     Boolean @default(false) // versuri / lyrics
+  aiVoce        Boolean @default(false) // voce sintetizată / vocal clone
+  aiProductie   Boolean @default(false) // producție, beat, mixaj, mastering
+  aiAltele      String? // alte aspecte cu AI (text liber)
+
+  // Informații despre creatorii umani — per rol
+  rolesCompozitie String? // Cine a compus melodia/acordurile
+  rolesVersuri    String? // Cine a scris versurile
+  rolesProductie  String? // Cine a produs (beat, instrumente, aranjament)
+  rolesMixaj      String? // Cine a mixat și masterat
+
+  composers   String? // legacy / fallback câmp general
+  producers   String?
+  daw         String?
+  sessionDate String?
+  studio      String?
+  instruments String?
+  statement   String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([labelId])
+}
+
+// Compozitori angajați ai labelului — apar ca opțiuni în declarațiile AI per piesă
+model Composer {
+  id             String   @id @default(cuid())
+  name           String
+  email          String?
+  specialization String?  // ex: "Compoziție melodică", "Versuri", "Producție"
+  photo          String?  // path relativ în public/uploads/composers/
+  createdAt      DateTime @default(now())
 
   labelId String
   label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)

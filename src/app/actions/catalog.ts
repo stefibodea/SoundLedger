@@ -5,7 +5,7 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
-import { canManageArtists } from '@/lib/roles'
+import { canManageArtists, canManageCompliance } from '@/lib/roles'
 import { assertArtistBelongsToLabel } from '@/lib/tenant-security'
 import { createTrackSchema, createAlbumSchema } from '@/lib/schemas'
 import { saveAudioFile, deleteAudioFile } from '@/lib/file-upload'
@@ -146,6 +146,11 @@ export async function updateTrackAction(formData: FormData) {
   const durationRaw = formData.get('duration')
   const duration = durationRaw ? parseInt(String(durationRaw), 10) || null : null
 
+  const rolesCompozitie = String(formData.get('rolesCompozitie') || '').trim() || null
+  const rolesVersuri    = String(formData.get('rolesVersuri')    || '').trim() || null
+  const rolesProductie  = String(formData.get('rolesProductie')  || '').trim() || null
+  const rolesMixaj      = String(formData.get('rolesMixaj')      || '').trim() || null
+
   await prisma.track.update({
     where: { id },
     data: {
@@ -158,13 +163,29 @@ export async function updateTrackAction(formData: FormData) {
       key: String(formData.get('key') || '').trim() || null,
       duration,
       releaseDate: String(formData.get('releaseDate') || '').trim() || null,
-      composers: String(formData.get('composers') || '').trim() || null,
-      producers: String(formData.get('producers') || '').trim() || null,
+      composers: rolesCompozitie,
+      producers: rolesProductie,
       lyrics: String(formData.get('lyrics') || '').trim() || null,
       coverArt,
       audioFile: audioFilename,
     },
   })
+
+  if (rolesCompozitie || rolesVersuri || rolesProductie || rolesMixaj) {
+    await prisma.creativeRecord.upsert({
+      where: { trackId: id },
+      create: {
+        trackId: id,
+        labelId: session.labelId!,
+        rolesCompozitie, rolesVersuri, rolesProductie, rolesMixaj,
+        composers: rolesCompozitie, producers: rolesProductie,
+      },
+      update: {
+        rolesCompozitie, rolesVersuri, rolesProductie, rolesMixaj,
+        composers: rolesCompozitie, producers: rolesProductie,
+      },
+    })
+  }
 
   redirect(`/catalog/${id}`)
 }
@@ -213,6 +234,92 @@ export async function removeTrackAudioAction(formData: FormData) {
   })
 
   redirect(`/catalog/${trackId}?success=audio_removed`)
+}
+
+export async function declareCreativeRecordAction(formData: FormData) {
+  const session = await requireSession()
+  if (!session.labelId || !canManageCompliance(session.role)) redirect('/dashboard')
+
+  const trackId = String(formData.get('trackId') || '').trim()
+  if (!trackId) redirect('/catalog')
+
+  const track = await prisma.track.findUnique({
+    where: { id: trackId },
+    include: { humanMadeCert: true },
+  })
+  if (!track || track.labelId !== session.labelId) redirect('/catalog')
+
+  const aiCompozitie = formData.get('aiCompozitie') === 'on'
+  const aiVersuri    = formData.get('aiVersuri')    === 'on'
+  const aiVoce       = formData.get('aiVoce')       === 'on'
+  const aiProductie  = formData.get('aiProductie')  === 'on'
+  const aiAltele     = String(formData.get('aiAltele') || '').trim() || null
+
+  const rolesCompozitie = String(formData.get('rolesCompozitie') || '').trim() || null
+  const rolesVersuri    = String(formData.get('rolesVersuri')    || '').trim() || null
+  const rolesProductie  = String(formData.get('rolesProductie')  || '').trim() || null
+  const rolesMixaj      = String(formData.get('rolesMixaj')      || '').trim() || null
+
+  const hasAI = aiCompozitie || aiVersuri || aiVoce || aiProductie || !!aiAltele
+
+  await prisma.creativeRecord.upsert({
+    where: { trackId },
+    create: {
+      trackId,
+      labelId:  session.labelId,
+      aiCompozitie, aiVersuri, aiVoce, aiProductie, aiAltele,
+      rolesCompozitie, rolesVersuri, rolesProductie, rolesMixaj,
+    },
+    update: {
+      aiCompozitie, aiVersuri, aiVoce, aiProductie, aiAltele,
+      rolesCompozitie, rolesVersuri, rolesProductie, rolesMixaj,
+    },
+  })
+
+  if (!hasAI) {
+    const roleParts: string[] = []
+    if (rolesCompozitie) roleParts.push(`Compoziție: ${rolesCompozitie}`)
+    if (rolesVersuri)    roleParts.push(`Versuri: ${rolesVersuri}`)
+    if (rolesProductie)  roleParts.push(`Producție: ${rolesProductie}`)
+    if (rolesMixaj)      roleParts.push(`Mixaj: ${rolesMixaj}`)
+    const creditsLine = roleParts.length > 0 ? ` Credite: ${roleParts.join('; ')}.` : ''
+
+    const declaration =
+      `Prin prezenta se atestă că piesa "${track.title}" a fost creată integral prin mijloace umane, fără utilizarea inteligenței artificiale în niciuna dintre etapele de producție.${creditsLine}`
+
+    const code = track.humanMadeCert?.certificateCode
+      ?? `HM-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+
+    await prisma.humanMadeCertificate.upsert({
+      where: { trackId },
+      create: {
+        trackId,
+        labelId:         session.labelId,
+        certificateCode: code,
+        issuedById:      session.userId,
+        declaration,
+        isRevoked:       false,
+      },
+      update: {
+        declaration,
+        isRevoked:  false,
+        revokedAt:  null,
+        revokedReason: null,
+        issuedAt:   new Date(),
+        issuedById: session.userId,
+      },
+    })
+  } else {
+    // Piesă cu AI — revocă certificatul dacă există
+    if (track.humanMadeCert && !track.humanMadeCert.isRevoked) {
+      await prisma.humanMadeCertificate.update({
+        where:  { trackId },
+        data:   { isRevoked: true, revokedAt: new Date(), revokedReason: 'Declarație actualizată: utilizare AI confirmată.' },
+      })
+    }
+  }
+
+  redirect(`/catalog/${trackId}?declared=1`)
 }
 
 export async function createAlbumAction(formData: FormData) {

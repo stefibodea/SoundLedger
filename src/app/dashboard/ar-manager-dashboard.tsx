@@ -116,9 +116,9 @@ export async function ARManagerDashboard({ session }: { session: SessionPayload 
         {/* Kanban snapshot */}
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 style={{ margin: 0 }}>📊 Pipeline Scouting</h3>
+            <h3 style={{ margin: 0 }}> Pipeline Scouting</h3>
             <Link href="/ar" className="btn btn-ghost" style={{ fontSize: 12 }}>
-              Kanban complet →
+              Kanban complet
             </Link>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
@@ -144,7 +144,7 @@ export async function ARManagerDashboard({ session }: { session: SessionPayload 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <h3 style={{ margin: 0 }}>🗓 Lansări planificate</h3>
             <Link href="/releases" className="btn btn-ghost" style={{ fontSize: 12 }}>
-              Toate →
+              Toate
             </Link>
           </div>
           {plannedReleases.length === 0 ? (
@@ -197,7 +197,7 @@ export async function ARManagerDashboard({ session }: { session: SessionPayload 
             gap: 12,
           }}
         >
-          <span style={{ fontSize: 18 }}>⚠</span>
+          <span style={{ fontSize: 18 }}></span>
           <div>
             <span style={{ color: 'var(--role-finance-dark)', fontWeight: 500 }}>
               {fingerprintsLacking} {fingerprintsLacking === 1 ? 'piesă fără fingerprint' : 'piese fără fingerprint'}

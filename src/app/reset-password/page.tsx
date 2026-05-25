@@ -73,7 +73,7 @@ export default async function ResetPasswordPage({
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 28, margin: '0 auto 20px',
               }}>
-                ✕
+                ×
               </div>
               <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0efe8', marginBottom: 10 }}>
                 Link invalid

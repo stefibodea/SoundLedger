@@ -55,7 +55,7 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
   return (
     <AppShell session={session} title={prospect.name}>
       <div style={{ marginBottom: 20 }}>
-        <Link href="/ar" className="btn btn-secondary">← Înapoi la pipeline</Link>
+        <Link href="/ar" className="btn btn-secondary">Înapoi la pipeline</Link>
       </div>
 
       {error && (
@@ -156,7 +156,7 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
                   <input type="hidden" name="status" value={mainNextStatus} />
                   <input type="hidden" name="returnUrl" value={`/ar/${prospect.id}`} />
                   <button className="btn btn-sm btn-primary" type="submit">
-                    {STATUS_LABELS[mainNextStatus]} →
+                    {STATUS_LABELS[mainNextStatus]}
                   </button>
                 </form>
               )}
@@ -176,7 +176,7 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
           {/* Onboarding — doar când e de semnat și utilizatorul poate gestiona contracte */}
           {prospect.status === 'SIGNED' && canOnboard && (
             <section className="card" style={{ borderLeft: '3px solid #6ee7b7' }}>
-              <h4 style={{ marginBottom: 4, color: '#6ee7b7' }}>✓ Creează artist + contract</h4>
+              <h4 style={{ marginBottom: 4, color: '#6ee7b7' }}>Creează artist + contract</h4>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 14 }}>
                 Adaugă artistul în catalog și creează contractul activ.
               </p>
@@ -203,7 +203,7 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
                   </div>
                 </div>
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-                  Creează artist + contract →
+                  Creează artist + contract
                 </button>
               </form>
             </section>
@@ -241,7 +241,7 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
                 <form action={generateProspectAIScoreAction}>
                   <input type="hidden" name="prospectId" value={prospect.id} />
                   <input type="hidden" name="returnUrl" value={`/ar/${prospect.id}`} />
-                  <button className="btn btn-sm btn-secondary" type="submit">↻ Regenerează scor</button>
+                  <button className="btn btn-sm btn-secondary" type="submit">Regenerează scor</button>
                 </form>
               </div>
             ) : (
@@ -252,7 +252,7 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
                 <form action={generateProspectAIScoreAction}>
                   <input type="hidden" name="prospectId" value={prospect.id} />
                   <input type="hidden" name="returnUrl" value={`/ar/${prospect.id}`} />
-                  <button className="btn btn-primary" type="submit">✦ Analizează cu AI</button>
+                  <button className="btn btn-primary" type="submit">Analizează cu AI</button>
                 </form>
               </div>
             )}
@@ -263,10 +263,10 @@ export default async function ProspectDetailPage({ params, searchParams }: Props
             <section className="card">
               <h4 style={{ marginBottom: 10 }}>Link-uri</h4>
               <div style={{ display: 'grid', gap: 6 }}>
-                {prospect.spotifyUrl    && <a href={prospect.spotifyUrl}    target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--primary)' }}>🎵 Spotify</a>}
+                {prospect.spotifyUrl    && <a href={prospect.spotifyUrl}    target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--primary)' }}> Spotify</a>}
                 {prospect.youtubeUrl    && <a href={prospect.youtubeUrl}    target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--primary)' }}>▶ YouTube</a>}
-                {prospect.instagram     && <a href={`https://instagram.com/${prospect.instagram.replace('@','')}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--primary)' }}>📷 {prospect.instagram}</a>}
-                {prospect.tiktok        && <a href={`https://tiktok.com/@${prospect.tiktok.replace('@','')}`}     target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--primary)' }}>🎵 TikTok: {prospect.tiktok}</a>}
+                {prospect.instagram     && <a href={`https://instagram.com/${prospect.instagram.replace('@','')}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--primary)' }}> {prospect.instagram}</a>}
+                {prospect.tiktok        && <a href={`https://tiktok.com/@${prospect.tiktok.replace('@','')}`}     target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--primary)' }}> TikTok: {prospect.tiktok}</a>}
                 {prospect.soundcloudUrl && <a href={prospect.soundcloudUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--primary)' }}>☁ SoundCloud</a>}
               </div>
             </section>

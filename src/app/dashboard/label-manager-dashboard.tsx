@@ -97,9 +97,9 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
 
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 style={{ margin: 0 }}>📊 Evoluția veniturilor</h3>
+            <h3 style={{ margin: 0 }}> Evoluția veniturilor</h3>
             <Link href="/finance" className="btn btn-ghost" style={{ fontSize: 12 }}>
-              Detalii →
+              Detalii
             </Link>
           </div>
           <RevenueChart data={chartData} />
@@ -108,7 +108,7 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
         <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <h3 style={{ margin: 0 }}>
-              🔔 Notificări
+               Notificări
               {liveNotifications.filter((n) => n.priority === 'alert').length > 0 && (
                 <span className="badge" style={{
                   marginLeft: 8, fontSize: 11,
@@ -123,7 +123,7 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
           {liveNotifications.length === 0 ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <p style={{ color: 'var(--text-tertiary)', fontSize: 13, textAlign: 'center' }}>
-                ✓ Totul este în regulă.<br />Nicio acțiune necesară.
+                Totul este în regulă.<br />Nicio acțiune necesară.
               </p>
             </div>
           ) : (
@@ -168,7 +168,7 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <h3 style={{ margin: 0 }}>AI Compliance Status</h3>
             <Link href="/compliance" className="btn btn-ghost" style={{ fontSize: 12 }}>
-              Vezi detaliile →
+              Vezi detaliile
             </Link>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
@@ -201,10 +201,10 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
       {/* ── Insights AI ── */}
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 style={{ margin: 0 }}>✦ Insights AI</h3>
+          <h3 style={{ margin: 0 }}>Insights AI</h3>
           <form action={generateDashboardInsightsAction}>
             <button className="btn btn-sm btn-secondary" type="submit">
-              ✦ Generează insights noi
+              Generează insights noi
             </button>
           </form>
         </div>
@@ -228,7 +228,7 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
           value: certifiedCount,
           label: 'Certificate',
           accentColor: 'red' as const,
-          sublabel: pendingDetectionsCount > 0 ? `⚠ ${pendingDetectionsCount} detecți${pendingDetectionsCount > 1 ? 'i' : 'e'}` : undefined,
+          sublabel: pendingDetectionsCount > 0 ? `${pendingDetectionsCount} detecți${pendingDetectionsCount > 1 ? 'i' : 'e'}` : undefined,
         }] : []),
       ]} />
 

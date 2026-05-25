@@ -3,7 +3,7 @@ import { AppShell } from '@/components/app-shell'
 import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
-import { canViewCompliance, canManageCompliance } from '@/lib/roles'
+import { canViewCompliance, canManageCompliance, canActOnDetection } from '@/lib/roles'
 import { enforceOnboarding } from '@/lib/onboarding'
 import { checkAudioServiceHealth } from '@/lib/audio-service'
 import { ScannerClient, type DetectionRow } from './scanner-client'
@@ -45,6 +45,7 @@ export default async function ScannerPage({
 
   const trackNameMap = new Map(topMatchTracks.map((t) => [t.id, `${t.title} — ${t.artist.name}`]))
   const canManage    = canManageCompliance(session.role)
+  const canAct       = canActOnDetection(session.role)
 
   // KPIs
   const totalCount     = rawDetections.length
@@ -84,6 +85,7 @@ export default async function ScannerPage({
       <ScannerClient
         detections={detections}
         canManage={canManage}
+        canAct={canAct}
         serviceOnline={serviceHealth.ok}
         fingerprintCount={fingerprintCount}
       />

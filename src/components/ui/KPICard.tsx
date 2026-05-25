@@ -36,7 +36,7 @@ export function KPICard({ label, value, accentColor = 'purple', subtitle, trend,
     'rgba(200,198,188,0.6)'
 
   const subLabel = trend
-    ? `${trend.direction === 'up' ? '↑' : trend.direction === 'down' ? '↓' : '→'} ${trend.value}`
+    ? `${trend.direction === 'up' ? '+' : trend.direction === 'down' ? '-' : ''} ${trend.value}`
     : subtitle ?? null
 
   const subColor = trend ? trendColor : v.accent

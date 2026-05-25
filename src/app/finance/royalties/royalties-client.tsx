@@ -171,7 +171,7 @@ export function RoyaltiesClient({ royalties, canManage }: { royalties: RoyaltyRo
                   type="submit"
                   style={{ fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '1px solid rgba(110,231,183,0.3)', background: 'rgba(110,231,183,0.1)', color: '#6ee7b7', cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
-                  ✓ Marchează plătit
+                  Marchează plătit
                 </button>
               </form>
               <form action={cancelRoyaltyAction}>
@@ -262,7 +262,7 @@ export function RoyaltiesClient({ royalties, canManage }: { royalties: RoyaltyRo
           pageSize={25}
           emptyState={
             <EmptyState
-              icon="💰"
+              icon=""
               title="Nicio plată"
               description={hasFilters ? 'Nicio plată corespunde filtrelor selectate.' : 'Nu există plăți royalty înregistrate.'}
             />

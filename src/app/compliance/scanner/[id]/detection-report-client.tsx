@@ -64,6 +64,7 @@ type Props = {
   matches: ParsedMatch[]
   topTrack: TrackInfo | null
   canManage: boolean
+  canAct: boolean
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -114,7 +115,7 @@ function truncate(s: string, n: number) {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-export function DetectionReportClient({ detection, matches, topTrack, canManage }: Props) {
+export function DetectionReportClient({ detection, matches, topTrack, canManage, canAct }: Props) {
   const router = useRouter()
   const [showAnalysis, setShowAnalysis] = useState(Boolean(detection.aiAnalysis))
   const [isPending,    startTransition]  = useTransition()
@@ -147,7 +148,7 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage 
           href="/compliance/scanner"
           style={{ color: 'var(--text-secondary)', fontSize: 13, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
         >
-          ← Înapoi la Scanner
+          Înapoi la Scanner
         </Link>
 
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
@@ -191,7 +192,7 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage 
 
         {detection.hasError && detection.analysisError && (
           <div style={{ borderLeft: '3px solid var(--role-artist-dark)', paddingLeft: 10, fontSize: 12, color: 'var(--role-artist-dark)' }}>
-            ⚠ Eroare analiză: {detection.analysisError}
+            Eroare analiză: {detection.analysisError}
           </div>
         )}
       </div>
@@ -231,7 +232,7 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage 
           {/* Player suspect */}
           <div className="card">
             <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 12, color: 'var(--text-primary)' }}>
-              🎵 Piesă suspectă
+               Piesă suspectă
             </div>
             {detection.suspectAudioFile ? (
               <audio
@@ -249,7 +250,7 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage 
           {/* Player catalog */}
           <div className="card">
             <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 12, color: 'var(--text-primary)' }}>
-              🎵 {topTrack ? `${topTrack.title} — ${topTrack.artistName}` : 'Top match din catalog'}
+               {topTrack ? `${topTrack.title} — ${topTrack.artistName}` : 'Top match din catalog'}
             </div>
             {topTrack?.audioFile ? (
               <audio
@@ -343,17 +344,17 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage 
           {/* Permisiuni */}
           {m.permissionStatus === 'denied' && (
             <div style={{ fontSize: 12, background: 'rgba(252,165,165,0.1)', border: '1px solid rgba(252,165,165,0.25)', borderRadius: 6, padding: '6px 10px', marginBottom: 10, color: '#fca5a5' }}>
-              ⚠ AI Training interzis — posibilă încălcare drepturi
+              AI Training interzis — posibilă încălcare drepturi
             </div>
           )}
           {m.permissionStatus === 'allowed' && (
             <div style={{ fontSize: 12, background: 'rgba(110,231,183,0.1)', border: '1px solid rgba(110,231,183,0.25)', borderRadius: 6, padding: '6px 10px', marginBottom: 10, color: '#6ee7b7' }}>
-              ✓ AI Training permis
+              AI Training permis
             </div>
           )}
           {m.permissionStatus === 'no_permission_set' && (
             <div style={{ fontSize: 12, background: 'rgba(253,230,138,0.1)', border: '1px solid rgba(253,230,138,0.25)', borderRadius: 6, padding: '6px 10px', marginBottom: 10, color: '#fde68a' }}>
-              ⚠ Permisiuni AI nesetate
+              Permisiuni AI nesetate
             </div>
           )}
 
@@ -364,7 +365,7 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage 
       {/* ── F) Raport AI ─────────────────────────────────────────────────── */}
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 12, flexWrap: 'wrap' }}>
-          <h3 style={{ margin: 0, fontSize: 15 }}>✦ Raport AI</h3>
+          <h3 style={{ margin: 0, fontSize: 15 }}>Raport AI</h3>
           <div style={{ display: 'flex', gap: 10 }}>
             {detection.aiAnalysis && (
               <button
@@ -380,7 +381,7 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage 
                 onClick={handleGenerateAnalysis}
                 disabled={isPending}
               >
-                {isPending ? 'Se generează…' : '✦ Generează raport AI'}
+                {isPending ? 'Se generează…' : 'Generează raport AI'}
               </button>
             )}
           </div>
@@ -408,7 +409,7 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage 
       </div>
 
       {/* ── G) Acțiuni ───────────────────────────────────────────────────── */}
-      {canManage && detection.status === 'PENDING' && (
+      {canAct && detection.status === 'PENDING' && (
         <div className="card">
           <h3 style={{ margin: '0 0 14px 0', fontSize: 15 }}>Actualizează status</h3>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -416,7 +417,7 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage 
               <input type="hidden" name="id"     value={detection.id} />
               <input type="hidden" name="status" value="CONFIRMED" />
               <button type="submit" className="btn btn-primary btn-sm">
-                ✓ Confirmă — încălcare reală
+                Confirmă — încălcare reală
               </button>
             </form>
             <form action={updateDetectionStatusFromReportAction}>
@@ -430,7 +431,7 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage 
               <input type="hidden" name="id"     value={detection.id} />
               <input type="hidden" name="status" value="RESOLVED" />
               <button type="submit" className="btn btn-ghost btn-sm">
-                ✓ Rezolvat
+                Rezolvat
               </button>
             </form>
           </div>

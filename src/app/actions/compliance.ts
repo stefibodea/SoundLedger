@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
-import { canViewCompliance, canManageCompliance } from '@/lib/roles'
+import { canViewCompliance, canManageCompliance, canActOnDetection } from '@/lib/roles'
 import { analyzeSuspectTrack, generateText } from '@/lib/ai'
 import { setAIPermissionSchema, analyzeSuspectSchema, issueCertificateSchema } from '@/lib/schemas'
 
@@ -129,7 +129,7 @@ export async function analyzeSuspectAction(formData: FormData) {
 
 export async function updateDetectionStatusAction(formData: FormData) {
   const session = await requireSession()
-  if (!session.labelId || !canViewCompliance(session.role)) redirect('/compliance')
+  if (!session.labelId || !canActOnDetection(session.role)) redirect('/compliance/scanner')
 
   const id     = String(formData.get('id')     || '').trim()
   const status = String(formData.get('status') || '').trim()
@@ -146,7 +146,7 @@ export async function updateDetectionStatusAction(formData: FormData) {
 
 export async function markTakedownSentAction(formData: FormData) {
   const session = await requireSession()
-  if (!session.labelId || !canManageCompliance(session.role)) redirect('/compliance/scanner')
+  if (!session.labelId || !canActOnDetection(session.role)) redirect('/compliance/scanner')
 
   const id = String(formData.get('id') || '').trim()
   const detection = await prisma.aIDetection.findUnique({ where: { id } })
@@ -158,7 +158,7 @@ export async function markTakedownSentAction(formData: FormData) {
 
 export async function markCompensationClaimedAction(formData: FormData) {
   const session = await requireSession()
-  if (!session.labelId || !canManageCompliance(session.role)) redirect('/compliance/scanner')
+  if (!session.labelId || !canActOnDetection(session.role)) redirect('/compliance/scanner')
 
   const id = String(formData.get('id') || '').trim()
   const detection = await prisma.aIDetection.findUnique({ where: { id } })

@@ -30,7 +30,7 @@ export async function sendInvitationEmail(args: {
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 20px; background: #f8f9fa;">
         <div style="background: #fff; border-radius: 16px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
-          <h2 style="margin: 0 0 8px; font-size: 22px; color: #111;">♪ SoundLedger</h2>
+          <h2 style="margin: 0 0 8px; font-size: 22px; color: #111;"> SoundLedger</h2>
           <p style="color: #666; margin: 0 0 24px;">Platforma de management pentru label-uri muzicale</p>
 
           <hr style="border: none; border-top: 1px solid #eee; margin: 0 0 24px;" />

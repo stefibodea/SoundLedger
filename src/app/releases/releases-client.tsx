@@ -41,7 +41,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_MUSIC_ICON: Record<string, string> = {
   RELEASED: '♫',
-  READY:    '♪',
+  READY:    '',
   PLANNING: '♩',
 }
 
@@ -505,7 +505,7 @@ export function ReleasesClient({ releases, tracks }: Props) {
               <FilterSection label="Ordine" icon={<Circle size={11} />}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {([
-                    { value: 'asc',  label: '↑ Trecut' },
+                    { value: 'asc',  label: 'Trecut' },
                     { value: 'desc', label: '↓ Viitor' },
                   ] as { value: 'asc' | 'desc'; label: string }[]).map(({ value, label }) => (
                     <button key={value} type="button" onClick={() => setSortOrder(value)} style={{
@@ -724,7 +724,7 @@ export function ReleasesClient({ releases, tracks }: Props) {
                     {checklist.slice(0, 5).map((item, i) => (
                       <div key={i} style={{ display: 'flex', gap: 7, alignItems: 'center', fontSize: 12 }}>
                         <span style={{ color: item.done ? '#6ee7b7' : 'var(--text-tertiary)', flexShrink: 0 }}>
-                          {item.done ? '✓' : '○'}
+                          {item.done ? '' : ''}
                         </span>
                         <span style={{ color: item.done ? 'var(--text-primary)' : 'var(--text-secondary)', textDecoration: item.done ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {item.label}

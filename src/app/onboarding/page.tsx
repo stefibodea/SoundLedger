@@ -148,8 +148,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="role">Rol</label>
-                <select id="role" name="role" className="form-input form-select" defaultValue={ROLES.AR_MANAGER}>
-                  <option value={ROLES.AR_MANAGER}>A&R Manager</option>
+                <select id="role" name="role" className="form-input form-select" defaultValue={ROLES.FINANCIAL}>
                   <option value={ROLES.FINANCIAL}>Departament Financiar</option>
                 </select>
               </div>

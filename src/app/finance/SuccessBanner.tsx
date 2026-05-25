@@ -34,7 +34,7 @@ export function SuccessBanner({ amount, artist, percent }: Props) {
       }}
     >
       <span style={{ color: '#6ee7b7', fontSize: 14 }}>
-        ✓ Venit înregistrat. Royalty de <strong>{amount}€</strong> generat automat pentru{' '}
+        Venit înregistrat. Royalty de <strong>{amount}€</strong> generat automat pentru{' '}
         <strong>{artist}</strong> ({percent}% conform contractului).
       </span>
       <button

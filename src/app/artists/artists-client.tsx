@@ -30,6 +30,7 @@ type Props = {
   withContract: number
   addedThisMonth: number
   withoutContract: number
+  canManage?: boolean
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -73,6 +74,7 @@ export function ArtistsClient({
   withContract,
   addedThisMonth,
   withoutContract,
+  canManage = true,
 }: Props) {
   const [search,       setSearch]       = useState('')
   const [genreFilter,  setGenreFilter]  = useState('')
@@ -258,7 +260,7 @@ export function ArtistsClient({
         {filtered.length === 0 ? (
             <div className="card">
               <EmptyState
-                icon="👥"
+                icon=""
                 title={letterFilter !== 'all' ? `Niciun artist cu numele care începe cu '${letterFilter}'` : 'Niciun artist găsit'}
                 description={hasActiveFilters ? 'Niciun artist nu corespunde filtrelor curente.' : 'Nu ai adăugat încă niciun artist.'}
                 action={

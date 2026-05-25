@@ -388,7 +388,7 @@ export function FingerprintsClient({
       width: '160px',
       render: (r) => (
         <Link href={`/catalog/${r.id}`} className="btn btn-ghost btn-sm" style={{ whiteSpace: 'nowrap' }}>
-          Vezi piesa →
+          Vezi piesa
         </Link>
       ),
     },
@@ -446,24 +446,24 @@ export function FingerprintsClient({
         }}>
           <span>
             {failedCount === 0
-              ? `✓ Procesare completă${mode === 'manual' ? ' (selecție manuală)' : ''}: ${completedCount} piese procesate cu succes`
-              : `⚠ Procesare parțială: ${completedCount} reușite, ${failedCount} eșuate din ${totalCount} total.`}
+              ? `Procesare completă${mode === 'manual' ? ' (selecție manuală)' : ''}: ${completedCount} piese procesate cu succes`
+              : `Procesare parțială: ${completedCount} reușite, ${failedCount} eșuate din ${totalCount} total.`}
           </span>
           <Link href="/compliance/fingerprints" className="btn btn-ghost btn-sm" style={{ marginLeft: 12, fontSize: 16, lineHeight: 1 }}>
-            ✕
+            ×
           </Link>
         </div>
       )}
 
       {success === 'deleted' && (
         <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 8, fontSize: 14, background: 'rgba(110,231,183,0.1)', border: '1px solid var(--role-ar-dark)', color: 'var(--role-ar-dark)' }}>
-          ✓ Fingerprint-ul a fost șters.
+          Fingerprint-ul a fost șters.
         </div>
       )}
 
       {error && (
         <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 8, fontSize: 14, background: 'rgba(252,165,165,0.1)', border: '1px solid var(--role-artist-dark)', color: 'var(--role-artist-dark)' }}>
-          ⚠️ {decodeURIComponent(error)}
+          {decodeURIComponent(error)}
         </div>
       )}
 
@@ -512,7 +512,7 @@ export function FingerprintsClient({
               <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
                 {stats.missingFingerprint > 0
                   ? `Durată estimată: ~${stats.missingFingerprint * 2}s`
-                  : '✓ Toate piesele cu audio au fingerprint calculat.'}
+                  : 'Toate piesele cu audio au fingerprint calculat.'}
               </p>
             </div>
           )}
@@ -607,7 +607,7 @@ export function FingerprintsClient({
               pageSize={25}
               emptyState={
                 <EmptyState
-                  icon="🎵"
+                  icon=""
                   title={items.length === 0 ? 'Niciun catalog' : 'Nicio piesă găsită'}
                   description={
                     items.length === 0

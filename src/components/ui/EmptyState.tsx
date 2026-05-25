@@ -13,7 +13,7 @@ type Props = {
  * Stare goală standardizată — afișată când nu există date de listat.
  * Componentă server-side (fără state).
  */
-export function EmptyState({ icon = '📭', title, description, action }: Props) {
+export function EmptyState({ icon = '', title, description, action }: Props) {
   return (
     <div style={{
       display: 'flex',
@@ -24,7 +24,7 @@ export function EmptyState({ icon = '📭', title, description, action }: Props)
       textAlign: 'center',
       color: 'var(--text-secondary)',
     }}>
-      <div style={{ fontSize: 48, marginBottom: 16, lineHeight: 1 }}>{icon}</div>
+      {icon && <div style={{ fontSize: 48, marginBottom: 16, lineHeight: 1 }}>{icon}</div>}
       <p style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-primary)', margin: '0 0 8px' }}>
         {title}
       </p>

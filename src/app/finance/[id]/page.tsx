@@ -50,7 +50,7 @@ export default async function EditRevenuePage({ params, searchParams }: Props) {
   return (
     <AppShell session={session} title="Editează venit">
       <div style={{ marginBottom: 20 }}>
-        <Link href="/finance" className="btn btn-secondary">← Înapoi la finanțe</Link>
+        <Link href="/finance" className="btn btn-secondary">Înapoi la finanțe</Link>
       </div>
 
       {error && (

@@ -276,7 +276,7 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
                         onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-secondary)' }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
                       >
-                        <span style={{ flexShrink: 0 }}>{s.kind === 'title' ? '♪' : '👤'}</span>
+                        <span style={{ flexShrink: 0 }}>{s.kind === 'title' ? '' : ''}</span>
                         <div>
                           <div style={{ fontSize: 12, fontWeight: s.kind === 'title' ? 600 : 400 }}>{s.label}</div>
                           {s.sub && <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{s.sub}</div>}
@@ -385,7 +385,7 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
       <section className="card">
         {filtered.length === 0 ? (
           <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+            <div style={{ fontSize: 40, marginBottom: 12 }}></div>
             <p style={{ fontSize: 14, margin: 0 }}>Nicio piesă nu corespunde filtrelor curente.</p>
             <button
               type="button"
@@ -542,7 +542,7 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
                 <div style={{ display: 'flex', gap: 4 }}>
                   <button type="button" className="btn btn-ghost" style={{ fontSize: 12, padding: '6px 12px' }}
                     disabled={currentPage === 1} onClick={() => setPage((p) => p - 1)}>
-                    ← Anterior
+                    Anterior
                   </button>
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
                     .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
@@ -564,7 +564,7 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
                     )}
                   <button type="button" className="btn btn-ghost" style={{ fontSize: 12, padding: '6px 12px' }}
                     disabled={currentPage === totalPages} onClick={() => setPage((p) => p + 1)}>
-                    Următor →
+                    Următor
                   </button>
                 </div>
               </div>
@@ -623,7 +623,7 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
                 disabled={declaration.length < 20}
                 style={{ fontSize: 13 }}
               >
-                ✓ Confirmă și emite
+                Confirmă și emite
               </button>
             </div>
 

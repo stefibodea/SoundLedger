@@ -264,7 +264,7 @@ export function ARClient({ prospects }: Props) {
         {filtered.length === 0 ? (
           <div className="card">
             <EmptyState
-              icon="🎤"
+              icon=""
               title="Niciun candidat găsit"
               description={hasActiveFilters ? 'Niciun candidat nu corespunde filtrelor curente.' : 'Nu ai adăugat încă niciun candidat în pipeline.'}
               action={
@@ -331,7 +331,7 @@ export function ARClient({ prospects }: Props) {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 4, marginBottom: 4 }}>
                               <strong style={{ fontSize: 14, fontWeight: 600 }}>{prospect.name}</strong>
                               <Link href={`/ar/${prospect.id}`} style={{ fontSize: 11, color: 'var(--primary)', whiteSpace: 'nowrap' }}>
-                                detalii →
+                                detalii
                               </Link>
                             </div>
 
@@ -353,14 +353,14 @@ export function ARClient({ prospects }: Props) {
                                   background: 'rgba(30,215,96,0.12)', color: '#1ed760',
                                   border: '1px solid rgba(30,215,96,0.25)', textDecoration: 'none',
                                 }}>
-                                🎵 Spotify
+                                 Spotify
                               </a>
                             )}
 
                             {score != null ? (
                               <div style={{ marginBottom: 8 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                                  <span style={{ fontSize: 11, fontWeight: 600, color: scoreColor?.bar }}>✦ {score}/100</span>
+                                  <span style={{ fontSize: 11, fontWeight: 600, color: scoreColor?.bar }}>{score}/100</span>
                                 </div>
                                 <div className="score-bar-track">
                                   <div
@@ -377,7 +377,7 @@ export function ARClient({ prospects }: Props) {
                               <form action={generateProspectAIScoreAction} style={{ marginBottom: 8 }}>
                                 <input type="hidden" name="prospectId" value={prospect.id} />
                                 <button type="submit" className="btn btn-sm btn-secondary" style={{ fontSize: 11, padding: '3px 10px' }}>
-                                  ✦ Analizează
+                                  Analizează
                                 </button>
                               </form>
                             )}
@@ -389,14 +389,14 @@ export function ARClient({ prospects }: Props) {
                                   className="btn btn-sm"
                                   style={{ fontSize: 11, padding: '2px 8px', background: 'rgba(110,231,183,0.15)', color: '#6ee7b7', border: '1px solid rgba(110,231,183,0.3)', borderRadius: 6 }}
                                 >
-                                  + Artist →
+                                  + Artist
                                 </Link>
                               ) : mainNext ? (
                                 <form action={moveProspectAction}>
                                   <input type="hidden" name="id" value={prospect.id} />
                                   <input type="hidden" name="status" value={mainNext} />
                                   <button type="submit" className="btn btn-sm btn-primary" style={{ fontSize: 11, padding: '2px 8px' }}>
-                                    {STATUS_LABELS[mainNext]} →
+                                    {STATUS_LABELS[mainNext]}
                                   </button>
                                 </form>
                               ) : null}

@@ -102,6 +102,66 @@ export async function updateMemberAvatarAction(formData: FormData) {
   revalidatePath('/team')
 }
 
+export async function updateComposerPhotoAction(formData: FormData) {
+  const session = await requireSession()
+  if (!canManageTeam(session.role)) throw new Error('Acces interzis')
+
+  const composerId = formData.get('composerId') as string
+  const file = formData.get('photo') as File
+  if (!file || file.size === 0) return
+
+  const composer = await prisma.composer.findFirst({
+    where: { id: composerId, labelId: session.labelId! },
+  })
+  if (!composer) throw new Error('Compozitor negăsit')
+
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'composers')
+  await fs.mkdir(uploadsDir, { recursive: true })
+
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const filename = `${composerId}-${Date.now()}.${ext}`
+  const buffer = Buffer.from(await file.arrayBuffer())
+  await fs.writeFile(path.join(uploadsDir, filename), buffer)
+
+  if (composer.photo) {
+    await fs.unlink(path.join(uploadsDir, composer.photo)).catch(() => {})
+  }
+
+  await prisma.composer.update({ where: { id: composerId }, data: { photo: filename } })
+  revalidatePath('/team')
+}
+
+export async function addComposerAction(formData: FormData) {
+  const session = await requireSession()
+  if (!session.labelId || !canManageTeam(session.role)) redirect('/dashboard')
+
+  const name = (formData.get('name') as string | null)?.trim()
+  if (!name) redirect('/team?error=Numele+compozitorului+este+obligatoriu')
+
+  const email = (formData.get('email') as string | null)?.trim() || null
+  const specialization = (formData.get('specialization') as string | null)?.trim() || null
+
+  await prisma.composer.create({
+    data: { name, email, specialization, labelId: session.labelId },
+  })
+
+  redirect('/team')
+}
+
+export async function removeComposerAction(formData: FormData) {
+  const session = await requireSession()
+  if (!session.labelId || !canManageTeam(session.role)) redirect('/dashboard')
+
+  const composerId = (formData.get('composerId') as string | null)?.trim()
+  if (!composerId) redirect('/team')
+
+  const composer = await prisma.composer.findUnique({ where: { id: composerId } })
+  if (!composer || composer.labelId !== session.labelId) redirect('/team')
+
+  await prisma.composer.delete({ where: { id: composerId } })
+  redirect('/team')
+}
+
 export async function revokeTeamInvitationAction(formData: FormData) {
   const session = await requireSession()
   if (!session.labelId || !canManageTeam(session.role)) {

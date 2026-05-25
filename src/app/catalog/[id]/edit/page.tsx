@@ -17,7 +17,15 @@ export default async function EditTrackPage({ params, searchParams }: PageProps)
   await enforceOnboarding(session, `/catalog/${id}/edit`)
   if (!session.labelId || !canManageArtists(session.role)) redirect('/dashboard')
 
-  const track = await prisma.track.findUnique({ where: { id }, include: { artist: true } })
+  const [track, creativeRecord, composers] = await Promise.all([
+    prisma.track.findUnique({ where: { id }, include: { artist: true } }),
+    prisma.creativeRecord.findUnique({ where: { trackId: id } }),
+    prisma.composer.findMany({
+      where: { labelId: session.labelId! },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, specialization: true },
+    }),
+  ])
   if (!track || track.labelId !== session.labelId) notFound()
 
   const audioUrl = getAudioFileUrl(track.audioFile)
@@ -25,12 +33,12 @@ export default async function EditTrackPage({ params, searchParams }: PageProps)
   return (
     <AppShell session={session} title={`Editează: ${track.title}`}>
       <div style={{ marginBottom: 16 }}>
-        <Link href={`/catalog/${id}`} className="btn btn-secondary btn-sm">← Înapoi la piesă</Link>
+        <Link href={`/catalog/${id}`} className="btn btn-secondary btn-sm">Înapoi la piesă</Link>
       </div>
 
       {error && (
         <div style={{ marginBottom: 16, padding: '12px 16px', background: 'rgba(252,165,165,0.1)', border: '1px solid var(--role-artist-dark)', borderRadius: 8, color: 'var(--role-artist-dark)', fontSize: 14 }}>
-          ⚠️ {decodeURIComponent(error)}
+          {decodeURIComponent(error)}
         </div>
       )}
 
@@ -90,15 +98,34 @@ export default async function EditTrackPage({ params, searchParams }: PageProps)
             </div>
           </div>
 
-          <h3 style={{ margin: '24px 0 20px' }}>Credite</h3>
+          <h3 style={{ margin: '24px 0 16px' }}>Credite</h3>
+          {composers.length > 0 && (
+            <div style={{ padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 8, marginBottom: 14, fontSize: 12, color: 'var(--text-tertiary)' }}>
+              Membrii echipei: {composers.map((c) => (
+                <span key={c.id} style={{ marginRight: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>
+                  {c.name}{c.specialization ? ` (${c.specialization})` : ''}
+                </span>
+              ))}
+            </div>
+          )}
           <div className="form-row">
             <div className="form-group">
-              <label className="form-label">Compozitori</label>
-              <input name="composers" className="form-input" defaultValue={track.composers ?? ''} placeholder="Ion Popescu, Maria Ionescu..." />
+              <label className="form-label">Compoziție melodică</label>
+              <input name="rolesCompozitie" className="form-input" defaultValue={creativeRecord?.rolesCompozitie ?? track.composers ?? ''} placeholder="Nume separate prin virgulă" />
             </div>
             <div className="form-group">
-              <label className="form-label">Producători</label>
-              <input name="producers" className="form-input" defaultValue={track.producers ?? ''} placeholder="DJ Example..." />
+              <label className="form-label">Versuri</label>
+              <input name="rolesVersuri" className="form-input" defaultValue={creativeRecord?.rolesVersuri ?? ''} placeholder="Autori versuri" />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Producție</label>
+              <input name="rolesProductie" className="form-input" defaultValue={creativeRecord?.rolesProductie ?? track.producers ?? ''} placeholder="Producători, beat makers" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Mixaj &amp; Mastering</label>
+              <input name="rolesMixaj" className="form-input" defaultValue={creativeRecord?.rolesMixaj ?? ''} placeholder="Sound engineers, mixeri" />
             </div>
           </div>
 
@@ -108,7 +135,7 @@ export default async function EditTrackPage({ params, searchParams }: PageProps)
               {track.coverArt ? (
                 <img src={track.coverArt} alt={track.title} style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border-medium)' }} />
               ) : (
-                <div style={{ width: 64, height: 64, borderRadius: 8, background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🎵</div>
+                <div style={{ width: 64, height: 64, borderRadius: 8, background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}></div>
               )}
               <div style={{ flex: 1 }}>
                 <label className="form-label" style={{ marginBottom: 4 }}>Încarcă imagine de pe calculator</label>

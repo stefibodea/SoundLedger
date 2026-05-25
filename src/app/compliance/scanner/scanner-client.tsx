@@ -34,6 +34,7 @@ const STATUS_LABELS: Record<string, string> = {
 type Props = {
   detections: DetectionRow[]
   canManage: boolean
+  canAct: boolean
   serviceOnline: boolean
   fingerprintCount: number
 }
@@ -64,7 +65,7 @@ function FilterSection({ label, icon, children }: { label: string; icon: ReactNo
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ScannerClient({ detections, canManage, serviceOnline, fingerprintCount }: Props) {
+export function ScannerClient({ detections, canManage, canAct, serviceOnline, fingerprintCount }: Props) {
   const [search,       setSearch]       = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
@@ -96,7 +97,7 @@ export function ScannerClient({ detections, canManage, serviceOnline, fingerprin
                 padding: '1px 5px',
                 borderRadius: 4,
               }}>
-                ⚠ Eroare
+                Eroare
               </span>
             )}
           </div>
@@ -160,7 +161,7 @@ export function ScannerClient({ detections, canManage, serviceOnline, fingerprin
       width: '110px',
       render: (d) => (
         <a href={`/compliance/scanner/${d.id}`} style={{ color: 'var(--primary)', fontSize: 12, whiteSpace: 'nowrap' }}>
-          Vezi raport →
+          Vezi raport
         </a>
       ),
     },
@@ -333,7 +334,7 @@ export function ScannerClient({ detections, canManage, serviceOnline, fingerprin
               }}
             >
               <p style={{ margin: 0, fontSize: 13, color: 'var(--role-artist-dark)' }}>
-                ⚠ Serviciul de analiză audio este offline. Pornește-l cu{' '}
+                Serviciul de analiză audio este offline. Pornește-l cu{' '}
                 <code>npm run dev:all</code>.
               </p>
             </div>
@@ -345,7 +346,7 @@ export function ScannerClient({ detections, canManage, serviceOnline, fingerprin
               type="submit"
               disabled={!serviceOnline || !canManage}
             >
-              🎵 Analizează audio cu ML
+               Analizează audio cu ML
             </button>
             {serviceOnline && (
               <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -367,7 +368,7 @@ export function ScannerClient({ detections, canManage, serviceOnline, fingerprin
           pageSize={20}
           emptyState={
             <EmptyState
-              icon="🔍"
+              icon=""
               title="Nicio detecție găsită"
               description={
                 hasActiveFilters

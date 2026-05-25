@@ -233,7 +233,7 @@ export const issueCertificateSchema = z.object({
 
 // ── Echipă / Invitații ─────────────────────────────────────────────────────────
 
-const INVITABLE_ROLES = ['AR_MANAGER', 'FINANCIAL']
+const INVITABLE_ROLES = ['FINANCIAL']
 
 export const inviteUserSchema = z.object({
   email: z.string().min(1, 'Email-ul este obligatoriu').email({ message: 'Format email invalid' }),

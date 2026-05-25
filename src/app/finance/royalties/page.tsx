@@ -42,7 +42,7 @@ export default async function RoyaltiesPage() {
     <AppShell session={session} title="Royalty Payments">
       <div style={{ marginBottom: 16 }}>
         <Link href="/finance" className="btn btn-secondary" style={{ fontSize: 13 }}>
-          ← Înapoi la finanțe
+          Înapoi la finanțe
         </Link>
       </div>
 

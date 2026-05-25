@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
-import { canManageArtists } from '@/lib/roles'
+import { canViewArtists, canManageArtists } from '@/lib/roles'
 import { enforceOnboarding } from '@/lib/onboarding'
 import { ArtistsClient, type ArtistRow } from './artists-client'
 
@@ -13,7 +13,8 @@ export default async function ArtistsPage({
 }) {
   const session = await requireSession()
   await enforceOnboarding(session, '/artists')
-  if (!session.labelId || !canManageArtists(session.role)) redirect('/dashboard')
+  if (!session.labelId || !canViewArtists(session.role)) redirect('/dashboard')
+  const canManage = canManageArtists(session.role)
 
   const params = await searchParams
   const error  = params.error
@@ -56,7 +57,7 @@ export default async function ArtistsPage({
     a.localeCompare(b, 'ro'),
   )
 
-  // Serializare Date → string (Server → Client Component)
+  // Serializare Date string (Server Client Component)
   const artists: ArtistRow[] = rawArtists.map((a) => ({
     id:       a.id,
     name:     a.name,
@@ -78,7 +79,7 @@ export default async function ArtistsPage({
 
       {error && (
         <div className="card" style={{ borderLeft: '3px solid var(--role-artist-dark)', marginBottom: 20 }}>
-          <p style={{ color: 'var(--role-artist-dark)', margin: 0 }}>⚠️ {decodeURIComponent(error)}</p>
+          <p style={{ color: 'var(--role-artist-dark)', margin: 0 }}>{decodeURIComponent(error)}</p>
         </div>
       )}
 
@@ -90,6 +91,7 @@ export default async function ArtistsPage({
         withContract={withContract}
         addedThisMonth={addedThisMonth}
         withoutContract={withoutContract}
+        canManage={canManage}
       />
 
     </AppShell>

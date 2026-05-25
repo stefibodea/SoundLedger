@@ -1,5 +1,4 @@
 import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canViewCompliance } from '@/lib/roles'
@@ -7,7 +6,7 @@ import { PrintButton } from './print-button'
 
 export default async function CertificateDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireSession()
-  if (!session.labelId || !canViewCompliance(session.role)) redirect('/compliance/certificates')
+  if (!session.labelId || !canViewCompliance(session.role)) redirect('/catalog')
 
   const { id } = await params
 
@@ -49,19 +48,7 @@ export default async function CertificateDetailPage({ params }: { params: Promis
     }}>
 
       {/* Bară navigare — ascunsă la print */}
-      <div className="no-print" style={{ width: '100%', maxWidth: 740, marginBottom: 24, display: 'flex', gap: 8, alignItems: 'center' }}>
-        <Link
-          href="/compliance/certificates"
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '8px 16px', borderRadius: 8, textDecoration: 'none',
-            fontSize: 13, fontWeight: 500,
-            background: '#fff', color: '#333',
-            border: '1px solid #ddd',
-          }}
-        >
-          ← Înapoi la certificate
-        </Link>
+      <div className="no-print" style={{ width: '100%', maxWidth: 740, marginBottom: 24, display: 'flex', justifyContent: 'flex-end' }}>
         <PrintButton />
       </div>
 
@@ -147,7 +134,7 @@ export default async function CertificateDetailPage({ params }: { params: Promis
                 Status
               </div>
               <div style={{ fontSize: 15, fontWeight: 700, color: cert.isRevoked ? '#c62828' : '#2e7d32', }}>
-                {cert.isRevoked ? '⚠ REVOCAT' : '✓ VALID — Certificat activ'}
+                {cert.isRevoked ? 'REVOCAT' : 'VALID — Certificat activ'}
               </div>
               {cert.isRevoked && revokedDate && (
                 <div style={{ fontSize: 13, color: '#c62828', marginTop: 4, }}>

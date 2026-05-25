@@ -88,7 +88,6 @@ export function DataTable<T>({
       <>
         {emptyState ?? (
           <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
             <p style={{ fontSize: 14, margin: 0 }}>Nu există înregistrări.</p>
           </div>
         )}
@@ -203,7 +202,7 @@ export function DataTable<T>({
               disabled={currentPage === 1}
               onClick={() => setPage((p) => p - 1)}
             >
-              ← Anterior
+              Anterior
             </button>
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
@@ -233,7 +232,7 @@ export function DataTable<T>({
               disabled={currentPage === totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
-              Următor →
+              Următor
             </button>
           </div>
         </div>

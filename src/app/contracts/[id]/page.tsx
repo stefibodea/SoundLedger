@@ -116,7 +116,7 @@ export default async function ContractDetailPage({
       {/* Înapoi + Print */}
       <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Link href="/contracts" className="btn btn-ghost btn-sm no-print">
-          ← Înapoi la contracte
+          Înapoi la contracte
         </Link>
         <ContractPrintButton />
       </div>
@@ -157,7 +157,7 @@ export default async function ContractDetailPage({
               <MetricBox label="Royalty" value={`${contract.royaltyPercent}%`} accent />
               <MetricBox label="Avans" value={contract.advance ? `${Number(contract.advance).toLocaleString('ro-RO')} €` : '—'} />
               <MetricBox label="Durată" value={contract.duration} />
-              <MetricBox label="Perioadă" value={`${contract.startDate ?? '—'} → ${contract.endDate ?? '—'}`} />
+              <MetricBox label="Perioadă" value={`${contract.startDate ?? '—'} ${contract.endDate ?? '—'}`} />
             </div>
           </div>
 
@@ -189,7 +189,7 @@ export default async function ContractDetailPage({
             {contract.documentUrl ? (
               <a href={contract.documentUrl} target="_blank" rel="noopener noreferrer"
                 style={{ fontSize: 14, color: 'var(--primary)', textDecoration: 'none' }}>
-                Vezi document →
+                Vezi document
               </a>
             ) : (
               <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>—</span>

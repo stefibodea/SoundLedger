@@ -62,7 +62,7 @@ export function CatalogFilters({ artists }: Props) {
           className="btn btn-ghost btn-sm"
           onClick={() => router.push(pathname)}
         >
-          Șterge filtrele ✕
+          Șterge filtrele ×
         </button>
       )}
     </div>

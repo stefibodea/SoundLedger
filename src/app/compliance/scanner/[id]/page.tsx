@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
-import { canViewCompliance, canManageCompliance } from '@/lib/roles'
+import { canViewCompliance, canManageCompliance, canActOnDetection } from '@/lib/roles'
 import { enforceOnboarding } from '@/lib/onboarding'
 import { DetectionReportClient, type ParsedMatch } from './detection-report-client'
 
@@ -79,6 +79,7 @@ export default async function DetectionReportPage({
             : null
         }
         canManage={canManageCompliance(session.role)}
+        canAct={canActOnDetection(session.role)}
       />
     </AppShell>
   )

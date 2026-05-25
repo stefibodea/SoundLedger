@@ -5,7 +5,7 @@ import { requireSession } from '@/lib/auth-guards'
 import { ROLE_LABELS, canManageTeam } from '@/lib/roles'
 import { revokeTeamInvitationAction } from '@/app/actions/team'
 import { enforceOnboarding } from '@/lib/onboarding'
-import { TeamPageClient, type MemberRow, type DepartmentGroup } from './team-client'
+import { TeamPageClient, type MemberRow } from './team-client'
 
 type TeamPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>
@@ -24,7 +24,7 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
   const errorMsg = typeof params.error === 'string' ? params.error : null
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000'
 
-  const [members, invitations] = await Promise.all([
+  const [members, invitations, composers] = await Promise.all([
     prisma.user.findMany({
       where: {
         labelId: session.labelId,
@@ -45,6 +45,10 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
       orderBy: { createdAt: 'desc' },
       take: 20,
     }),
+    prisma.composer.findMany({
+      where: { labelId: session.labelId },
+      orderBy: { name: 'asc' },
+    }),
   ])
 
   const memberRows: MemberRow[] = members.map((m) => ({
@@ -57,26 +61,16 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
     createdAt: m.createdAt.toISOString(),
   }))
 
-  const departments: DepartmentGroup[] = [
-    {
-      key: 'management',
-      label: 'Management',
-      members: memberRows.filter((m) =>
-        ['LABEL_MANAGER', 'AR_MANAGER', 'SUPER_ADMIN'].includes(m.role),
-      ),
-    },
-    {
-      key: 'financial',
-      label: 'Departament Financiar',
-      members: memberRows.filter((m) => m.role === 'FINANCIAL'),
-    },
-  ].filter((d) => d.members.length > 0)
-
-  const totalCount = memberRows.length
-  const subtitle = `${totalCount} ${totalCount === 1 ? 'membru' : 'membri'}`
+  const composerRows = composers.map((c) => ({
+    id: c.id,
+    name: c.name,
+    email: c.email,
+    specialization: c.specialization,
+    photo: c.photo,
+  }))
 
   return (
-    <AppShell session={session} title="Echipă" subtitle={subtitle}>
+    <AppShell session={session} title="Echipă">
       {errorMsg && (
         <div
           className="card"
@@ -116,7 +110,8 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
       )}
 
       <TeamPageClient
-        departments={departments}
+        members={memberRows}
+        composers={composerRows}
         canManage={canManageTeam(session.role)}
         currentUserId={session.userId}
       />

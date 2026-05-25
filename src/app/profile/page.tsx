@@ -10,14 +10,12 @@ import { PasswordInput } from '@/components/ui/PasswordInput'
 const ROLE_GRADIENTS: Record<string, string> = {
   SUPER_ADMIN:   'linear-gradient(135deg, #fca5a5, #e85d5d)',
   LABEL_MANAGER: 'linear-gradient(135deg, #9B94F0, #6366f1)',
-  AR_MANAGER:    'linear-gradient(135deg, #6ee7b7, #10b981)',
   FINANCIAL:     'linear-gradient(135deg, #fde68a, #f59e0b)',
 }
 
 const ROLE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   SUPER_ADMIN:   { bg: 'rgba(252,165,165,0.12)', text: '#fca5a5', border: 'rgba(252,165,165,0.3)' },
   LABEL_MANAGER: { bg: 'rgba(155,148,240,0.12)', text: '#9B94F0',  border: 'rgba(155,148,240,0.3)' },
-  AR_MANAGER:    { bg: 'rgba(110,231,183,0.12)', text: '#6ee7b7',  border: 'rgba(110,231,183,0.3)' },
   FINANCIAL:     { bg: 'rgba(253,230,138,0.12)', text: '#fde68a',  border: 'rgba(253,230,138,0.3)' },
 }
 
@@ -95,7 +93,7 @@ export default async function ProfilePage({
             color: '#6ee7b7',
             fontSize: 14,
           }}>
-            ✓ {successMsg}
+            {successMsg}
           </div>
         )}
 

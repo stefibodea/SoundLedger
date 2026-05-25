@@ -50,7 +50,7 @@ export async function inviteOnboardingMemberAction(formData: FormData) {
     redirect('/onboarding?error=Date+incomplete+pentru+membru')
   }
 
-  if (![ROLES.AR_MANAGER, ROLES.FINANCIAL].includes(role as never)) {
+  if (![ROLES.LABEL_MANAGER, ROLES.FINANCIAL].includes(role as never)) {
     redirect('/onboarding?error=Rol+invalid')
   }
 

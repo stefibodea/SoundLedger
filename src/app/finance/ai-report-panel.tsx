@@ -32,7 +32,7 @@ export function AiReportPanel({ latestAiReport, generateFinanceReportAction }: A
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: (!isCollapsed && latestAiReport) ? '1px solid rgba(255,255,255,0.06)' : 'none', paddingBottom: (!isCollapsed && latestAiReport) ? 12 : 0, marginBottom: (!isCollapsed && latestAiReport) ? 12 : 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-            ✦ Raport financiar AI
+            Raport financiar AI
           </h3>
           {latestAiReport && (
             <button
@@ -55,7 +55,7 @@ export function AiReportPanel({ latestAiReport, generateFinanceReportAction }: A
         </div>
         <form onSubmit={handleGenerate}>
           <button className="btn btn-secondary" type="submit" disabled={isPending} style={{ fontSize: 13, background: 'linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(168,85,247,0.15) 100%)', border: '1px solid rgba(168,85,247,0.3)' }}>
-            {isPending ? 'Se generează...' : (latestAiReport ? '↻ Regenerează' : '✦ Generează raport')}
+            {isPending ? 'Se generează...' : (latestAiReport ? 'Regenerează' : 'Generează raport')}
           </button>
         </form>
       </div>

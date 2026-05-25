@@ -18,7 +18,6 @@ const PLAN_LABELS: Record<string, string> = {
 
 const ROLE_LABELS: Record<string, string> = {
   LABEL_MANAGER: 'Label Manager',
-  AR_MANAGER:    'A&R Manager',
   FINANCIAL:     'Finanțe',
 }
 
@@ -60,7 +59,7 @@ export default async function AdminLabelPage({ params, searchParams }: Props) {
   return (
     <AppShell session={session} title={label.name} subtitle="Detalii casă de discuri">
       <div style={{ marginBottom: 20 }}>
-        <Link href="/admin" className="btn btn-secondary" style={{ fontSize: 13 }}>← Înapoi la toate labels</Link>
+        <Link href="/admin" className="btn btn-secondary" style={{ fontSize: 13 }}>Înapoi la toate labels</Link>
       </div>
 
       {error && (
@@ -78,7 +77,7 @@ export default async function AdminLabelPage({ params, searchParams }: Props) {
       {isSuspended && (
         <div className="card" style={{ marginBottom: 20, borderLeft: '3px solid #fca5a5', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <p style={{ color: '#fca5a5', margin: '0 0 4px', fontWeight: 600 }}>⚠ Casă de discuri suspendată</p>
+            <p style={{ color: '#fca5a5', margin: '0 0 4px', fontWeight: 600 }}>Casă de discuri suspendată</p>
             <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: 13 }}>
               Suspendată la: {new Date(label.suspendedAt!).toLocaleString('ro-RO')}
             </p>
@@ -86,7 +85,7 @@ export default async function AdminLabelPage({ params, searchParams }: Props) {
           <form action={unsuspendLabelAction}>
             <input type="hidden" name="labelId" value={label.id} />
             <button type="submit" className="btn btn-secondary" style={{ color: '#6ee7b7', borderColor: '#6ee7b7', fontSize: 13 }}>
-              ↑ Reactivează
+              Reactivează
             </button>
           </form>
         </div>

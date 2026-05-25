@@ -41,7 +41,7 @@ export function RevenueChart({ data }: Props) {
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         height: 200, color: 'var(--text-secondary)', textAlign: 'center', gap: 8,
       }}>
-        <div style={{ fontSize: 32 }}>📊</div>
+        <div style={{ fontSize: 32 }}></div>
         <p style={{ fontSize: 13, margin: 0 }}>
           Nu sunt suficiente date pentru a afișa o evoluție.<br />
           Continuă să adaugi venituri.

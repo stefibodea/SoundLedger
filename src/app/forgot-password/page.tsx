@@ -124,7 +124,7 @@ export default async function ForgotPasswordPage({
 
               <p style={{ marginTop: 18, textAlign: 'center', fontSize: 13 }}>
                 <Link href="/login" style={{ color: '#9B94F0', textDecoration: 'none' }}>
-                  ← Înapoi la autentificare
+                  Înapoi la autentificare
                 </Link>
               </p>
             </>

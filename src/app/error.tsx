@@ -37,7 +37,7 @@ export default function GlobalError({
         padding: '32px 36px',
       }}>
         <div style={{ fontSize: 32, marginBottom: 16 }}>
-          {isTenantError ? '🔒' : '⚠️'}
+          {isTenantError ? '' : ''}
         </div>
         <h1 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 700 }}>
           {isTenantError ? 'Acces interzis' : 'A apărut o eroare'}
@@ -69,7 +69,7 @@ export default function GlobalError({
               color: '#aaa', fontSize: 14, textDecoration: 'none', display: 'inline-block',
             }}
           >
-            ← Acasă
+            Acasă
           </a>
         </div>
       </div>

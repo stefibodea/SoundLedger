@@ -4,19 +4,11 @@ import { AppShell } from '@/components/app-shell'
 import { ArtistRevenueChart } from '@/components/artist-revenue-chart'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
-import { canManageArtists } from '@/lib/roles'
+import { canViewArtists, canManageArtists } from '@/lib/roles'
 import { enforceOnboarding } from '@/lib/onboarding'
-import { addTrackToArtistAction } from '@/app/actions/artists'
 
 type PageProps = {
   params: Promise<{ id: string }>
-}
-
-const CONTRACT_STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
-  ACTIVE:      { bg: 'rgba(110,231,183,0.12)',     color: '#6ee7b7',                  label: 'Activ' },
-  EXPIRING:    { bg: 'rgba(253,230,138,0.12)',     color: '#fde68a',                  label: 'Expiră curând' },
-  EXPIRED:     { bg: 'rgba(252,165,165,0.12)',     color: '#fca5a5',                  label: 'Expirat' },
-  NEGOTIATION: { bg: 'rgba(96,165,250,0.12)',      color: '#60a5fa',                  label: 'În negociere' },
 }
 
 // ── Icoane platforme ──────────────────────────────────────────────────────────
@@ -65,7 +57,8 @@ export default async function ArtistDetailPage({ params }: PageProps) {
   const { id } = await params
   const session = await requireSession()
   await enforceOnboarding(session, `/artists/${id}`)
-  if (!session.labelId || !canManageArtists(session.role)) redirect('/dashboard')
+  if (!session.labelId || !canViewArtists(session.role)) redirect('/dashboard')
+  const canManage = canManageArtists(session.role)
 
   const artist = await prisma.artist.findUnique({
     where: { id },
@@ -153,19 +146,26 @@ export default async function ArtistDetailPage({ params }: PageProps) {
         </div>
 
         <div style={{ display: 'flex', gap: 10 }}>
-          <Link href="/artists" className="btn btn-secondary btn-sm">← Artiști</Link>
-          <Link
-            href={`/artists/${id}/edit`}
-            style={{
-              display: 'inline-flex', alignItems: 'center',
-              padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-              background: 'linear-gradient(135deg, #9B94F0 0%, #38bdf8 100%)',
-              color: 'white', textDecoration: 'none', border: 'none',
-              boxShadow: '0 0 12px rgba(56,189,248,0.25)',
-            }}
-          >
-            Editează profil
-          </Link>
+          <Link href="/artists" className="btn btn-secondary btn-sm">Artiști</Link>
+          {activeContract && (
+            <Link href={`/contracts/${activeContract.id}/preview`} className="btn btn-secondary btn-sm">
+              Previzualizare contract
+            </Link>
+          )}
+          {canManage && (
+            <Link
+              href={`/artists/${id}/edit`}
+              style={{
+                display: 'inline-flex', alignItems: 'center',
+                padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                background: 'linear-gradient(135deg, #9B94F0 0%, #38bdf8 100%)',
+                color: 'white', textDecoration: 'none', border: 'none',
+                boxShadow: '0 0 12px rgba(56,189,248,0.25)',
+              }}
+            >
+              Editează profil
+            </Link>
+          )}
         </div>
       </div>
 
@@ -242,7 +242,7 @@ export default async function ArtistDetailPage({ params }: PageProps) {
             {!artist.spotifyUrl && !artist.appleMusicUrl && !artist.youtubeUrl && !artist.instagram && !artist.tiktok && (
               <p style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>
                 Niciun link adăugat.{' '}
-                <Link href={`/artists/${id}/edit`} style={{ color: 'var(--primary)' }}>Adaugă acum →</Link>
+                {canManage && <Link href={`/artists/${id}/edit`} style={{ color: 'var(--primary)' }}>Adaugă acum</Link>}
               </p>
             )}
           </div>
@@ -263,98 +263,36 @@ export default async function ArtistDetailPage({ params }: PageProps) {
         <ArtistRevenueChart revenues={artist.revenues} />
       </section>
 
-      {/* ── Discografie + Adaugă piesă + Contracte ─────────────────────────── */}
-      <div className="grid grid-2">
-        <div style={{ display: 'grid', gap: 20 }}>
-          <section className="card">
-            <h3 style={{ marginBottom: 14 }}>Adaugă piesă nouă</h3>
-            <form action={addTrackToArtistAction}>
-              <input type="hidden" name="artistId" value={id} />
-              <div className="form-group">
-                <label className="form-label">Titlu *</label>
-                <input name="title" className="form-input" required placeholder="Numele piesei" />
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Tip</label>
-                  <select name="type" className="form-input form-select">
-                    <option value="SINGLE">Single</option>
-                    <option value="ALBUM_TRACK">Track album</option>
-                    <option value="EP_TRACK">Track EP</option>
-                  </select>
+      {/* ── Discografie ─────────────────────────────────────────────────────── */}
+      <section className="card">
+        <h3 style={{ marginBottom: 14 }}>Discografie ({artist.tracks.length} piese)</h3>
+        {artist.tracks.length === 0 ? (
+          <p style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>Nicio piesă adăugată încă.</p>
+        ) : (
+          <div style={{ display: 'grid', gap: 4 }}>
+            {artist.tracks.map((track) => (
+              <div key={track.id} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '8px 0', borderBottom: '1px solid var(--border-light)',
+              }}>
+                <div>
+                  <Link href={`/catalog/${track.id}`} style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', textDecoration: 'none' }}>
+                    {track.title}
+                  </Link>
+                  {track.genre && <span style={{ fontSize: 12, color: 'var(--text-tertiary)', marginLeft: 8 }}>{track.genre}</span>}
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Gen</label>
-                  <input name="genre" className="form-input" placeholder="Pop, Hip-Hop..." />
-                </div>
+                <span className="badge" style={{
+                  fontSize: 11,
+                  background: track.status === 'RELEASED' ? 'rgba(74,222,128,0.10)' : 'var(--bg-tertiary)',
+                  color: track.status === 'RELEASED' ? '#4ade80' : 'var(--text-secondary)',
+                }}>
+                  {track.status === 'RELEASED' ? 'Lansat' : 'Nelansat'}
+                </span>
               </div>
-              <button className="btn btn-primary btn-sm" type="submit">Adaugă piesă</button>
-            </form>
-          </section>
-
-          <section className="card">
-            <h3 style={{ marginBottom: 14 }}>Discografie ({artist.tracks.length} piese)</h3>
-            {artist.tracks.length === 0 ? (
-              <p style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>Nicio piesă adăugată încă.</p>
-            ) : (
-              <div style={{ display: 'grid', gap: 4 }}>
-                {artist.tracks.map((track) => (
-                  <div key={track.id} style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '8px 0', borderBottom: '1px solid var(--border-light)',
-                  }}>
-                    <div>
-                      <strong style={{ fontSize: 14 }}>{track.title}</strong>
-                      {track.genre && <span style={{ fontSize: 12, color: 'var(--text-tertiary)', marginLeft: 8 }}>{track.genre}</span>}
-                    </div>
-                    <span className="badge" style={{
-                      fontSize: 11,
-                      background: track.status === 'RELEASED' ? 'rgba(74,222,128,0.10)' : 'var(--bg-tertiary)',
-                      color: track.status === 'RELEASED' ? '#4ade80' : 'var(--text-secondary)',
-                    }}>
-                      {track.status === 'RELEASED' ? 'Lansat' : 'Nelansat'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
-
-        <section className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h3>Contracte</h3>
-            <Link href="/contracts" className="btn btn-secondary btn-sm">+ Contract nou</Link>
+            ))}
           </div>
-          {artist.contracts.length === 0 ? (
-            <p style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>Niciun contract înregistrat.</p>
-          ) : (
-            <div style={{ display: 'grid', gap: 10 }}>
-              {artist.contracts.map((contract) => {
-                const s = CONTRACT_STATUS_STYLES[contract.status] ?? CONTRACT_STATUS_STYLES.ACTIVE
-                return (
-                  <div key={contract.id} style={{ padding: '12px 14px', border: '1px solid var(--border-light)', borderRadius: 10 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                      <strong style={{ fontSize: 14 }}>{contract.duration}</strong>
-                      <span className="badge" style={{ background: s.bg, color: s.color }}>{s.label}</span>
-                    </div>
-                    <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                      Royalty: {contract.royaltyPercent}%
-                      {contract.advance ? ` • Avans: ${contract.advance} €` : ''}
-                    </div>
-                    {(contract.startDate || contract.endDate) && (
-                      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>
-                        {contract.startDate && `De la: ${contract.startDate}`}
-                        {contract.endDate && ` → ${contract.endDate}`}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </section>
-      </div>
+        )}
+      </section>
     </AppShell>
   )
 }

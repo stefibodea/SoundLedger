@@ -59,9 +59,6 @@ export function ConfirmDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 28, marginBottom: 10 }}>
-            {dangerMode ? '⚠️' : '❓'}
-          </div>
           <h3 id="confirm-title" style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700 }}>
             {title}
           </h3>

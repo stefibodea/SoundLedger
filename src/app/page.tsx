@@ -104,7 +104,7 @@ export default function LandingPage() {
               </div>
               <ul className={styles.pricingFeatures}>
                 {p.features.map((f, j) => (
-                  <li key={j}>✓ {f}</li>
+                  <li key={j}>{f}</li>
                 ))}
               </ul>
               <Link href="/register" className={`btn ${p.highlight ? 'btn-primary' : 'btn-secondary'}`} style={{ width: '100%' }}>

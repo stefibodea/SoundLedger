@@ -153,7 +153,7 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <h3 style={{ margin: 0 }}>Contracte care expiră în 30 zile</h3>
             <Link href="/contracts" className="btn btn-ghost" style={{ fontSize: 12 }}>
-              Toate →
+              Toate
             </Link>
           </div>
           {expiringContracts.length === 0 ? (
@@ -254,7 +254,7 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
               : `${pendingRoyalties.toFixed(0)} €`}
           </span>
           <Link href="/finance" style={{ color: 'var(--primary)', fontSize: 13, textDecoration: 'none' }}>
-            → Mergi la Finanțe
+            Mergi la Finanțe
           </Link>
         </div>
       )}

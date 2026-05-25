@@ -87,7 +87,7 @@ export function Modal({ isOpen, onClose, title, description, children, size = 'm
               flexShrink: 0,
             }}
           >
-            ✕
+            ×
           </button>
         </div>
 

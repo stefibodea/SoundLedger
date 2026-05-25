@@ -136,7 +136,7 @@ export function FilterBar({
                 color: 'var(--text-secondary)', fontSize: 14, padding: 2,
               }}
             >
-              ✕
+              ×
             </button>
           )}
           {/* Dropdown sugestii */}
@@ -160,7 +160,7 @@ export function FilterBar({
                   onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-secondary)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
                 >
-                  🔍 {s}
+                  {s}
                 </button>
               ))}
             </div>
@@ -232,7 +232,7 @@ export function FilterBar({
                 background: 'none', border: 'none', cursor: 'pointer', padding: 0,
               }}
             >
-              ✕ Resetează filtrele
+              Resetează filtrele
             </button>
           )}
         </span>

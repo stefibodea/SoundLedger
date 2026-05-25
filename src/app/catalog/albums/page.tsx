@@ -34,7 +34,7 @@ export default async function AlbumsPage() {
   return (
     <AppShell session={session} title="Albume & EP-uri">
       <div style={{ marginBottom: 20 }}>
-        <Link href="/catalog" className="btn btn-secondary btn-sm">← Catalog piese</Link>
+        <Link href="/catalog" className="btn btn-secondary btn-sm">Catalog piese</Link>
       </div>
 
       {canWrite && (
@@ -77,7 +77,7 @@ export default async function AlbumsPage() {
       {albums.length === 0 ? (
         <section className="card">
           <div className="empty-state">
-            <div className="empty-state-icon">🎵</div>
+            <div className="empty-state-icon"></div>
             <p className="empty-state-title">Niciun album înregistrat</p>
             <p className="empty-state-text">Adaugă primul album sau EP al label-ului tău.</p>
           </div>
@@ -89,7 +89,7 @@ export default async function AlbumsPage() {
               {album.coverArt ? (
                 <img src={album.coverArt} alt={album.title} style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 8, marginBottom: 12 }} />
               ) : (
-                <div style={{ width: '100%', aspectRatio: '1', background: 'var(--bg-tertiary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, marginBottom: 12 }}>🎵</div>
+                <div style={{ width: '100%', aspectRatio: '1', background: 'var(--bg-tertiary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, marginBottom: 12 }}></div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>

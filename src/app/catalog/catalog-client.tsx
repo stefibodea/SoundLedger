@@ -167,6 +167,12 @@ export type TrackRow = {
   coverArt: string | null
   createdAt: string
   artist: { id: string; name: string; photo: string | null }
+  declaration: 'UMAN' | 'AI' | null
+  cert: {
+    id: string; code: string; issuedAt: string; declaration: string
+    rolesCompozitie: string | null; rolesVersuri: string | null
+    rolesProductie: string | null; rolesMixaj: string | null
+  } | null
 }
 
 export type ArtistOption = { id: string; name: string }
@@ -179,6 +185,7 @@ type Props = {
   tracks: TrackRow[]
   artists: ArtistOption[]
   canWrite: boolean
+  labelName: string
   initialArtistFilter?: string
 }
 
@@ -217,7 +224,7 @@ function FilterSection({ label, icon, children }: { label: string; icon: ReactNo
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function CatalogClient({ tracks, artists, canWrite, initialArtistFilter = '' }: Props) {
+export function CatalogClient({ tracks, artists, canWrite, labelName, initialArtistFilter = '' }: Props) {
   const [search,       setSearch]       = useState('')
   const [typeFilter,   setTypeFilter]   = useState<TypeFilter>('all')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -225,6 +232,7 @@ export function CatalogClient({ tracks, artists, canWrite, initialArtistFilter =
   const [genreFilter,  setGenreFilter]  = useState('')
   const [sortBy,       setSortBy]       = useState<SortKey>('date')
   const [modalOpen,    setModalOpen]    = useState(false)
+  const [certTrack,    setCertTrack]    = useState<TrackRow | null>(null)
   const [showSugg,     setShowSugg]     = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
   const [addHover,     setAddHover]     = useState(false)
@@ -381,14 +389,46 @@ export function CatalogClient({ tracks, artists, canWrite, initialArtistFilter =
       },
     },
     {
-      key: 'date',
-      header: 'Adăugat',
-      width: '100px',
-      render: (t) => (
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-          {fmtDate(t.createdAt)}
-        </span>
-      ),
+      key: 'declaration',
+      header: 'Declarație',
+      width: '110px',
+      render: (t) => {
+        if (!t.declaration) {
+          return (
+            <span style={{
+              display: 'inline-block', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 500,
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)',
+              color: 'var(--text-tertiary)',
+            }}>
+              Nedeclarat
+            </span>
+          )
+        }
+        if (t.declaration === 'UMAN') {
+          return (
+            <button
+              type="button"
+              onClick={() => setCertTrack(t)}
+              style={{
+                display: 'inline-block', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600,
+                background: 'rgba(74,222,128,0.10)', border: '1px solid rgba(74,222,128,0.25)',
+                color: '#4ade80', cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              Uman
+            </button>
+          )
+        }
+        return (
+          <span style={{
+            display: 'inline-block', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600,
+            background: 'rgba(253,230,138,0.10)', border: '1px solid rgba(253,230,138,0.25)',
+            color: '#fde68a',
+          }}>
+            AI
+          </span>
+        )
+      },
     },
     {
       key: 'actions',
@@ -407,7 +447,7 @@ export function CatalogClient({ tracks, artists, canWrite, initialArtistFilter =
             transition: 'all 0.12s ease',
           }}
         >
-          Detalii →
+          Detalii
         </Link>
       ),
     },
@@ -508,7 +548,7 @@ export function CatalogClient({ tracks, artists, canWrite, initialArtistFilter =
                 {search && (
                   <button type="button" onClick={() => { setSearch(''); setShowSugg(false) }}
                     style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 14, padding: 2, lineHeight: 1 }}>
-                    ✕
+                    ×
                   </button>
                 )}
                 {showSugg && filteredSugg.length > 0 && (
@@ -518,7 +558,7 @@ export function CatalogClient({ tracks, artists, canWrite, initialArtistFilter =
                         style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--text-primary)', borderBottom: i < filteredSugg.length - 1 ? '1px solid var(--border-light)' : 'none' }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-secondary)' }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-                      >🔍 {s}</button>
+                      > {s}</button>
                     ))}
                   </div>
                 )}
@@ -595,7 +635,7 @@ export function CatalogClient({ tracks, artists, canWrite, initialArtistFilter =
           {/* Bara de acțiuni */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <Link href="/catalog/albums" className="btn btn-ghost" style={{ fontSize: 13 }}>
-              🎵 Albume & EP-uri →
+               Albume & EP-uri
             </Link>
             {canWrite && (
               <button
@@ -716,6 +756,171 @@ export function CatalogClient({ tracks, artists, canWrite, initialArtistFilter =
           </div>
         </form>
       </Modal>
+
+      {/* ── Modal certificat Human Made ────────────────────────────────────── */}
+      {certTrack && certTrack.cert && (() => {
+        const cert = certTrack.cert!
+        const issuedDate = new Date(cert.issuedAt).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' })
+        return (
+          <>
+            <style>{`
+              @keyframes cert-fadein { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+              @media print {
+                body > * { display: none !important; }
+                #cert-printable { display: block !important; position: fixed; inset: 0; z-index: 9999; background: white; }
+              }
+            `}</style>
+
+            {/* Overlay blur */}
+            <div
+              onClick={() => setCertTrack(null)}
+              style={{
+                position: 'fixed', inset: 0, zIndex: 300,
+                background: 'rgba(10,9,18,0.65)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+              }}
+            />
+
+            {/* Container centrat scrollabil */}
+            <div style={{
+              position: 'fixed', inset: 0, zIndex: 301,
+              overflowY: 'auto',
+              display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+              padding: '40px 20px 60px',
+            }}>
+              <div style={{
+                width: '100%', maxWidth: 580,
+                animation: 'cert-fadein 0.22s ease',
+              }}>
+              {/* Buton descarcă + închide */}
+              <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                marginBottom: 16,
+              }}>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  style={{
+                    padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                    background: 'linear-gradient(135deg, #2e7d32, #4ade80)',
+                    color: 'white', fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                    boxShadow: '0 0 16px rgba(74,222,128,0.3)',
+                  }}
+                >
+                  Descarcă PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCertTrack(null)}
+                  style={{
+                    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
+                    color: 'var(--text-secondary)', borderRadius: 8, padding: '8px 14px',
+                    cursor: 'pointer', fontSize: 20, lineHeight: 1, fontFamily: 'inherit',
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Documentul certificat */}
+              <div id="cert-printable">
+                <div style={{
+                  background: '#fff', borderRadius: 4,
+                  boxShadow: '0 8px 48px rgba(0,0,0,0.5)',
+                  overflow: 'hidden', fontFamily: 'Georgia, serif',
+                }}>
+                  <div style={{ height: 6, background: 'linear-gradient(90deg, #1a3a1a, #2e7d32, #1a3a1a)' }} />
+                  <div style={{ padding: '48px 52px', color: '#111' }}>
+
+                    {/* Antet */}
+                    <div style={{ textAlign: 'center', marginBottom: 40 }}>
+                      <div style={{ fontSize: 12, letterSpacing: 5, color: '#2e7d32', textTransform: 'uppercase', marginBottom: 6 }}>{labelName}</div>
+                      <div style={{ fontSize: 9, letterSpacing: 3, color: '#aaa', textTransform: 'uppercase', marginBottom: 18 }}>Certificat de Autenticitate · SoundLedger</div>
+                      <h1 style={{ fontSize: 30, fontWeight: 400, color: '#111', margin: '0 0 4px', letterSpacing: 2, textTransform: 'uppercase' }}>Human Made</h1>
+                      <div style={{ width: 50, height: 2, background: '#2e7d32', margin: '10px auto 0' }} />
+                    </div>
+
+                    {/* Titlu piesă */}
+                    <div style={{ textAlign: 'center', marginBottom: 32 }}>
+                      <p style={{ fontSize: 13, color: '#666', lineHeight: 2, margin: 0, fontStyle: 'italic' }}>Prin prezentul document se atestă că opera muzicală</p>
+                      <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111', margin: '8px 0 6px' }}>„{certTrack.title}"</h2>
+                      <p style={{ fontSize: 15, color: '#2e7d32', margin: 0 }}>de {certTrack.artist.name}</p>
+                    </div>
+
+                    {/* Declarație */}
+                    <div style={{ margin: '0 0 24px', padding: '20px 28px', background: '#f9f9f7', borderLeft: '3px solid #2e7d32', borderRadius: 2 }}>
+                      <p style={{ fontSize: 13, color: '#444', lineHeight: 1.9, margin: 0, fontStyle: 'italic' }}>{cert.declaration}</p>
+                    </div>
+
+                    {/* Echipa creativa cu semnaturi */}
+                    {(cert.rolesCompozitie || cert.rolesVersuri || cert.rolesProductie || cert.rolesMixaj) && (() => {
+                      const roleRows = [
+                        { label: 'Compoziție', names: cert.rolesCompozitie },
+                        { label: 'Versuri',    names: cert.rolesVersuri },
+                        { label: 'Producție',  names: cert.rolesProductie },
+                        { label: 'Mixaj',      names: cert.rolesMixaj },
+                      ].filter((r) => r.names)
+                      return (
+                        <div style={{ margin: '0 0 28px' }}>
+                          <div style={{ fontSize: 9, letterSpacing: 2, color: '#2e7d32', textTransform: 'uppercase', marginBottom: 14 }}>Echipa creativa</div>
+                          <div style={{ display: 'grid', gridTemplateColumns: roleRows.length > 2 ? '1fr 1fr' : '1fr '.repeat(roleRows.length).trim(), gap: '14px 20px' }}>
+                            {roleRows.map(({ label, names }) => {
+                              const nameList = (names ?? '').split(',').map((n) => n.trim()).filter(Boolean)
+                              return (
+                                <div key={label} style={{ paddingBottom: 12, borderBottom: '1px solid #e8e8e8' }}>
+                                  <div style={{ fontSize: 9, letterSpacing: 1.5, color: '#888', textTransform: 'uppercase', marginBottom: 8 }}>{label}</div>
+                                  {nameList.map((name) => (
+                                    <div key={name} style={{ marginBottom: 10 }}>
+                                      <div style={{ fontSize: 13, fontWeight: 600, color: '#111', marginBottom: 6 }}>{name}</div>
+                                      <div style={{ height: 1, width: '80%', background: '#ccc', marginBottom: 2 }} />
+                                      <div style={{ fontSize: 9, color: '#aaa' }}>Semnătură</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                    {/* Detalii */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, border: '1px solid #e0e0e0', borderRadius: 4, overflow: 'hidden', marginBottom: 32 }}>
+                      {[
+                        { label: 'Cod certificat', value: cert.code, mono: true },
+                        { label: 'Data emiterii',  value: issuedDate },
+                        { label: 'Label muzical',  value: labelName },
+                        { label: 'Status',         value: 'VALID — Certificat activ' },
+                      ].map(({ label, value, mono }) => (
+                        <div key={label} style={{ padding: '14px 18px', background: '#fff', borderBottom: '1px solid #e8e8e8' }}>
+                          <div style={{ fontSize: 9, letterSpacing: 2, color: '#2e7d32', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: label === 'Status' ? '#2e7d32' : '#111', fontFamily: mono ? 'monospace' : 'inherit' }}>{value}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Footer */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: 24, borderTop: '1px solid #e0e0e0' }}>
+                      <div>
+                        <div style={{ fontSize: 9, color: '#bbb', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 3 }}>Emis prin platforma</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#333' }}>SoundLedger</div>
+                        <div style={{ fontSize: 9, color: '#bbb', marginTop: 2 }}>Protecția drepturilor artiștilor în era AI</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 10, color: '#bbb', marginBottom: 2 }}>Cod unic</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#2e7d32', letterSpacing: 1 }}>{cert.code}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ height: 6, background: 'linear-gradient(90deg, #1a3a1a, #2e7d32, #1a3a1a)' }} />
+                </div>
+              </div>
+              </div>
+            </div>
+          </>
+        )
+      })()}
     </>
   )
 }

@@ -22,27 +22,19 @@ const NAV_LINKS: Record<string, NavLink[]> = {
     { href: '/compliance', label: 'AI Compliance' },
     { href: '/team', label: 'Echipă' },
   ],
-  [ROLES.AR_MANAGER]: [
+  [ROLES.FINANCIAL]: [
     { href: '/dashboard', label: 'Acasă' },
     { href: '/artists', label: 'Artiști' },
     { href: '/catalog', label: 'Catalog' },
-    { href: '/ar', label: 'Scouting' },
-    { href: '/compliance', label: 'AI Compliance' },
-    { href: '/compliance/fingerprints', label: 'Fingerprints' },
-  ],
-  [ROLES.FINANCIAL]: [
-    { href: '/dashboard', label: 'Acasă' },
-    { href: '/catalog', label: 'Catalog' },
     { href: '/contracts', label: 'Contracte' },
     { href: '/finance', label: 'Finanțe' },
-    { href: '/compliance', label: 'AI Compliance' },
   ],
 
 }
 
 function isNavActive(href: string, pathname: string): boolean {
   if (href === '/compliance') {
-    return pathname.startsWith('/compliance') && !pathname.startsWith('/compliance/fingerprints')
+    return pathname.startsWith('/compliance')
   }
   if (href === '/ar') {
     return pathname === '/ar' || pathname.startsWith('/ar/')

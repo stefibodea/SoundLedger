@@ -196,7 +196,7 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
       {successType === 'csv_imported' && successCount && successTotal && (
         <div className="card" style={{ marginBottom: 16, borderLeft: '3px solid #4ade80', padding: '14px 18px', background: 'rgba(74,222,128,0.06)' }}>
           <p style={{ color: '#4ade80', margin: 0, fontWeight: 500, fontSize: 14 }}>
-            ✅ <strong>Import finalizat cu succes!</strong> Au fost înregistrate cu succes <strong>{successCount} venituri</strong> în valoare totală de <strong>{successTotal} €</strong>, iar plățile de royalty aferente au fost calculate și înregistrate automat!
+             <strong>Import finalizat cu succes!</strong> Au fost înregistrate cu succes <strong>{successCount} venituri</strong> în valoare totală de <strong>{successTotal} €</strong>, iar plățile de royalty aferente au fost calculate și înregistrate automat!
           </p>
         </div>
       )}
@@ -366,7 +366,7 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
           )}
         </div>
         <Link href="/finance/royalties" className="btn btn-secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
-          Gestionează royalties →
+          Gestionează royalties
         </Link>
       </section>
 

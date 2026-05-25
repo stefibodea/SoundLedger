@@ -143,7 +143,7 @@ export function ContractsClient({ contracts, canManage }: Props) {
       width: '200px',
       render: (c) => (
         <span style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-          {fmtDate(c.startDate)} → {fmtDate(c.endDate)}
+          {fmtDate(c.startDate)} {fmtDate(c.endDate)}
         </span>
       ),
     },
@@ -153,7 +153,7 @@ export function ContractsClient({ contracts, canManage }: Props) {
       width: '100px',
       render: (c) => (
         <Link href={`/contracts/${c.id}`} className="btn btn-sm btn-ghost" style={{ fontSize: 12 }}>
-          Vezi →
+          Vezi
         </Link>
       ),
     },
@@ -258,7 +258,7 @@ export function ContractsClient({ contracts, canManage }: Props) {
               pageSize={25}
               emptyState={
                 <EmptyState
-                  icon="📄"
+                  icon=""
                   title="Niciun contract găsit"
                   description={
                     hasActiveFilters

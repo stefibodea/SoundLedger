@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
-import { canManageCompliance } from '@/lib/roles'
+import { canManageCompliance, canActOnDetection } from '@/lib/roles'
 import { isValidAudioFile, saveSuspectAudioFile } from '@/lib/file-upload'
 import { compareAudioWithCatalog, type CatalogTrackPayload } from '@/lib/audio-service'
 import { generateText } from '@/lib/ai'
@@ -140,7 +140,7 @@ export async function analyzeSuspectTrackAction(formData: FormData) {
 
 export async function updateDetectionStatusFromReportAction(formData: FormData) {
   const session = await requireSession()
-  if (!session.labelId || !canManageCompliance(session.role)) redirect('/compliance/scanner')
+  if (!session.labelId || !canActOnDetection(session.role)) redirect('/compliance/scanner')
 
   const id        = String(formData.get('id')     || '').trim()
   const newStatus = String(formData.get('status') || '').trim()

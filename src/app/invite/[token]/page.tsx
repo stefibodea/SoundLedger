@@ -8,16 +8,12 @@ type InvitePageProps = {
 }
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
-  AR_MANAGER: 'Vei putea gestiona prospecții A&R, evalua artiști noi și urmări pipeline-ul de semnare.',
-  FINANCIAL: 'Vei avea acces la venituri, plăți royalty și rapoarte financiare ale label-ului.',
-
+  FINANCIAL:     'Vei avea acces la venituri, plăți royalty și rapoarte financiare ale label-ului.',
   LABEL_MANAGER: 'Vei putea administra toate aspectele label-ului: artiști, contracte, finanțe și echipă.',
 }
 
 const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
-  AR_MANAGER:    { bg: 'var(--role-ar-light)',      color: 'var(--role-ar-dark)' },
   FINANCIAL:     { bg: 'var(--role-finance-light)',  color: 'var(--role-finance-dark)' },
-
   LABEL_MANAGER: { bg: 'var(--role-label-light)',    color: 'var(--role-label-dark)' },
 }
 
@@ -60,7 +56,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
             padding: '10px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
             marginBottom: 16,
           }}>
-            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)', letterSpacing: '-0.5px' }}>♪ SoundLedger</span>
+            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)', letterSpacing: '-0.5px' }}> SoundLedger</span>
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Ai primit o invitație</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
