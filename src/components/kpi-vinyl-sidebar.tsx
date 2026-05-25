@@ -30,12 +30,12 @@ type Props = {
 }
 
 export function KpiVinylSidebar({ kpis, compact = false }: Props) {
-  const disc  = compact ? 125 : 155
-  const inner = compact ? 82  : 102
+  const disc  = compact ? 142 : 165
+  const inner = compact ? 94  : 110
   const gap   = compact ? 18  : 24
-  const valSz = compact ? 22  : 26
-  const lblSz = compact ? 10  : 12
-  const maxW  = compact ? 74  : 90
+  const valSz = compact ? 24  : 27
+  const lblSz = compact ? 11  : 12
+  const maxW  = compact ? 82  : 96
   return (
     <>
     <style>{`

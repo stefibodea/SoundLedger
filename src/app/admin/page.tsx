@@ -59,7 +59,7 @@ export default async function AdminPage() {
         <KPICard label="Labels totale" value={totalLabels}    accentColor="blue"   />
         <KPICard label="Active"        value={activeLabels}   accentColor="green"  />
         <KPICard label="Suspendate"    value={suspendedCount} accentColor={suspendedCount > 0 ? 'red' : 'gray'} />
-        <KPICard label="Venituri tot." value={fmtEur(totalRevenue)} accentColor="purple" />
+        <KPICard label="Venituri" value={fmtEur(totalRevenue)} accentColor="purple" />
       </div>
 
       <section className="card">

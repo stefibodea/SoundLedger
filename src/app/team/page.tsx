@@ -28,7 +28,6 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
     prisma.user.findMany({
       where: {
         labelId: session.labelId,
-        role: { not: 'ARTIST' },
       },
       select: {
         id: true,

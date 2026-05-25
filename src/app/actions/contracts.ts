@@ -45,7 +45,7 @@ export async function createContractAction(formData: FormData) {
       advance,
       startDate,
       endDate,
-      status: status || 'DRAFT',
+      status: status || 'ACTIVE',
       signedAt:       signedAt       ? new Date(signedAt)  : null,
       documentUrl:    documentUrl    ?? null,
       specialClauses: specialClauses ?? null,

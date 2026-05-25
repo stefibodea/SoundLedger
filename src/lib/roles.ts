@@ -3,7 +3,6 @@ export const ROLES = {
   LABEL_MANAGER: 'LABEL_MANAGER',
   AR_MANAGER: 'AR_MANAGER',
   FINANCIAL: 'FINANCIAL',
-  ARTIST: 'ARTIST',
 } as const
 
 export type AppRole = (typeof ROLES)[keyof typeof ROLES]
@@ -13,7 +12,6 @@ export const ROLE_LABELS: Record<string, string> = {
   LABEL_MANAGER: 'Label Manager',
   AR_MANAGER: 'A&R Manager',
   FINANCIAL: 'Finanțe & Drepturi',
-  ARTIST: 'Artist',
 }
 
 export function getRoleDisplayName(role: string): string {
@@ -41,7 +39,7 @@ export function canManageCatalog(role: string): boolean {
 }
 
 export function canViewReleases(role: string): boolean {
-  return role === ROLES.SUPER_ADMIN || role === ROLES.LABEL_MANAGER || role === ROLES.ARTIST
+  return role === ROLES.SUPER_ADMIN || role === ROLES.LABEL_MANAGER
 }
 
 export function canManageReleases(role: string): boolean {
@@ -52,8 +50,7 @@ export function canViewContracts(role: string): boolean {
   return (
     role === ROLES.SUPER_ADMIN ||
     role === ROLES.LABEL_MANAGER ||
-    role === ROLES.FINANCIAL ||
-    role === ROLES.ARTIST
+    role === ROLES.FINANCIAL
   )
 }
 
@@ -65,8 +62,7 @@ export function canViewFinance(role: string): boolean {
   return (
     role === ROLES.SUPER_ADMIN ||
     role === ROLES.LABEL_MANAGER ||
-    role === ROLES.FINANCIAL ||
-    role === ROLES.ARTIST
+    role === ROLES.FINANCIAL
   )
 }
 

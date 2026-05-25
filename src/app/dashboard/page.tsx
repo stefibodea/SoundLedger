@@ -4,7 +4,6 @@ import { enforceOnboarding } from '@/lib/onboarding'
 import { LabelManagerDashboard } from './label-manager-dashboard'
 import { ARManagerDashboard } from './ar-manager-dashboard'
 import { FinanceManagerDashboard } from './finance-manager-dashboard'
-import { ArtistDashboard } from './artist-dashboard'
 
 export default async function DashboardPage() {
   const session = await requireSession()
@@ -22,5 +21,6 @@ export default async function DashboardPage() {
     return <FinanceManagerDashboard session={session} />
   }
 
-  return <ArtistDashboard session={session} />
+  // Fallback — should not happen with current roles
+  return <LabelManagerDashboard session={session} />
 }

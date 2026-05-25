@@ -166,21 +166,19 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
       {canViewCompliance(session.role) && (
         <div className="card" style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h3 style={{ margin: 0 }}>🛡️ AI Compliance Status</h3>
+            <h3 style={{ margin: 0 }}>AI Compliance Status</h3>
             <Link href="/compliance" className="btn btn-ghost" style={{ fontSize: 12 }}>
               Vezi detaliile →
             </Link>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 8 }}>
-              <span style={{ fontSize: 18 }}>✅</span>
               <div>
                 <div style={{ fontSize: 20, fontWeight: 700, color: '#4ade80' }}>{certifiedCount}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Certificate Human Made</div>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 8 }}>
-              <span style={{ fontSize: 18 }}>⚙️</span>
               <div>
                 <div style={{ fontSize: 20, fontWeight: 700, color: tracksWithoutPerms > 0 ? 'var(--role-finance-dark)' : 'var(--text-secondary)' }}>
                   {tracksWithoutPerms}
@@ -189,7 +187,6 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 8 }}>
-              <span style={{ fontSize: 18 }}>🔍</span>
               <div>
                 <div style={{ fontSize: 20, fontWeight: 700, color: pendingDetectionsCount > 0 ? 'var(--role-artist-dark)' : 'var(--text-secondary)' }}>
                   {pendingDetectionsCount}

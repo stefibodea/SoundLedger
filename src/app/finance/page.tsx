@@ -6,10 +6,12 @@ import { RevenueCharts } from '@/components/revenue-charts'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canViewFinance, canManageFinance } from '@/lib/roles'
-import { createRevenueAction, reconcileRevenueAction } from '@/app/actions/revenues'
+import { createRevenueAction, reconcileRevenueAction, importRevenueCsvAction } from '@/app/actions/revenues'
 import { generateFinanceReportAction } from '@/app/actions/ai'
 import { SuccessBanner } from './SuccessBanner'
+import { AddRevenueForm } from './add-revenue-form'
 import { enforceOnboarding } from '@/lib/onboarding'
+import { AiReportPanel } from './ai-report-panel'
 
 const SOURCE_LABELS: Record<string, string> = {
   SPOTIFY:             'Spotify',
@@ -66,6 +68,8 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
   const successAmount = typeof params.amount  === 'string' ? params.amount     : null
   const successArtist = typeof params.artist  === 'string' ? decodeURIComponent(params.artist) : null
   const successPercent = typeof params.percent === 'string' ? params.percent   : null
+  const successCount = typeof params.count   === 'string' ? params.count      : null
+  const successTotal = typeof params.total   === 'string' ? params.total      : null
   const filterSrc  = typeof params.source     === 'string' ? params.source     : ''
   const filterArt  = typeof params.artistId   === 'string' ? params.artistId   : ''
   const periodFrom = typeof params.periodFrom === 'string' ? params.periodFrom : ''
@@ -179,6 +183,14 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
         <SuccessBanner amount={successAmount} artist={successArtist} percent={successPercent} />
       )}
 
+      {successType === 'csv_imported' && successCount && successTotal && (
+        <div className="card" style={{ marginBottom: 16, borderLeft: '3px solid #4ade80', padding: '14px 18px', background: 'rgba(74,222,128,0.06)' }}>
+          <p style={{ color: '#4ade80', margin: 0, fontWeight: 500, fontSize: 14 }}>
+            ✅ <strong>Import finalizat cu succes!</strong> Au fost înregistrate cu succes <strong>{successCount} venituri</strong> în valoare totală de <strong>{successTotal} €</strong>, iar plățile de royalty aferente au fost calculate și înregistrate automat!
+          </p>
+        </div>
+      )}
+
       {/* Charts */}
       <RevenueCharts monthly={monthly} bySource={bySource} />
 
@@ -202,112 +214,14 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
       </section>
 
       {/* AI Finance Report */}
-      <section className="card" style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 style={{ margin: 0 }}>✦ Raport financiar AI</h3>
-          <form action={generateFinanceReportAction}>
-            <button className="btn btn-secondary" type="submit" style={{ fontSize: 13 }}>
-              {latestAiReport ? '↻ Regenerează' : '✦ Generează raport'}
-            </button>
-          </form>
-        </div>
-
-        {latestAiReport ? (
-          <div>
-            <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 12 }}>
-              Generat: {new Date(latestAiReport.createdAt).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-            </p>
-            <div style={{ display: 'grid', gap: 14 }}>
-              {latestAiReport.message.split(/\n(?=\*\*)/).map((section, i) => {
-                const titleMatch = section.match(/^\*\*(.+?)\*\*\n?/)
-                const title = titleMatch?.[1] ?? ''
-                const body  = section.replace(/^\*\*.+?\*\*\n?/, '').trim()
-                if (!body) return null
-                return (
-                  <div key={i} style={{ paddingLeft: 12, borderLeft: '1px solid rgba(255,255,255,0.09)' }}>
-                    {title && <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--role-finance-dark)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</p>}
-                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, whiteSpace: 'pre-line' }}>{body}</p>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ) : (
-          <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>
-            Apasă "Generează raport" pentru o analiză AI a veniturilor: trend lunar, surse dominante, anomalii detectate și recomandări.
-          </p>
-        )}
-      </section>
+      <AiReportPanel
+        latestAiReport={latestAiReport}
+        generateFinanceReportAction={generateFinanceReportAction}
+      />
 
       {/* Add form — only for users who can manage */}
       {canManage && (
-        <section className="card" style={{ marginBottom: 20 }}>
-          <h3 style={{ marginBottom: 12 }}>Adaugă venit</h3>
-          <form action={createRevenueAction}>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label" htmlFor="source">Sursă</label>
-                <select className="form-input form-select" id="source" name="source" defaultValue="SPOTIFY">
-                  <option value="SPOTIFY">Spotify</option>
-                  <option value="APPLE_MUSIC">Apple Music</option>
-                  <option value="YOUTUBE_MUSIC">YouTube Music</option>
-                  <option value="YOUTUBE_CONTENT_ID">YouTube Content ID</option>
-                  <option value="TIKTOK">TikTok</option>
-                  <option value="DEEZER">Deezer</option>
-                  <option value="RADIO_TV">Radio &amp; TV (CREDIDAM/UCMR-ADA)</option>
-                  <option value="SYNC_LICENSING">Sync Licensing</option>
-                  <option value="LICENTIERE">Licențiere</option>
-                  <option value="VANZARI_FIZICE">Vânzări fizice</option>
-                  <option value="MERCHANDISE">Merchandise</option>
-                  <option value="ALTE_SURSE">Alte surse</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label" htmlFor="amount">Suma (€)</label>
-                <input className="form-input" id="amount" name="amount" type="number" step="0.01" min="0.01" required />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label" htmlFor="period">Perioadă</label>
-                <input className="form-input" id="period" name="period" placeholder="ex: 2026-03" required />
-              </div>
-              <div className="form-group">
-                <label className="form-label" htmlFor="streams">Nr. streamuri (opțional)</label>
-                <input className="form-input" id="streams" name="streams" type="number" min="0" placeholder="ex: 142500" />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label" htmlFor="artistId">Artist (opțional)</label>
-                <select className="form-input form-select" id="artistId" name="artistId" defaultValue="">
-                  <option value="">Fără artist specific</option>
-                  {artists.map((a) => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
-                  ))}
-                </select>
-                <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                  Dacă artistul are contract activ, royalty-ul va fi calculat și înregistrat automat.
-                </p>
-              </div>
-              <div className="form-group">
-                <label className="form-label" htmlFor="description">Descriere / notă contabilă (opțional)</label>
-                <input className="form-input" id="description" name="description" placeholder="ex: Q1 2026 Spotify statement" />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label" htmlFor="revenueStatus">Status venit</label>
-                <select className="form-input form-select" id="revenueStatus" name="revenueStatus" defaultValue="ESTIMAT">
-                  <option value="ESTIMAT">Estimat — statement provizoriu</option>
-                  <option value="RECONCILIAT">Reconciliat — statement final confirmat</option>
-                </select>
-              </div>
-              <div className="form-group" />
-            </div>
-            <button className="btn btn-primary" type="submit">Salvează venit</button>
-          </form>
-        </section>
+        <AddRevenueForm artists={artists} createRevenueAction={createRevenueAction} />
       )}
 
       {/* Filter bar + export */}
@@ -368,13 +282,12 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
                 <th>Artist</th>
                 <th>Streamuri</th>
                 <th>Descriere</th>
-                <th>Status</th>
                 {canManage && <th></th>}
               </tr>
             </thead>
             <tbody>
               {filteredRevenues.length === 0 ? (
-                <tr><td colSpan={canManage ? 8 : 7}>Nu există venituri pentru filtrele selectate.</td></tr>
+                <tr><td colSpan={canManage ? 7 : 6}>Nu există venituri pentru filtrele selectate.</td></tr>
               ) : (
                 filteredRevenues.map((r) => (
                   <tr key={r.id}>
@@ -395,17 +308,6 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
                     </td>
                     <td style={{ fontSize: 12, color: 'var(--text-secondary)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {r.description ?? '—'}
-                    </td>
-                    <td>
-                      {r.revenueStatus === 'RECONCILIAT' ? (
-                        <span style={{ background: 'rgba(110,231,183,0.15)', color: '#6ee7b7', border: '1px solid rgba(110,231,183,0.3)', fontSize: 11, padding: '2px 8px', borderRadius: 20, whiteSpace: 'nowrap' }}>
-                          Reconciliat
-                        </span>
-                      ) : (
-                        <span style={{ background: 'rgba(253,230,138,0.15)', color: '#fde68a', border: '1px solid rgba(253,230,138,0.3)', fontSize: 11, padding: '2px 8px', borderRadius: 20, whiteSpace: 'nowrap' }}>
-                          Estimat
-                        </span>
-                      )}
                     </td>
                     {canManage && (
                       <td>

@@ -66,8 +66,11 @@ export default async function EditRevenuePage({ params, searchParams }: Props) {
             <input type="hidden" name="id" value={revenue.id} />
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Sursă</label>
-                <select name="source" className="form-input form-select" defaultValue={revenue.source}>
+                <label className="form-label">
+                  Sursă <span style={{ color: 'var(--status-expired)' }}>*</span>
+                </label>
+                <select name="source" className="form-input form-select" defaultValue={revenue.source} required>
+                  <option value="">Selectează o sursă...</option>
                   <option value="SPOTIFY">Spotify</option>
                   <option value="APPLE_MUSIC">Apple Music</option>
                   <option value="YOUTUBE_MUSIC">YouTube Music</option>
@@ -83,32 +86,65 @@ export default async function EditRevenuePage({ params, searchParams }: Props) {
                 </select>
               </div>
               <div className="form-group">
-                <label className="form-label">Suma (€)</label>
-                <input name="amount" type="number" step="0.01" className="form-input" defaultValue={revenue.amount} required />
+                <label className="form-label">
+                  Suma (€) <span style={{ color: 'var(--status-expired)' }}>*</span>
+                </label>
+                <input
+                  name="amount"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="ex: 1250.75"
+                  className="form-input"
+                  defaultValue={revenue.amount}
+                  required
+                />
               </div>
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Perioadă</label>
+                <label className="form-label">
+                  Perioadă <span style={{ color: 'var(--status-expired)' }}>*</span>
+                </label>
                 <input name="period" className="form-input" defaultValue={revenue.period} placeholder="ex: 2026-03" required />
               </div>
               <div className="form-group">
-                <label className="form-label">Nr. streamuri (opțional)</label>
-                <input name="streams" type="number" min="0" className="form-input" defaultValue={revenue.streams ?? ''} />
+                <label className="form-label">
+                  Nr. streamuri <span style={{ color: 'var(--status-expired)' }}>*</span>
+                </label>
+                <input
+                  name="streams"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="ex: 142500"
+                  className="form-input"
+                  defaultValue={revenue.streams ?? ''}
+                  required
+                />
               </div>
             </div>
             <div className="form-group">
-              <label className="form-label">Artist (opțional)</label>
-              <select name="artistId" className="form-input form-select" defaultValue={revenue.artistId ?? ''}>
-                <option value="">Fără artist specific</option>
+              <label className="form-label">
+                Artist <span style={{ color: 'var(--status-expired)' }}>*</span>
+              </label>
+              <select name="artistId" className="form-input form-select" defaultValue={revenue.artistId ?? ''} required>
+                <option value="">Selectează un artist...</option>
                 {artists.map((a) => (
                   <option key={a.id} value={a.id}>{a.name}</option>
                 ))}
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Descriere / note contabile (opțional)</label>
-              <textarea name="description" className="form-input form-textarea" rows={3} defaultValue={revenue.description ?? ''} />
+              <label className="form-label">
+                Descriere / notă <span style={{ color: 'var(--status-expired)' }}>*</span>
+              </label>
+              <textarea
+                name="description"
+                className="form-input form-textarea"
+                rows={3}
+                defaultValue={revenue.description ?? ''}
+                placeholder="ex: Factură sync sau licențiere"
+                required
+              />
             </div>
             <button className="btn btn-primary" type="submit">Salvează modificările</button>
           </form>

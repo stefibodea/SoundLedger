@@ -80,6 +80,18 @@ export async function changePasswordAction(formData: FormData) {
     redirect('/profile?error=parola_prea_scurta')
   }
 
+  if (!/[A-Z]/.test(newPassword)) {
+    redirect('/profile?error=parola_fara_litera_mare')
+  }
+
+  if (!/[0-9]/.test(newPassword)) {
+    redirect('/profile?error=parola_fara_cifra')
+  }
+
+  if (!/[^A-Za-z0-9]/.test(newPassword)) {
+    redirect('/profile?error=parola_fara_special')
+  }
+
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
     select: { password: true },

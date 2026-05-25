@@ -13,7 +13,7 @@ model User {
   password      String
   firstName     String
   lastName      String
-  role              String   @default("LABEL_MANAGER") // SUPER_ADMIN, LABEL_MANAGER, AR_MANAGER, FINANCIAL, ARTIST
+  role              String   @default("LABEL_MANAGER") // SUPER_ADMIN, LABEL_MANAGER, AR_MANAGER, FINANCIAL
   avatar            String?  // path relativ în public/uploads/avatars/
   mustResetPassword Boolean  @default(false)
   createdAt         DateTime @default(now())
@@ -23,7 +23,7 @@ model User {
   ownedLabel    Label?   @relation("LabelOwner")
   labelId       String?
   label         Label?   @relation("LabelMembers", fields: [labelId], references: [id])
-  artistProfile Artist?  @relation("ArtistUser")
+
   notifications Notification[]
   sentInvitations Invitation[] @relation("InvitationSender")
 }
@@ -101,9 +101,7 @@ model Artist {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  // Link to user account (if artist has login)
-  userId        String?  @unique
-  user          User?    @relation("ArtistUser", fields: [userId], references: [id])
+
 
   // Label
   labelId       String

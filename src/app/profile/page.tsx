@@ -5,13 +5,13 @@ import { AppShell } from '@/components/app-shell'
 import { getRoleDisplayName } from '@/lib/roles'
 import { ProfileForm } from './profile-form'
 import { changePasswordAction } from '@/app/actions/profile'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 
 const ROLE_GRADIENTS: Record<string, string> = {
   SUPER_ADMIN:   'linear-gradient(135deg, #fca5a5, #e85d5d)',
   LABEL_MANAGER: 'linear-gradient(135deg, #9B94F0, #6366f1)',
   AR_MANAGER:    'linear-gradient(135deg, #6ee7b7, #10b981)',
   FINANCIAL:     'linear-gradient(135deg, #fde68a, #f59e0b)',
-  ARTIST:        'linear-gradient(135deg, #93c5fd, #3b82f6)',
 }
 
 const ROLE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -19,7 +19,6 @@ const ROLE_COLORS: Record<string, { bg: string; text: string; border: string }> 
   LABEL_MANAGER: { bg: 'rgba(155,148,240,0.12)', text: '#9B94F0',  border: 'rgba(155,148,240,0.3)' },
   AR_MANAGER:    { bg: 'rgba(110,231,183,0.12)', text: '#6ee7b7',  border: 'rgba(110,231,183,0.3)' },
   FINANCIAL:     { bg: 'rgba(253,230,138,0.12)', text: '#fde68a',  border: 'rgba(253,230,138,0.3)' },
-  ARTIST:        { bg: 'rgba(147,197,253,0.12)', text: '#93c5fd',  border: 'rgba(147,197,253,0.3)' },
 }
 
 const SUCCESS_MESSAGES: Record<string, string> = {
@@ -33,6 +32,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   parola_incorecta: 'Parola actuală este incorectă.',
   parolele_nu_coincid: 'Parolele noi nu coincid.',
   parola_prea_scurta: 'Parola nouă trebuie să aibă cel puțin 8 caractere.',
+  parola_fara_litera_mare: 'Parola nouă trebuie să conțină cel puțin o literă mare.',
+  parola_fara_cifra: 'Parola nouă trebuie să conțină cel puțin o cifră.',
+  parola_fara_special: 'Parola nouă trebuie să conțină cel puțin un caracter special.',
   utilizator_negasit: 'Utilizatorul nu a fost găsit.',
 }
 
@@ -234,25 +236,28 @@ export default async function ProfilePage({
           >
             <div className="form-group">
               <label className="form-label">Parola actuală</label>
-              <input className="form-input" type="password" name="currentPassword" required />
+              <PasswordInput id="currentPassword" name="currentPassword" required className="form-input" />
             </div>
             <div className="form-group">
               <label className="form-label">Parola nouă</label>
-              <input
-                className="form-input"
-                type="password"
+              <PasswordInput
+                id="newPassword"
                 name="newPassword"
                 required
+                className="form-input"
                 minLength={8}
               />
+              <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.4 }}>
+                Minim 8 caractere, o literă mare, o cifră și un caracter special.
+              </p>
             </div>
             <div className="form-group">
               <label className="form-label">Confirmă parola nouă</label>
-              <input
-                className="form-input"
-                type="password"
+              <PasswordInput
+                id="confirmPassword"
                 name="confirmPassword"
                 required
+                className="form-input"
                 minLength={8}
               />
             </div>

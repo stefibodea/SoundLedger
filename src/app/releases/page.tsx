@@ -68,7 +68,7 @@ export default async function ReleasesPage() {
       <ReleasesClient releases={releases} tracks={tracks} />
 
       <KpiVinylSidebar compact kpis={[
-        { value: totalReleases, label: 'Total lansări',        accentColor: 'purple' },
+        { value: totalReleases, label: 'Total',                accentColor: 'purple' },
         { value: releasedCount, label: 'Lansate',              accentColor: 'green' },
         { value: upcomingCount, label: 'Următoarele 30 zile',  accentColor: upcomingCount > 0 ? 'yellow' : 'gray' },
         { value: overdueCount,  label: 'Trecute de termen',    accentColor: overdueCount  > 0 ? 'red'    : 'gray' },

@@ -9,9 +9,10 @@ type Props = {
   minLength?: number
   placeholder?: string
   style?: React.CSSProperties
+  className?: string
 }
 
-export function PasswordInput({ id, name, required, minLength, placeholder, style }: Props) {
+export function PasswordInput({ id, name, required, minLength, placeholder, style, className }: Props) {
   const [visible, setVisible] = useState(false)
 
   return (
@@ -23,6 +24,7 @@ export function PasswordInput({ id, name, required, minLength, placeholder, styl
         required={required}
         minLength={minLength}
         placeholder={placeholder}
+        className={className}
         style={{ paddingRight: 44, ...style }}
       />
       <button

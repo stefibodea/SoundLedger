@@ -70,7 +70,7 @@ const contracts = [
   },
   {
     artist: 'om la lună',
-    status: 'NEGOTIATION',
+    status: 'ACTIVE',
     royaltyPercent: 20,
     advance: 5000,
     startDate: '01.07.2025',
@@ -80,7 +80,7 @@ const contracts = [
   },
   {
     artist: 'COJO',
-    status: 'DRAFT',
+    status: 'ACTIVE',
     royaltyPercent: 18,
     advance: null,
     startDate: '01.06.2025',

@@ -234,11 +234,7 @@ export function ContractsClient({ contracts, canManage }: Props) {
               </select>
             </FilterSection>
 
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 20, paddingTop: 14 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: hasActiveFilters ? 8 : 0 }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{filtered.length}</span>
-                {' '}{filtered.length === 1 ? 'contract' : 'contracte'}
-              </div>
+            <div style={{ borderTop: hasActiveFilters ? '1px solid rgba(255,255,255,0.05)' : 'none', marginTop: hasActiveFilters ? 20 : 0, paddingTop: hasActiveFilters ? 14 : 0 }}>
               {hasActiveFilters && (
                 <button type="button" className="btn btn-ghost"
                   style={{ fontSize: 12, padding: '4px 10px', width: '100%' }}

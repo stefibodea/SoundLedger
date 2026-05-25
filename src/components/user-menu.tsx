@@ -10,7 +10,6 @@ const ROLE_GRADIENTS: Record<string, string> = {
   LABEL_MANAGER: 'linear-gradient(135deg, #9B94F0, #6366f1)',
   AR_MANAGER:    'linear-gradient(135deg, #6ee7b7, #10b981)',
   FINANCIAL:     'linear-gradient(135deg, #fde68a, #f59e0b)',
-  ARTIST:        'linear-gradient(135deg, #93c5fd, #3b82f6)',
 }
 
 const ROLE_COLORS: Record<string, { bg: string; text: string; glow: string; border: string }> = {
@@ -18,7 +17,6 @@ const ROLE_COLORS: Record<string, { bg: string; text: string; glow: string; bord
   LABEL_MANAGER: { bg: 'rgba(155,148,240,0.12)', text: '#9B94F0',  glow: 'rgba(155,148,240,0.35)', border: 'rgba(155,148,240,0.3)' },
   AR_MANAGER:    { bg: 'rgba(110,231,183,0.12)', text: '#6ee7b7',  glow: 'rgba(110,231,183,0.35)', border: 'rgba(110,231,183,0.3)' },
   FINANCIAL:     { bg: 'rgba(253,230,138,0.12)', text: '#fde68a',  glow: 'rgba(253,230,138,0.35)', border: 'rgba(253,230,138,0.3)' },
-  ARTIST:        { bg: 'rgba(147,197,253,0.12)', text: '#93c5fd',  glow: 'rgba(147,197,253,0.35)', border: 'rgba(147,197,253,0.3)' },
 }
 
 type Props = {

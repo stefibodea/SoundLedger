@@ -14,9 +14,6 @@ import {
   ShieldCheck,
   Fingerprint,
   Users,
-  User,
-  Music2,
-  DollarSign,
   Building2,
   ChevronLeft,
   ChevronRight,
@@ -37,7 +34,6 @@ import {
 
 type Props = {
   role: string
-  isArtist: boolean
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -121,7 +117,7 @@ function SectionHeader({
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export function SidebarNav({ role, isArtist }: Props) {
+export function SidebarNav({ role }: Props) {
   const pathname   = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
 
@@ -268,14 +264,6 @@ export function SidebarNav({ role, isArtist }: Props) {
           <>
             <SectionHeader label="Platformă" first isCollapsed={isCollapsed} />
             <NavItem href="/admin" icon={Building2} label="Case de discuri" pathname={pathname} isCollapsed={isCollapsed} />
-          </>
-        ) : isArtist ? (
-          <>
-            <NavItem href="/dashboard"   icon={LayoutDashboard} label="Acasă"       pathname={pathname} isCollapsed={isCollapsed} />
-            <NavItem href="/my-profile"  icon={User}            label="Profilul meu"    pathname={pathname} isCollapsed={isCollapsed} />
-            <NavItem href="/my-music"    icon={Music2}          label="Muzica mea"      pathname={pathname} isCollapsed={isCollapsed} />
-            <NavItem href="/my-contract" icon={FileText}        label="Contractul meu"  pathname={pathname} isCollapsed={isCollapsed} />
-            <NavItem href="/my-revenues" icon={DollarSign}      label="Veniturile mele" pathname={pathname} isCollapsed={isCollapsed} />
           </>
         ) : (
           <>

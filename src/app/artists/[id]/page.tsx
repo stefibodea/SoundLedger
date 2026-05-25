@@ -13,11 +13,10 @@ type PageProps = {
 }
 
 const CONTRACT_STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
-  DRAFT:       { bg: 'var(--bg-tertiary)',         color: 'var(--text-secondary)',    label: 'Draft' },
-  ACTIVE:      { bg: 'var(--role-ar-light)',        color: 'var(--role-ar-dark)',      label: 'Activ' },
-  EXPIRING:    { bg: 'var(--role-finance-light)',   color: 'var(--role-finance-dark)', label: 'Expiră curând' },
-  EXPIRED:     { bg: 'var(--role-artist-light)',    color: 'var(--role-artist-dark)',  label: 'Expirat' },
-  NEGOTIATION: { bg: 'var(--role-label-light)',     color: 'var(--role-label-dark)',   label: 'În negociere' },
+  ACTIVE:      { bg: 'rgba(110,231,183,0.12)',     color: '#6ee7b7',                  label: 'Activ' },
+  EXPIRING:    { bg: 'rgba(253,230,138,0.12)',     color: '#fde68a',                  label: 'Expiră curând' },
+  EXPIRED:     { bg: 'rgba(252,165,165,0.12)',     color: '#fca5a5',                  label: 'Expirat' },
+  NEGOTIATION: { bg: 'rgba(96,165,250,0.12)',      color: '#60a5fa',                  label: 'În negociere' },
 }
 
 // ── Icoane platforme ──────────────────────────────────────────────────────────
@@ -332,7 +331,7 @@ export default async function ArtistDetailPage({ params }: PageProps) {
           ) : (
             <div style={{ display: 'grid', gap: 10 }}>
               {artist.contracts.map((contract) => {
-                const s = CONTRACT_STATUS_STYLES[contract.status] ?? CONTRACT_STATUS_STYLES.DRAFT
+                const s = CONTRACT_STATUS_STYLES[contract.status] ?? CONTRACT_STATUS_STYLES.ACTIVE
                 return (
                   <div key={contract.id} style={{ padding: '12px 14px', border: '1px solid var(--border-light)', borderRadius: 10 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>

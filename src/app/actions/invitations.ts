@@ -4,7 +4,6 @@ import bcrypt from 'bcryptjs'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { createSession } from '@/lib/session'
-import { ROLES } from '@/lib/roles'
 
 export async function acceptInvitationAction(token: string, formData: FormData) {
   const firstName = String(formData.get('firstName') || '').trim()
@@ -45,23 +44,6 @@ export async function acceptInvitationAction(token: string, formData: FormData) 
     where: { id: invitation.id },
     data: { acceptedAt: new Date() },
   })
-
-  // Auto-link: daca rolul este ARTIST, cauta un profil de artist cu acelasi email de contact
-  if (invitation.role === ROLES.ARTIST) {
-    const matchedArtist = await prisma.artist.findFirst({
-      where: {
-        labelId: invitation.labelId,
-        contactEmail: invitation.email,
-        userId: null,
-      },
-    })
-    if (matchedArtist) {
-      await prisma.artist.update({
-        where: { id: matchedArtist.id },
-        data: { userId: user.id },
-      })
-    }
-  }
 
   await createSession(user.id, user.role, user.labelId ?? undefined)
   redirect('/dashboard')

@@ -13,7 +13,6 @@ const STATUS_LABELS: Record<string, string> = {
   ACTIVE:      'Activ',
   EXPIRING:    'Expiră curând',
   EXPIRED:     'Expirat',
-  DRAFT:       'Draft',
   NEGOTIATION: 'În negociere',
 }
 
@@ -76,7 +75,7 @@ export default async function ContractDetailPage({
   return (
     <AppShell
       session={session}
-      title={`Contract — ${contract.artist.name}`}
+      title={`Contract ${contract.artist.name}`}
       subtitle={`${STATUS_LABELS[contract.status] ?? contract.status} • ${contract.duration}`}
     >
       <style>{`
@@ -124,21 +123,21 @@ export default async function ContractDetailPage({
 
       {/* ── SECȚIUNEA 1 — HEADER ─────────────────────────────────────────────── */}
       <div className="card" style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
 
           {/* Stânga — artist */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <Avatar name={contract.artist.name} imageUrl={contract.artist.photo} size={64} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+            <Avatar name={contract.artist.name} imageUrl={contract.artist.photo} size={150} />
             <div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+              <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
                 {contract.artist.name}
               </div>
               {contract.artist.realName && (
-                <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
+                <div style={{ fontSize: 15, color: 'var(--text-secondary)', marginTop: 6 }}>
                   {contract.artist.realName}
                 </div>
               )}
-              <div style={{ marginTop: 8 }}>
+              <div style={{ marginTop: 12 }}>
                 <StatusBadge
                   label={STATUS_LABELS[contract.status] ?? contract.status}
                   variant={contractStatusVariant(contract.status)}

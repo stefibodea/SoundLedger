@@ -99,10 +99,6 @@ src/
 │   ├── login/page.tsx
 │   ├── register/page.tsx
 │   ├── onboarding/page.tsx
-│   ├── my-profile/page.tsx           # Vizualizare artist propriu profil
-│   ├── my-music/page.tsx
-│   ├── my-contract/page.tsx
-│   ├── my-revenues/page.tsx
 │   ├── globals.css                   # Design system CSS custom
 │   ├── layout.tsx
 │   └── page.tsx                      # Landing page
@@ -136,13 +132,15 @@ Fișier: `prisma/schema.prisma`. DB locală: `dev.db`. Fără migrări formale �
 ### Modele
 
 **User** — `id, email, password, firstName, lastName, role, labelId, createdAt`
-- `role`: `SUPER_ADMIN | LABEL_MANAGER | AR_MANAGER | FINANCIAL | ARTIST`
+- `role`: `SUPER_ADMIN | LABEL_MANAGER | AR_MANAGER | FINANCIAL`
+- ⚠️ Rolul ARTIST a fost eliminat — artiștii nu au conturi de utilizator
 
 **Label** — `id, name, country, city, genre, logo, plan (FREE_TRIAL|INDIE|PRO|ENTERPRISE), ownerId`
 
 **Invitation** — `id, email, role, token, expiresAt, acceptedAt, labelId, createdById`
 
-**Artist** — `id, name, realName, birthDate, nationality, genre, subgenre, bio, photo, spotifyUrl, appleMusicUrl, youtubeUrl, instagram, tiktok, contactEmail, contactPhone, managerName, managerContact, userId(optional — link cont), labelId`
+**Artist** — `id, name, realName, birthDate, nationality, genre, subgenre, bio, photo, spotifyUrl, appleMusicUrl, youtubeUrl, instagram, tiktok, contactEmail, contactPhone, managerName, managerContact, labelId`
+- ⚠️ Artiștii NU mai au câmpul `userId` — nu se pot lega de un cont de utilizator
 
 **Track** — `id, title, type(SINGLE|ALBUM_TRACK|EP_TRACK), releaseDate(String?), status(UNRELEASED|RELEASED), genre, subgenre, isrc, bpm, key, duration(sec), audioFile, coverArt, lyrics, composers, producers, artistId, labelId, albumId(optional)`
 
@@ -176,20 +174,20 @@ Fișier: `prisma/schema.prisma`. DB locală: `dev.db`. Fără migrări formale �
 
 ## Roluri și permisiuni (`src/lib/roles.ts`)
 
-| Funcție | SUPER_ADMIN | LABEL_MANAGER | AR_MANAGER | FINANCIAL | ARTIST |
-|---|---|---|---|---|---|
-| `canManageArtists` | ✓ | ✓ | ✓ | — | — |
-| `canViewContracts` | ✓ | ✓ | ✓ | ✓ | — |
-| `canManageContracts` | ✓ | ✓ | — | — | — |
-| `canViewFinance` | ✓ | ✓ | — | ✓ | — |
-| `canUseScouting` | ✓ | ✓ | ✓ | — | — |
-| `canViewCatalog` | ✓ | ✓ | ✓ | ✓ | — |
-| `canManageReleases` | ✓ | ✓ | ✓ | — | — |
-| `canManageTeam` | ✓ | ✓ | — | — | — |
-| `canViewCompliance` | ✓ | ✓ | ✓ | — | — |
-| `canManageCompliance` | ✓ | ✓ | — | — | — |
+| Funcție | SUPER_ADMIN | LABEL_MANAGER | AR_MANAGER | FINANCIAL |
+|---|---|---|---|---|
+| `canManageArtists` | ✓ | ✓ | ✓ | — |
+| `canViewContracts` | ✓ | ✓ | — | ✓ |
+| `canManageContracts` | ✓ | ✓ | — | — |
+| `canViewFinance` | ✓ | ✓ | — | ✓ |
+| `canUseScouting` | ✓ | ✓ | ✓ | — |
+| `canViewCatalog` | ✓ | ✓ | ✓ | ✓ |
+| `canManageReleases` | ✓ | ✓ | — | — |
+| `canManageTeam` | ✓ | ✓ | — | — |
+| `canViewCompliance` | ✓ | ✓ | ✓ | ✓ |
+| `canManageCompliance` | ✓ | ✓ | ✓ | — |
 
-Artiștii văd doar: `/my-profile`, `/my-music`, `/my-contract`, `/my-revenues`.
+⚠️ Rolul ARTIST a fost eliminat — artiștii nu mai au acces la platformă.
 
 ## Sesiune și autentificare
 

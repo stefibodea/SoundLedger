@@ -37,13 +37,7 @@ const NAV_LINKS: Record<string, NavLink[]> = {
     { href: '/finance', label: 'Finanțe' },
     { href: '/compliance', label: 'AI Compliance' },
   ],
-  [ROLES.ARTIST]: [
-    { href: '/dashboard', label: 'Acasă' },
-    { href: '/my-music', label: 'Catalog' },
-    { href: '/my-contract', label: 'Contracte' },
-    { href: '/my-revenues', label: 'Finanțe' },
-    { href: '/my-profile', label: 'Profilul meu' },
-  ],
+
 }
 
 function isNavActive(href: string, pathname: string): boolean {

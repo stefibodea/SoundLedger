@@ -234,7 +234,6 @@ export function TeamPageClient({
             >
               <option value={ROLES.AR_MANAGER}>A&R Manager</option>
               <option value={ROLES.FINANCIAL}>Departament Financiar</option>
-              <option value={ROLES.ARTIST}>Artist</option>
             </select>
             <button className="btn btn-primary btn-sm" type="submit" style={{ flexShrink: 0 }}>
               Invită

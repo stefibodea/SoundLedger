@@ -10,14 +10,14 @@ type InvitePageProps = {
 const ROLE_DESCRIPTIONS: Record<string, string> = {
   AR_MANAGER: 'Vei putea gestiona prospecții A&R, evalua artiști noi și urmări pipeline-ul de semnare.',
   FINANCIAL: 'Vei avea acces la venituri, plăți royalty și rapoarte financiare ale label-ului.',
-  ARTIST: 'Vei putea vedea propriul catalog, contracte și situația veniturilor tale.',
+
   LABEL_MANAGER: 'Vei putea administra toate aspectele label-ului: artiști, contracte, finanțe și echipă.',
 }
 
 const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
   AR_MANAGER:    { bg: 'var(--role-ar-light)',      color: 'var(--role-ar-dark)' },
   FINANCIAL:     { bg: 'var(--role-finance-light)',  color: 'var(--role-finance-dark)' },
-  ARTIST:        { bg: 'var(--role-artist-light)',   color: 'var(--role-artist-dark)' },
+
   LABEL_MANAGER: { bg: 'var(--role-label-light)',    color: 'var(--role-label-dark)' },
 }
 

@@ -139,7 +139,7 @@ export const createContractSchema = z.object({
   advance:        optionalPositiveNumber,
   startDate:      z.string().transform((v) => v.trim() || null),
   endDate:        z.string().transform((v) => v.trim() || null),
-  status:         z.string().transform((v) => v.trim() || 'DRAFT'),
+  status:         z.string().transform((v) => v.trim() || 'ACTIVE'),
   signedAt:       z.string().transform((v) => v.trim() || null),
   documentUrl:    z.string().transform((v) => v.trim() || null),
   specialClauses: z.string().transform((v) => v.trim() || null),
@@ -164,12 +164,12 @@ export const createRevenueSchema = z.object({
       .transform(Number),
   ),
   period:      requiredString('Perioada este obligatorie').regex(/^\d{4}-\d{2}$/, 'Formatul perioadei trebuie să fie YYYY-MM'),
-  artistId:    z.string().transform((v) => v.trim() || null),
+  artistId:    requiredString('Artistul este obligatoriu'),
   streams:     z.string().transform((v) => v.trim()).refine(
-    (v) => v === '' || (Number.isInteger(Number(v)) && Number(v) >= 0),
-    'Streamurile trebuie să fie un număr întreg pozitiv',
-  ).transform((v) => (v === '' ? null : Number(v))),
-  description: z.string().transform((v) => v.trim() || null),
+    (v) => v !== '' && Number.isInteger(Number(v)) && Number(v) >= 0,
+    'Streamurile sunt obligatorii și trebuie să fie un număr întreg pozitiv',
+  ).transform(Number),
+  description: requiredString('Descrierea este obligatorie'),
 })
 
 // ── A&R Prospects ──────────────────────────────────────────────────────────────
@@ -233,7 +233,7 @@ export const issueCertificateSchema = z.object({
 
 // ── Echipă / Invitații ─────────────────────────────────────────────────────────
 
-const INVITABLE_ROLES = ['AR_MANAGER', 'FINANCIAL', 'ARTIST']
+const INVITABLE_ROLES = ['AR_MANAGER', 'FINANCIAL']
 
 export const inviteUserSchema = z.object({
   email: z.string().min(1, 'Email-ul este obligatoriu').email({ message: 'Format email invalid' }),

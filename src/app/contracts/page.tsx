@@ -27,7 +27,6 @@ export default async function ContractsPage({
 
   const activeCount      = rawContracts.filter((c) => c.status === 'ACTIVE').length
   const expiringCount    = rawContracts.filter((c) => c.status === 'EXPIRING').length
-  const draftCount       = rawContracts.filter((c) => c.status === 'DRAFT').length
   const negotiationCount = rawContracts.filter((c) => c.status === 'NEGOTIATION').length
 
   const contracts: ContractRow[] = rawContracts.map((c) => ({
@@ -62,10 +61,10 @@ export default async function ContractsPage({
       />
 
       <KpiVinylSidebar kpis={[
-        { value: activeCount,      label: 'Active',    accentColor: 'green' },
-        { value: expiringCount,    label: 'Expiră',    accentColor: expiringCount > 0 ? 'yellow' : 'gray' },
-        { value: draftCount,       label: 'Draft',     accentColor: 'blue' },
-        { value: negotiationCount, label: 'Negociere', accentColor: 'purple' },
+        { value: rawContracts.length, label: 'Total',       accentColor: 'cyan' },
+        { value: activeCount,         label: 'Active',      accentColor: 'green' },
+        { value: expiringCount,       label: 'Expiră',      accentColor: expiringCount > 0 ? 'yellow' : 'gray' },
+        { value: negotiationCount,    label: 'Negociere',   accentColor: 'purple' },
       ]} />
 
     </AppShell>

@@ -20,7 +20,6 @@ const ROLE_LABELS: Record<string, string> = {
   LABEL_MANAGER: 'Label Manager',
   AR_MANAGER:    'A&R Manager',
   FINANCIAL:     'Finanțe',
-  ARTIST:        'Artist',
 }
 
 type Props = {
