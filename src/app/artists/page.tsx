@@ -49,8 +49,13 @@ export default async function ArtistsPage({
     }),
   ])
 
-  const totalArtists   = rawArtists.length
+  const totalArtists    = rawArtists.length
   const withoutContract = totalArtists - withContract
+
+  const GENRES = ['Rock', 'Indie', 'Electronic', 'Pop'] as const
+  const genreCounts = Object.fromEntries(
+    GENRES.map((g) => [g, rawArtists.filter((a) => a.genre === g).length])
+  ) as Record<typeof GENRES[number], number>
 
   // Genuri unice pentru dropdown de filtru
   const genreOptions = [...new Set(rawArtists.map((a) => a.genre))].sort((a, b) =>
@@ -91,6 +96,7 @@ export default async function ArtistsPage({
         withContract={withContract}
         addedThisMonth={addedThisMonth}
         withoutContract={withoutContract}
+        genreCounts={genreCounts}
         canManage={canManage}
       />
 

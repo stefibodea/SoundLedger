@@ -1,9 +1,8 @@
 ﻿'use client'
 
-import { useState, useMemo, type ReactNode } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Search, Music2, ArrowUpDown } from 'lucide-react'
-import { Avatar } from '@/components/ui/Avatar'
+import { Search } from 'lucide-react'
 import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
 import { EmptyState } from '@/components/ui/EmptyState'
 
@@ -30,20 +29,15 @@ type Props = {
   withContract: number
   addedThisMonth: number
   withoutContract: number
+  genreCounts: Record<string, number>
   canManage?: boolean
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
-
 function initials(name: string) {
   return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
 }
-
-const ALPHABET = ['Toți','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
 
 // ── FilterSection collapsible ─────────────────────────────────────────────────
 
@@ -59,6 +53,144 @@ function FilterLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
+// ── ArtistCard ────────────────────────────────────────────────────────────────
+
+const GENRE_COLOR: Record<string, string> = {
+  'Rock':       '#fca5a5',
+  'Indie':      '#9B94F0',
+  'Electronic': '#93c5fd',
+  'Pop':        '#6ee7b7',
+}
+
+function ArtistCard({ artist }: { artist: ArtistRow }) {
+  const [hovered, setHovered] = useState(false)
+  const ini       = initials(artist.name)
+  const barColor  = GENRE_COLOR[artist.genre] ?? 'rgba(155,148,240,0.55)'
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: 'rgba(15,15,20,0.65)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        border: `1px solid ${hovered ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.05)'}`,
+        borderRadius: 14,
+        overflow: 'hidden',
+        transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
+        transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
+        boxShadow: hovered
+          ? '0 16px 48px rgba(0,0,0,0.45), 0 0 28px rgba(155,148,240,0.18)'
+          : '0 4px 16px rgba(0,0,0,0.25)',
+      }}
+    >
+      {/* Portrait */}
+      <div style={{ position: 'relative', aspectRatio: '3/4', overflow: 'hidden' }}>
+        {artist.photo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={artist.photo}
+            alt={artist.name}
+            style={{
+              position: 'absolute', inset: 0, width: '100%', height: '100%',
+              objectFit: 'cover',
+              filter: hovered ? 'saturate(1) brightness(1)' : 'saturate(0.85) brightness(0.92)',
+              transition: 'transform 0.4s ease, filter 0.3s ease',
+              transform: hovered ? 'scale(1.07)' : 'scale(1)',
+            }}
+          />
+        ) : (
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(145deg, #111828, #0a1525)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <span style={{
+              fontSize: '2rem', fontWeight: 700,
+              color: 'rgba(155,148,240,0.6)',
+              opacity: hovered ? 0.9 : 0.5,
+              transition: 'opacity 0.25s ease',
+            }}>
+              {ini}
+            </span>
+          </div>
+        )}
+
+        {/* Hover overlay cu buton */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'rgba(0,0,0,0.50)',
+          backdropFilter: hovered ? 'blur(3px)' : 'none',
+          WebkitBackdropFilter: hovered ? 'blur(3px)' : 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          opacity: hovered ? 1 : 0,
+          transition: 'opacity 0.25s ease',
+          pointerEvents: hovered ? 'auto' : 'none',
+        }}>
+          <Link
+            href={`/artists/${artist.id}`}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'rgba(155,148,240,0.18)',
+              border: '1px solid rgba(155,148,240,0.5)',
+              borderRadius: 8,
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              padding: '8px 20px',
+              textDecoration: 'none',
+              backdropFilter: 'blur(4px)',
+              letterSpacing: '0.02em',
+              transition: 'background 0.15s ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(155,148,240,0.32)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(155,148,240,0.18)' }}
+          >
+            Vezi detalii
+          </Link>
+        </div>
+
+        {/* Bottom bar — culoarea genului */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 3,
+          background: barColor,
+          opacity: hovered ? 1 : 0.5,
+          transition: 'opacity 0.25s ease',
+        }} />
+      </div>
+
+      {/* Info */}
+      <Link href={`/artists/${artist.id}`} style={{ textDecoration: 'none', display: 'block', padding: '12px 14px 14px' }}>
+        <div style={{
+          fontWeight: 600, fontSize: 14, color: '#f0efe8',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          marginBottom: 7, letterSpacing: '-0.01em',
+        }}>
+          {artist.name}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+          <span style={{
+            display: 'inline-block',
+            background: `${barColor}22`,
+            color: barColor,
+            border: `1px solid ${barColor}55`,
+            fontSize: 11, fontWeight: 600,
+            padding: '3px 10px', borderRadius: 20,
+            letterSpacing: '0.02em',
+            maxWidth: '70%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {artist.genre}
+          </span>
+          <span style={{ fontSize: 11, color: 'rgba(200,198,188,0.40)', flexShrink: 0 }}>
+            {artist._count.tracks} piese
+          </span>
+        </div>
+      </Link>
+    </div>
+  )
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function ArtistsClient({
@@ -68,24 +200,18 @@ export function ArtistsClient({
   withContract,
   addedThisMonth,
   withoutContract,
+  genreCounts,
   canManage = true,
 }: Props) {
   const [search,       setSearch]       = useState('')
   const [genreFilter,  setGenreFilter]  = useState('')
   const [sortBy,       setSortBy]       = useState<SortOption>('name')
-  const [letterFilter, setLetterFilter] = useState('all')
-
-  const availableLetters = useMemo(
-    () => new Set(artists.map((a) => a.name[0]?.toUpperCase() ?? '')),
-    [artists],
-  )
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
     let result = artists.filter((a) => {
       if (q && !a.name.toLowerCase().includes(q) && !(a.realName?.toLowerCase().includes(q) ?? false)) return false
       if (genreFilter && a.genre !== genreFilter) return false
-      if (letterFilter !== 'all' && a.name[0]?.toUpperCase() !== letterFilter) return false
       return true
     })
     result = [...result].sort((a, b) => {
@@ -95,92 +221,40 @@ export function ArtistsClient({
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     })
     return result
-  }, [artists, search, genreFilter, letterFilter, sortBy])
+  }, [artists, search, genreFilter, sortBy])
 
-  const hasActiveFilters = Boolean(search || genreFilter || letterFilter !== 'all')
-  const resetFilters = () => { setSearch(''); setGenreFilter(''); setLetterFilter('all') }
+  const hasActiveFilters = Boolean(search || genreFilter)
+  const resetFilters = () => { setSearch(''); setGenreFilter('') }
 
   return (
     <>
       <style>{`
         .filter-search-input {
-          display: block; width: 100%; height: 40px; border-radius: 20px;
-          border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05);
-          color: var(--text-primary); font-size: 13px;
-          padding: 0 36px 0 40px; outline: none; font-family: inherit;
+          display: block; width: 100%; height: 36px; border-radius: 8px;
+          border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.05);
+          color: #f0efe8; font-size: 13px;
+          padding: 0 12px 0 38px; outline: none; font-family: inherit;
           transition: border-color 0.2s ease, box-shadow 0.2s ease; box-sizing: border-box;
         }
         .filter-search-input:focus {
-          border-color: rgba(155,148,240,0.5); box-shadow: 0 0 0 3px rgba(155,148,240,0.10);
+          border-color: rgba(155,148,240,0.45); box-shadow: 0 0 0 3px rgba(155,148,240,0.10);
         }
-        .filter-search-input::placeholder { color: rgba(200,198,188,0.5); }
-        .artist-card {
-          border-radius: 12px; overflow: hidden;
-          background: var(--bg-secondary); border: 1px solid var(--border-light);
-          cursor: pointer; text-decoration: none; display: block;
-          transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-          animation: fadeInUp 0.3s ease forwards; opacity: 0;
+        .filter-search-input::placeholder { color: rgba(200,198,188,0.4); }
+
+        /* ── Genre chips ── */
+        .genre-chip {
+          padding: 4px 10px; border-radius: 6px; font-size: 11px;
+          cursor: pointer; font-family: inherit;
+          transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.05);
+          color: #d4d2c8; font-weight: 400;
         }
-        .artist-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 40px rgba(155,148,240,0.18);
-          border-color: rgba(155,148,240,0.35);
+        .genre-chip:hover { background: rgba(255,255,255,0.09); color: #f0efe8; }
+        .genre-chip.active {
+          background: rgba(155,148,240,0.18); border-color: rgba(155,148,240,0.45);
+          color: #9B94F0; font-weight: 600;
         }
-        .artist-photo-overlay {
-          position: absolute; inset: 0;
-          background: linear-gradient(135deg, rgba(155,148,240,0.18) 0%, rgba(56,189,248,0.14) 100%);
-          opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 1;
-        }
-        .artist-card:hover .artist-photo-overlay { opacity: 1; }
-        .artist-photo-img { filter: saturate(0.8) brightness(0.9); transition: filter 0.3s ease; }
-        .artist-card:hover .artist-photo-img { filter: saturate(1) brightness(1); }
-        .az-letter {
-          width: 32px; height: 32px; border-radius: 6px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 12px; font-weight: 500; cursor: pointer;
-          transition: all 0.15s ease; border: 1px solid transparent;
-          background: transparent; color: var(--text-primary);
-        }
-        .az-letter:hover:not(:disabled) { background: rgba(255,255,255,0.05); color: var(--text-primary); }
-        .az-letter.active {
-          background: transparent; color: #9B94F0; border-color: #9B94F0; border-radius: 50%;
-          box-shadow: 0 0 0 1px rgba(155,148,240,0.45), 0 0 10px rgba(155,148,240,0.22); font-weight: 700;
-        }
-        .az-letter:disabled { opacity: 0.2; cursor: default; }
-        .artists-search {
-          display: flex; align-items: center; gap: 8px;
-          background: rgba(255,255,255,0.04); border: 1px solid var(--border-light);
-          border-radius: 8px; padding: 0 10px; height: 36px;
-          transition: border-color 0.2s ease, box-shadow 0.2s ease; width: 100%;
-        }
-        .artists-search:focus-within {
-          border-color: rgba(155,148,240,0.5); box-shadow: 0 0 0 3px rgba(155,148,240,0.10);
-        }
-        .artists-search input {
-          background: transparent; border: none; outline: none;
-          color: var(--text-primary); font-size: 13px; width: 100%;
-        }
-        .artists-search input::placeholder { color: var(--text-tertiary, #6b6a62); }
-        .filter-sort-select {
-          width: 100%; background: rgba(255,255,255,0.04);
-          border: 1px solid var(--border-light); border-radius: 8px;
-          color: var(--text-primary); font-size: 12px;
-          padding: 7px 28px 7px 10px; appearance: none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b6a62'/%3E%3C/svg%3E");
-          background-repeat: no-repeat; background-position: right 8px center;
-          cursor: pointer; outline: none; transition: border-color 0.2s; font-family: inherit;
-        }
-        .filter-sort-select:focus { border-color: rgba(155,148,240,0.4); color: var(--text-primary); }
-        .bare-chip {
-          padding: 5px 8px; border-radius: 4px; border: none;
-          background: transparent; font-size: 13px; font-family: inherit;
-          cursor: pointer; text-align: left; width: 100%;
-          color: var(--text-primary); font-weight: 400;
-          transition: background 0.12s ease, color 0.12s ease;
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .bare-chip:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
-        .bare-chip.active { color: #9B94F0; font-weight: 500; }
       `}</style>
 
       {/* ── Conținut cu filtre poziționate absolut în stânga ─────────────── */}
@@ -223,9 +297,9 @@ export function ArtistsClient({
                   <div style={{ marginBottom: 16 }}>
                     <FilterLabel>Gen muzical</FilterLabel>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                      <button type='button' onClick={() => setGenreFilter('')} style={{ padding: '4px 9px', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', fontWeight: genreFilter === '' ? 600 : 400, background: genreFilter === '' ? 'rgba(155,148,240,0.18)' : 'rgba(255,255,255,0.04)', border: genreFilter === '' ? '1px solid rgba(155,148,240,0.40)' : '1px solid rgba(255,255,255,0.07)', color: genreFilter === '' ? '#9B94F0' : 'var(--text-primary)', transition: 'all 0.15s ease' }}>Toate</button>
+                      <button type='button' onClick={() => setGenreFilter('')} className={`genre-chip${genreFilter === '' ? ' active' : ''}`}>Toate</button>
                       {genreOptions.map((g) => (
-                        <button key={g} type='button' onClick={() => setGenreFilter(g)} style={{ padding: '4px 9px', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', fontWeight: genreFilter === g ? 600 : 400, background: genreFilter === g ? 'rgba(155,148,240,0.18)' : 'rgba(255,255,255,0.04)', border: genreFilter === g ? '1px solid rgba(155,148,240,0.40)' : '1px solid rgba(255,255,255,0.07)', color: genreFilter === g ? '#9B94F0' : 'var(--text-primary)', transition: 'all 0.15s ease' }}>{g}</button>
+                        <button key={g} type='button' onClick={() => setGenreFilter(g)} className={`genre-chip${genreFilter === g ? ' active' : ''}`}>{g}</button>
                       ))}
                     </div>
                   </div>
@@ -246,32 +320,12 @@ export function ArtistsClient({
         </div>
         {/* ── Conținut original neatins ─────────────────────────────────── */}
 
-        {/* Bara A-Z */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, padding: '12px 0', borderBottom: '1px solid var(--border-light)', marginBottom: 16 }}>
-          {ALPHABET.map((letter) => {
-            const key = letter === 'Toți' ? 'all' : letter
-            const isActive = letterFilter === key
-            const hasArtists = letter === 'Toți' || availableLetters.has(letter)
-            return (
-              <button
-                key={letter}
-                type="button"
-                className={`az-letter${isActive ? ' active' : ''}`}
-                disabled={!hasArtists}
-                onClick={() => setLetterFilter(key)}
-              >
-                {letter}
-              </button>
-            )
-          })}
-        </div>
-
         {/* Grid */}
         {filtered.length === 0 ? (
             <div className="card">
               <EmptyState
                 icon=""
-                title={letterFilter !== 'all' ? `Niciun artist cu numele care începe cu '${letterFilter}'` : 'Niciun artist găsit'}
+                title="Niciun artist găsit"
                 description={hasActiveFilters ? 'Niciun artist nu corespunde filtrelor curente.' : 'Nu ai adăugat încă niciun artist.'}
                 action={
                   hasActiveFilters
@@ -281,42 +335,10 @@ export function ArtistsClient({
               />
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14 }}>
-              {filtered.map((a, i) => {
-                const delay = Math.min(i * 0.05, 0.4)
-                return (
-                  <Link key={a.id} href={`/artists/${a.id}`} className="artist-card" style={{ animationDelay: `${delay}s` }}>
-                    <div style={{ position: 'relative', paddingBottom: '133%', background: 'var(--bg-tertiary)' }}>
-                      {a.photo ? (
-                        <img src={a.photo} alt={a.name} className="artist-photo-img"
-                          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                      ) : (
-                        <div style={{
-                          position: 'absolute', inset: 0,
-                          background: 'linear-gradient(135deg, #1e1b35 0%, #2d1b69 50%, #1a1b3a 100%)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          <span style={{ fontSize: '2.5rem', fontWeight: 700, color: 'rgba(155,148,240,0.6)' }}>{initials(a.name)}</span>
-                        </div>
-                      )}
-                      <div className="artist-photo-overlay" />
-                    </div>
-                    <div style={{ padding: '12px 14px' }}>
-                      <div style={{ fontWeight: 600, fontSize: 14, color: '#f0efe8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 4 }}>
-                        {a.name}
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--text-secondary)' }}>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
-                          {a.genre.length > 12 ? a.genre.slice(0, 12) + '…' : a.genre}
-                        </span>
-                        <span style={{ fontSize: 11 }}>
-                          {a._count.tracks} piese
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                )
-              })}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
+              {filtered.map((a) => (
+                <ArtistCard key={a.id} artist={a} />
+              ))}
             </div>
           )
         }
@@ -324,10 +346,10 @@ export function ArtistsClient({
       </div>{/* end relative container */}
 
       <KpiVinylSidebar kpis={[
-        { value: totalArtists,    label: 'Artiști',       accentColor: 'purple' },
-        { value: withContract,    label: 'Cu contract',   accentColor: 'green' },
-        { value: addedThisMonth,  label: 'Luna aceasta',  accentColor: 'blue' },
-        { value: withoutContract, label: 'Fără contract', accentColor: withoutContract > 0 ? 'yellow' : 'gray' },
+        { value: genreCounts['Rock']       ?? 0, label: 'Rock',       accentColor: 'red'    },
+        { value: genreCounts['Indie']      ?? 0, label: 'Indie',      accentColor: 'purple' },
+        { value: genreCounts['Electronic'] ?? 0, label: 'Electronic', accentColor: 'blue'   },
+        { value: genreCounts['Pop']        ?? 0, label: 'Pop',        accentColor: 'green'  },
       ]} />
 
     </>
