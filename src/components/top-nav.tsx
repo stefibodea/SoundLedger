@@ -17,17 +17,18 @@ const NAV_LINKS: Record<string, NavLink[]> = {
     { href: '/catalog', label: 'Catalog' },
     { href: '/releases', label: 'Lansări' },
     { href: '/contracts', label: 'Contracte' },
-    { href: '/finance', label: 'Finanțe' },
+    { href: '/finance', label: 'Venituri' },
     { href: '/ar', label: 'Scouting' },
-    { href: '/compliance', label: 'AI Compliance' },
-    { href: '/team', label: 'Echipă' },
+    { href: '/compliance', label: 'Detectare' },
+    { href: '/team', label: 'Echipa Creativă' },
   ],
   [ROLES.FINANCIAL]: [
     { href: '/dashboard', label: 'Acasă' },
     { href: '/artists', label: 'Artiști' },
     { href: '/catalog', label: 'Catalog' },
     { href: '/contracts', label: 'Contracte' },
-    { href: '/finance', label: 'Finanțe' },
+    { href: '/finance', label: 'Venituri' },
+    { href: '/finance/royalties', label: 'Redevențe' },
   ],
 
 }
@@ -39,6 +40,9 @@ function isNavActive(href: string, pathname: string): boolean {
   if (href === '/ar') {
     return pathname === '/ar' || pathname.startsWith('/ar/')
   }
+  if (href === '/finance') {
+    return pathname === '/finance'
+  }
   return pathname === href || pathname.startsWith(href + '/')
 }
 
@@ -49,9 +53,11 @@ type Props = {
   roleDisplay: string
   email: string
   avatarUrl?: string
+  plan?: string | null
+  planExpiry?: string | null
 }
 
-export function TopNav({ role, initials, displayName, roleDisplay, email, avatarUrl }: Props) {
+export function TopNav({ role, initials, displayName, roleDisplay, email, avatarUrl, plan, planExpiry }: Props) {
   const pathname = usePathname()
   const links = NAV_LINKS[role] ?? []
 
@@ -64,10 +70,10 @@ export function TopNav({ role, initials, displayName, roleDisplay, email, avatar
         right: 0,
         zIndex: 100,
         height: 56,
-        background: 'rgba(35, 33, 43, 0.75)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+        background: 'rgba(16, 14, 30, 0.82)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        borderBottom: '1px solid rgba(155, 148, 240, 0.10)',
         display: 'flex',
         alignItems: 'stretch',
         padding: '0 20px',
@@ -159,6 +165,8 @@ export function TopNav({ role, initials, displayName, roleDisplay, email, avatar
           email={email}
           role={role}
           avatarUrl={avatarUrl}
+          plan={plan}
+          planExpiry={planExpiry}
         />
       </div>
     </header>

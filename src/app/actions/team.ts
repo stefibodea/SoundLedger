@@ -24,20 +24,20 @@ export async function inviteTeamMemberAction(formData: FormData) {
   })
   if (!result.success) {
     const msg = result.error.issues[0]?.message ?? 'Date invalide'
-    redirect(`/team?error=${encodeURIComponent(msg)}`)
+    redirect(`/settings?error=${encodeURIComponent(msg)}`)
   }
   const { email, role } = result.data
 
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) {
-    redirect('/team?error=Email+deja+folosit')
+    redirect('/settings?error=Email+deja+folosit')
   }
 
   const existingInvite = await prisma.invitation.findFirst({
     where: { email, labelId: session.labelId, acceptedAt: null, expiresAt: { gt: new Date() } },
   })
   if (existingInvite) {
-    redirect('/team?error=Exista+deja+o+invitatie+activa+pentru+acest+email')
+    redirect('/settings?error=Exista+deja+o+invitatie+activa+pentru+acest+email')
   }
 
   const token = randomBytes(24).toString('hex')
@@ -62,7 +62,7 @@ export async function inviteTeamMemberAction(formData: FormData) {
   })
 
   const mailStatus = mail.sent ? 'ok' : 'mail_error'
-  redirect(`/team?invite=${invitation.token}&mail=${mailStatus}`)
+  redirect(`/settings?invite=${invitation.token}&mail=${mailStatus}`)
 }
 
 export async function updateMemberAvatarAction(formData: FormData) {
@@ -169,13 +169,13 @@ export async function revokeTeamInvitationAction(formData: FormData) {
   }
 
   const invitationId = String(formData.get('invitationId') || '').trim()
-  if (!invitationId) redirect('/team')
+  if (!invitationId) redirect('/settings')
 
   const invitation = await prisma.invitation.findUnique({ where: { id: invitationId } })
   if (!invitation || invitation.labelId !== session.labelId || invitation.acceptedAt) {
-    redirect('/team?error=Invitatia+nu+poate+fi+revocata')
+    redirect('/settings?error=Invitatia+nu+poate+fi+revocata')
   }
 
   await prisma.invitation.delete({ where: { id: invitationId } })
-  redirect('/team')
+  redirect('/settings')
 }
