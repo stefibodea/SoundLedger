@@ -111,7 +111,7 @@ export default function RegisterPage() {
               className="register-input"
               style={{ width: '100%', boxSizing: 'border-box', padding: '11px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(168,85,247,0.2)', borderRadius: 8, color: '#f0efe8', fontSize: 14, fontFamily: 'inherit', outline: 'none', marginBottom: 12, display: 'block', appearance: 'none', cursor: 'pointer' }}
             >
-              <option value="FREE_TRIAL" style={{ background: '#1e1b35', color: '#f0efe8' }}>Free Trial</option>
+              <option value="FREE_TRIAL" style={{ background: '#1e1b35', color: '#f0efe8' }}>Gratuit</option>
               <option value="PRO" style={{ background: '#1e1b35', color: '#f0efe8' }}>Pro</option>
               <option value="ENTERPRISE" style={{ background: '#1e1b35', color: '#f0efe8' }}>Enterprise</option>
             </select>

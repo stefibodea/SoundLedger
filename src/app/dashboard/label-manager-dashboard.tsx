@@ -45,7 +45,6 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
   const [
     artistsCount,
     tracksCount,
-    contractsActiveCount,
     revenueAgg,
     releasesCount,
     prospectsCount,
@@ -58,7 +57,6 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
   ] = await Promise.all([
     prisma.artist.count({ where: { labelId } }),
     prisma.track.count({ where: { labelId } }),
-    prisma.contract.count({ where: { labelId, status: { in: ['ACTIVE', 'EXPIRING'] } } }),
     prisma.revenue.aggregate({ where: { labelId }, _sum: { amount: true } }),
     prisma.release.count({ where: { labelId, status: { not: 'RELEASED' } } }),
     prisma.aRProspect.count({ where: { labelId, status: { not: 'REJECTED' } } }),
@@ -219,11 +217,11 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
         )}
       </div>
 
-      <KpiVinylSidebar compact kpis={[
+      <KpiVinylSidebar kpis={[
         { value: artistsCount,        label: 'Artiști',    accentColor: 'purple' },
         { value: tracksCount,         label: 'Piese',      accentColor: 'green' },
         { value: revenueTotal >= 1000 ? `${(revenueTotal / 1000).toFixed(1)}k €` : `${revenueTotal.toFixed(0)} €`, label: 'Venituri', accentColor: 'yellow' },
-        { value: contractsActiveCount, label: 'Contracte', accentColor: 'blue' },
+
         ...(canViewCompliance(session.role) ? [{
           value: certifiedCount,
           label: 'Certificate',

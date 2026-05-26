@@ -69,7 +69,7 @@ export default async function ScannerPage({
   return (
     <AppShell
       session={session}
-      title="🔍 Scanner piese suspecte"
+      title="Detectare"
     >
       {error && (
         <div className="card" style={{ borderLeft: '3px solid var(--role-artist-dark)', marginBottom: 20 }}>

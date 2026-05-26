@@ -7,7 +7,7 @@ import { requireSession } from '@/lib/auth-guards'
 import { ROLES } from '@/lib/roles'
 
 const PLAN_LABELS: Record<string, string> = {
-  FREE_TRIAL: 'Free Trial',
+  FREE_TRIAL: 'Gratuit',
   INDIE:      'Indie',
   PRO:        'Pro',
   ENTERPRISE: 'Enterprise',

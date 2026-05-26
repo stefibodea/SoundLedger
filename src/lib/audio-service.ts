@@ -26,7 +26,7 @@ export async function checkAudioServiceHealth(): Promise<{ ok: boolean; version?
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 3000)
   try {
-    const res = await fetch(`${AUDIO_SERVICE_URL}/health`, { signal: controller.signal })
+    const res = await fetch(`${AUDIO_SERVICE_URL}/health`, { signal: controller.signal, cache: 'no-store' })
     clearTimeout(timeout)
     if (!res.ok) return { ok: false, error: `HTTP ${res.status}` }
     const data = await res.json() as { status?: string; librosa_version?: string }

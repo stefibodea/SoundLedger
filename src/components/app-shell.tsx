@@ -11,10 +11,18 @@ type AppShellProps = {
 }
 
 export async function AppShell({ session, title, subtitle, children }: AppShellProps) {
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId },
-    select: { firstName: true, lastName: true, email: true, avatar: true },
-  })
+  const [user, label] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { firstName: true, lastName: true, email: true, avatar: true },
+    }),
+    session.labelId
+      ? prisma.label.findUnique({
+          where: { id: session.labelId },
+          select: { plan: true, planExpiry: true },
+        })
+      : null,
+  ])
 
   const initials = [user?.firstName?.[0], user?.lastName?.[0]]
     .filter(Boolean)
@@ -35,6 +43,8 @@ export async function AppShell({ session, title, subtitle, children }: AppShellP
         roleDisplay={roleDisplay}
         email={email}
         avatarUrl={avatarUrl}
+        plan={label?.plan ?? null}
+        planExpiry={label?.planExpiry ? label.planExpiry.toISOString() : null}
       />
       <div style={{ paddingTop: 56, minHeight: '100vh' }}>
         <main

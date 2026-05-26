@@ -25,7 +25,7 @@ export async function issueOptOutDeclarationAction(formData: FormData) {
   })
 
   if (existing && !existing.isRevoked) {
-    redirect('/settings/opt-out?error=' + encodeURIComponent('Există deja o declarație activă'))
+    redirect('/settings?tab=optout&error=' + encodeURIComponent('Există deja o declarație activă'))
   }
 
   const declarationCode = generateOptOutCode()
@@ -54,7 +54,7 @@ export async function issueOptOutDeclarationAction(formData: FormData) {
     })
   }
 
-  redirect('/settings/opt-out?success=1')
+  redirect('/settings?tab=optout&success=optout_emis')
 }
 
 export async function revokeOptOutDeclarationAction(formData: FormData) {
@@ -68,7 +68,7 @@ export async function revokeOptOutDeclarationAction(formData: FormData) {
     data: { isRevoked: true, revokedAt: new Date(), revokedReason: reason },
   })
 
-  redirect('/settings/opt-out?revoked=1')
+  redirect('/settings?tab=optout&revoked=1')
 }
 
 // ── Creative Record ───────────────────────────────────────────────────────────

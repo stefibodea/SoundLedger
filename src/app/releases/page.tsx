@@ -14,8 +14,6 @@ export default async function ReleasesPage() {
 
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const in30Days = new Date(todayStart)
-  in30Days.setDate(todayStart.getDate() + 30)
 
   const [rawReleases, rawTracks] = await Promise.all([
     prisma.release.findMany({
@@ -35,11 +33,6 @@ export default async function ReleasesPage() {
 
   const totalReleases   = rawReleases.length
   const releasedCount   = rawReleases.filter((r) => r.status === 'RELEASED').length
-  const upcomingCount   = rawReleases.filter((r) =>
-    r.status !== 'RELEASED' &&
-    new Date(r.releaseDate) >= todayStart &&
-    new Date(r.releaseDate) <= in30Days,
-  ).length
   const overdueCount    = rawReleases.filter((r) =>
     r.status !== 'RELEASED' && new Date(r.releaseDate) < todayStart,
   ).length
@@ -67,12 +60,11 @@ export default async function ReleasesPage() {
       {/* ── Client Component: filtre + carduri + modal ─────────────────────── */}
       <ReleasesClient releases={releases} tracks={tracks} />
 
-      <KpiVinylSidebar compact kpis={[
-        { value: totalReleases, label: 'Total',                accentColor: 'purple' },
-        { value: releasedCount, label: 'Lansate',              accentColor: 'green' },
-        { value: upcomingCount, label: 'Următoarele 30 zile',  accentColor: upcomingCount > 0 ? 'yellow' : 'gray' },
-        { value: overdueCount,  label: 'Trecute de termen',    accentColor: overdueCount  > 0 ? 'red'    : 'gray' },
-        { value: planningCount, label: 'Planificate',          accentColor: 'blue' },
+      <KpiVinylSidebar kpis={[
+        { value: totalReleases, label: 'Total',             accentColor: 'purple' },
+        { value: releasedCount, label: 'Lansate',           accentColor: 'green' },
+        { value: overdueCount,  label: 'Trecute de termen', accentColor: overdueCount  > 0 ? 'red' : 'gray' },
+        { value: planningCount, label: 'Planificate',       accentColor: 'blue' },
       ]} />
 
     </AppShell>

@@ -220,10 +220,6 @@ export function ScannerClient({ detections, canManage, canAct, serviceOnline, fi
                 </div>
               </div>
               <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{filtered.length}</span>
-                {' '}{filtered.length === 1 ? 'detecție' : 'detecții'}
-              </div>
             </div>
           </div>
         </div>
@@ -338,13 +334,6 @@ export function ScannerClient({ detections, canManage, canAct, serviceOnline, fi
             >
                Analizează audio cu ML
             </button>
-            {serviceOnline && (
-              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                Sistemul ML va analiza piesa prin Chromaprint (detecție copiere directă) și OpenL3 (similaritate semantică) și o va compara cu catalogul tău de{' '}
-                <strong>{fingerprintCount}</strong>{' '}
-                {fingerprintCount === 1 ? 'piesă cu amprentă calculată' : 'piese cu amprentă calculată'}
-              </span>
-            )}
           </div>
         </form>
       </section>

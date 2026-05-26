@@ -17,6 +17,14 @@ export type RoyaltyRow = {
   revenue: { id: string; source: string; period: string } | null
 }
 
+export type ArtistOption = {
+  id:             string
+  name:           string
+  photo:          string | null
+  contractId:     string
+  royaltyPercent: number
+}
+
 type StatusFilter = 'all' | 'PENDING' | 'PAID' | 'CANCELLED'
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -83,7 +91,47 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
   )
 }
 
-export function RoyaltiesClient({ royalties, canManage }: { royalties: RoyaltyRow[]; canManage: boolean }) {
+const SOURCE_CSV_LABELS: Record<string, string> = {
+  SPOTIFY: 'Spotify', APPLE_MUSIC: 'Apple Music', YOUTUBE_MUSIC: 'YouTube Music',
+  YOUTUBE_CONTENT_ID: 'YouTube Content ID', TIKTOK: 'TikTok', DEEZER: 'Deezer',
+  RADIO_TV: 'Radio & TV', SYNC_LICENSING: 'Sync Licensing', LICENTIERE: 'Licențiere',
+  VANZARI_FIZICE: 'Vânzări fizice', MERCHANDISE: 'Merchandise', ALTE_SURSE: 'Alte surse',
+  STREAMING: 'Spotify', YOUTUBE: 'YouTube', LICENSING: 'Licențiere',
+  PHYSICAL: 'Vânzări fizice', SYNC: 'Sync',
+}
+
+
+function exportCsv(rows: RoyaltyRow[]) {
+  const header = ['Artist', 'Sumă (€)', 'Perioadă', 'Status', 'Venit asociat', 'Plătit la', 'Note']
+  const lines = rows.map((r) => [
+    r.artist.name,
+    r.amount.toFixed(2),
+    r.period,
+    r.status === 'PENDING' ? 'În așteptare' : r.status === 'PAID' ? 'Plătit' : 'Anulat',
+    r.revenue ? `${SOURCE_CSV_LABELS[r.revenue.source] ?? r.revenue.source} · ${r.revenue.period}` : '',
+    r.paidAt ? new Date(r.paidAt).toLocaleDateString('ro-RO') : '',
+    r.notes ?? '',
+  ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+
+  const csv  = [header.join(','), ...lines].join('\n')
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href     = url
+  a.download = `redevente-${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+type Props = {
+  royalties:     RoyaltyRow[]
+  canManage:     boolean
+  artistOptions: ArtistOption[]
+  success?:      string
+  error?:        string
+}
+
+export function RoyaltiesClient({ royalties, canManage, artistOptions, success, error }: Props) {
   const [search,       setSearch]       = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [periodFilter, setPeriodFilter] = useState('')
@@ -192,69 +240,101 @@ export function RoyaltiesClient({ royalties, canManage }: { royalties: RoyaltyRo
   ]
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 20, alignItems: 'start' }}>
-      {/* Filtre stânga */}
-      <aside>
-        <div className="card" style={{ padding: '16px 14px' }}>
-          <div className="form-group" style={{ marginBottom: 16 }}>
-            <label className="form-label" style={{ fontSize: 11 }}>Caută artist</label>
-            <input
-              className="form-input"
-              style={{ fontSize: 13 }}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Nume artist..."
-            />
-          </div>
+    <>
+    {(success || error) && (
+      <div style={{
+        marginBottom: 16, padding: '10px 16px', borderRadius: 8, fontSize: 14,
+        background: success ? 'rgba(74,222,128,0.08)' : 'rgba(252,165,165,0.08)',
+        border: `1px solid ${success ? 'rgba(74,222,128,0.25)' : 'rgba(252,165,165,0.25)'}`,
+        color: success ? '#4ade80' : '#fca5a5',
+      }}>
+        {success ? 'Plata a fost înregistrată cu succes.' : decodeURIComponent(error ?? '')}
+      </div>
+    )}
 
-          <div style={{ marginBottom: 16 }}>
-            <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, marginTop: 0 }}>
-              Status
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              {STATUS_CHIPS.map((chip) => (
-                <FilterChip
-                  key={chip.value}
-                  label={chip.label}
-                  active={statusFilter === chip.value}
-                  onClick={() => setStatusFilter(chip.value)}
-                />
-              ))}
+    <div style={{ position: 'relative' }}>
+      {/* ── Filtre — în stânga conținutului ── */}
+      <div style={{ position: 'absolute', right: 'calc(100% + 20px)', top: 0, width: 220, height: '100%' }}>
+        <div style={{ position: 'sticky', top: 80 }}>
+          <div style={{
+            background: 'rgba(16,14,28,0.72)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(155,148,240,0.10)',
+            borderRadius: 14,
+            padding: '18px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0,
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(155,148,240,0.65)' }}>Filtrează</span>
+              {hasFilters && (
+                <button type="button" onClick={() => { setSearch(''); setStatusFilter('all'); setPeriodFilter('') }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: 'rgba(155,148,240,0.55)', fontFamily: 'inherit', padding: '2px 4px', borderRadius: 4 }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = '#9B94F0' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(155,148,240,0.55)' }}>
+                  Resetează
+                </button>
+              )}
             </div>
-          </div>
 
-          <div className="form-group" style={{ marginBottom: 16 }}>
-            <label className="form-label" style={{ fontSize: 11 }}>Perioadă (YYYY-MM)</label>
-            <input
-              className="form-input"
-              style={{ fontSize: 13 }}
-              value={periodFilter}
-              onChange={(e) => setPeriodFilter(e.target.value)}
-              placeholder="ex: 2026-03"
-            />
-          </div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.40)', marginBottom: 8 }}>Caută artist</div>
+              <input
+                className="form-input"
+                style={{ fontSize: 13 }}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Nume artist..."
+              />
+            </div>
 
-          {hasFilters && (
+            <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
+
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.40)', marginBottom: 8 }}>Status</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {STATUS_CHIPS.map((chip) => (
+                  <FilterChip
+                    key={chip.value}
+                    label={chip.label}
+                    active={statusFilter === chip.value}
+                    onClick={() => setStatusFilter(chip.value)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
+
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.40)', marginBottom: 8 }}>Perioadă</div>
+              <input
+                className="form-input"
+                style={{ fontSize: 13 }}
+                value={periodFilter}
+                onChange={(e) => setPeriodFilter(e.target.value)}
+                placeholder="YYYY-MM"
+              />
+            </div>
+
+            <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '16px -16px 16px' }} />
+
             <button
               type="button"
-              className="btn btn-ghost"
-              style={{ width: '100%', fontSize: 12 }}
-              onClick={() => { setSearch(''); setStatusFilter('all'); setPeriodFilter('') }}
+              onClick={() => exportCsv(filtered)}
+              className="btn btn-secondary"
+              style={{ width: '100%', fontSize: 12, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap', boxSizing: 'border-box', padding: '0 12px' }}
             >
-              × Resetează filtre
+              ↓ Exportă raport{hasFilters ? ' (filtrat)' : ''}
             </button>
-          )}
+          </div>
         </div>
-      </aside>
+      </div>
 
-      {/* Tabel dreapta */}
+      {/* ── Tabel ── */}
       <section className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 style={{ margin: 0 }}>Plăți royalties</h3>
-          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            {filtered.length} {filtered.length === 1 ? 'plată' : 'plăți'}
-          </span>
-        </div>
         <DataTable
           data={filtered}
           columns={columns}
@@ -270,5 +350,7 @@ export function RoyaltiesClient({ royalties, canManage }: { royalties: RoyaltyRo
         />
       </section>
     </div>
+
+    </>
   )
 }

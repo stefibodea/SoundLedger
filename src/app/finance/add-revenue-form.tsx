@@ -169,21 +169,8 @@ export function AddRevenueForm({ artists, createRevenueAction }: AddRevenueFormP
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        style={{
-          background: 'linear-gradient(135deg, #9B94F0 0%, #38bdf8 100%)',
-          color: 'white',
-          border: 'none',
-          padding: '8px 18px',
-          borderRadius: 8,
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: 'pointer',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          transition: 'opacity 0.2s ease',
-          whiteSpace: 'nowrap',
-        }}
+        className="btn btn-primary"
+        style={{ fontSize: 13, height: 36, padding: '0 16px', whiteSpace: 'nowrap', boxSizing: 'border-box' }}
       >
         + Adaugă venit
       </button>

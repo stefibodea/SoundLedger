@@ -2,8 +2,21 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { User, LogOut, Building2, CreditCard, ShieldOff } from 'lucide-react'
+import { UserRound, LogOut, Zap } from 'lucide-react'
 import { logoutAction } from '@/app/actions/auth'
+
+const PLAN_LABELS: Record<string, string> = {
+  FREE_TRIAL: 'Gratuit',
+  INDIE:      'Indie',
+  PRO:        'Pro',
+  ENTERPRISE: 'Enterprise',
+}
+const PLAN_COLORS: Record<string, string> = {
+  FREE_TRIAL: 'var(--text-secondary)',
+  INDIE:      '#60a5fa',
+  PRO:        '#9B94F0',
+  ENTERPRISE: '#fde68a',
+}
 
 const ROLE_GRADIENTS: Record<string, string> = {
   SUPER_ADMIN:   'linear-gradient(135deg, #fca5a5, #e85d5d)',
@@ -24,45 +37,14 @@ type Props = {
   email: string
   role: string
   avatarUrl?: string
+  plan?: string | null
+  planExpiry?: string | null
 }
 
-type NavItemProps = {
-  href: string
-  icon: React.ReactNode
-  label: string
-  onClick: () => void
-}
-
-function NavItem({ href, icon, label, onClick }: NavItemProps) {
-  const [hovered, setHovered] = useState(false)
-  return (
-    <Link
-      href={href}
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        padding: '12px 20px',
-        cursor: 'pointer',
-        textDecoration: 'none',
-        color: hovered ? 'var(--text-primary)' : 'var(--text-secondary)',
-        fontSize: 14,
-        background: hovered ? 'rgba(255,255,255,0.05)' : 'transparent',
-        transition: 'background 0.15s ease, color 0.15s ease',
-      }}
-    >
-      {icon}
-      {label}
-    </Link>
-  )
-}
-
-export function UserMenu({ initials, displayName, roleDisplay, email, role, avatarUrl }: Props) {
+export function UserMenu({ initials, displayName, roleDisplay, email, role, avatarUrl, plan, planExpiry }: Props) {
   const [isOpen, setIsOpen] = useState(false)
   const [logoutHover, setLogoutHover] = useState(false)
+  const [settingsHover, setSettingsHover] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   const gradient = ROLE_GRADIENTS[role] ?? ROLE_GRADIENTS.LABEL_MANAGER
@@ -255,16 +237,80 @@ export function UserMenu({ initials, displayName, roleDisplay, email, role, avat
         </div>
 
         {/* ── Nav items ── */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
-          <NavItem href="/profile" icon={<User size={18} />} label="Profilul meu" onClick={close} />
-          {(role === 'SUPER_ADMIN' || role === 'LABEL_MANAGER') && (
-            <>
-              <NavItem href="/settings/label"   icon={<Building2  size={18} />} label="Informații label"      onClick={close} />
-              <NavItem href="/settings/plan"    icon={<CreditCard size={18} />} label="Plan abonament"         onClick={close} />
-              <NavItem href="/settings/opt-out" icon={<ShieldOff  size={18} />} label="Declarație Opt-Out AI" onClick={close} />
-            </>
+        <div style={{ padding: '8px 0 16px' }}>
+          <Link
+            href="/settings"
+            onClick={close}
+            onMouseEnter={() => setSettingsHover(true)}
+            onMouseLeave={() => setSettingsHover(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '12px 20px',
+              cursor: 'pointer',
+              textDecoration: 'none',
+              color: settingsHover ? 'var(--text-primary)' : 'var(--text-secondary)',
+              fontSize: 14,
+              background: settingsHover ? 'rgba(255,255,255,0.05)' : 'transparent',
+              transition: 'background 0.15s ease, color 0.15s ease',
+            }}
+          >
+            <UserRound size={18} />
+            Profilul meu
+          </Link>
+
+          {/* ── Plan card ── */}
+          {plan && (
+            <div style={{ padding: '0 16px', marginTop: 8 }}>
+              <Link
+                href="/settings?tab=abonament"
+                onClick={close}
+                style={{ textDecoration: 'none' }}
+              >
+                <div style={{
+                  borderRadius: 10,
+                  background: 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${PLAN_COLORS[plan] ?? 'rgba(255,255,255,0.08)'}26`,
+                  padding: '12px 14px',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s ease',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                      Plan activ
+                    </span>
+                    <span style={{
+                      fontSize: 11, fontWeight: 700,
+                      color: PLAN_COLORS[plan] ?? 'var(--text-secondary)',
+                      background: `${PLAN_COLORS[plan] ?? '#fff'}18`,
+                      border: `1px solid ${PLAN_COLORS[plan] ?? '#fff'}30`,
+                      padding: '1px 8px', borderRadius: 999,
+                    }}>
+                      {PLAN_LABELS[plan] ?? plan}
+                    </span>
+                  </div>
+                  {planExpiry && (
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                      Expiră{' '}
+                      <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                        {new Date(planExpiry).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </span>
+                    </div>
+                  )}
+                  {(plan === 'FREE_TRIAL' || plan === 'INDIE') && (
+                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#9B94F0' }}>
+                      <Zap size={11} />
+                      Upgrade plan
+                    </div>
+                  )}
+                </div>
+              </Link>
+            </div>
           )}
         </div>
+
+        <div style={{ flex: 1 }} />
 
         {/* ── Logout ── */}
         <div style={{

@@ -10,7 +10,7 @@ import { SuspendLabelSection } from './SuspendLabelSection'
 import { DeleteLabelSection } from './DeleteLabelSection'
 
 const PLAN_LABELS: Record<string, string> = {
-  FREE_TRIAL: 'Free Trial',
+  FREE_TRIAL: 'Gratuit',
   INDIE:      'Indie',
   PRO:        'Pro',
   ENTERPRISE: 'Enterprise',

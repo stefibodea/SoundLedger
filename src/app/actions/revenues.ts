@@ -195,6 +195,43 @@ export async function cancelRoyaltyAction(formData: FormData) {
   revalidatePath('/finance')
 }
 
+export async function createRoyaltyPaymentAction(formData: FormData) {
+  const session = await requireSession()
+  if (!session.labelId || !canManageFinance(session.role)) redirect('/finance/royalties')
+
+  const artistId  = String(formData.get('artistId')  || '').trim()
+  const contractId = String(formData.get('contractId') || '').trim()
+  const amount    = parseFloat(String(formData.get('amount') || '0'))
+  const period    = String(formData.get('period')    || '').trim()
+  const notes     = String(formData.get('notes')     || '').trim() || null
+
+  if (!artistId || !contractId || !period || isNaN(amount) || amount <= 0) {
+    redirect('/finance/royalties?error=' + encodeURIComponent('Completează toate câmpurile obligatorii'))
+  }
+
+  const [artist, contract] = await Promise.all([
+    prisma.artist.findUnique({ where: { id: artistId, labelId: session.labelId } }),
+    prisma.contract.findUnique({ where: { id: contractId, labelId: session.labelId } }),
+  ])
+  if (!artist || !contract) redirect('/finance/royalties?error=' + encodeURIComponent('Artist sau contract invalid'))
+
+  await prisma.royaltyPayment.create({
+    data: {
+      amount,
+      period,
+      status:     'PENDING',
+      notes,
+      artistId,
+      contractId,
+      labelId:    session.labelId,
+    },
+  })
+
+  revalidatePath('/finance/royalties')
+  revalidatePath('/finance')
+  redirect('/finance/royalties?success=1')
+}
+
 // ── CSV Importer Helper ──────────────────────────────────────────────────────────
 
 function parseCsvLine(line: string): string[] {

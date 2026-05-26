@@ -91,7 +91,7 @@ export default function LandingPage() {
         <p className={styles.sectionSubtitle}>Alege planul potrivit pentru dimensiunea casei tale de discuri</p>
         <div className={styles.pricingGrid}>
           {[
-            { name: 'Free Trial', price: '0€', period: '30 zile', features: ['Max 3 artiști', 'Max 20 piese', 'Dashboard de bază', 'Fără AI insights'], highlight: false },
+            { name: 'Gratuit', price: '0€', period: '30 zile', features: ['Max 3 artiști', 'Max 20 piese', 'Dashboard de bază', 'Fără AI insights'], highlight: false },
             { name: 'Pro', price: '30€', period: '/ lună', features: ['Max 50 artiști', 'Piese nelimitate', 'A&R Scouting', 'AI complet', 'Suport prioritar'], highlight: true },
             { name: 'Enterprise', price: '70€', period: '/ lună', features: ['Artiști nelimitați', 'Piese nelimitate', 'Toate funcționalitățile', 'Suport dedicat', 'API access'], highlight: false },
           ].map((p, i) => (
@@ -108,7 +108,7 @@ export default function LandingPage() {
                 ))}
               </ul>
               <Link href="/register" className={`btn ${p.highlight ? 'btn-primary' : 'btn-secondary'}`} style={{ width: '100%' }}>
-                {p.name === 'Free Trial' ? 'Începe gratuit' : 'Alege planul'}
+                {p.name === 'Gratuit' ? 'Începe gratuit' : 'Alege planul'}
               </Link>
             </div>
           ))}

@@ -8,8 +8,8 @@ export type AppRole = (typeof ROLES)[keyof typeof ROLES]
 
 export const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: 'Super Admin',
-  LABEL_MANAGER: 'Label Manager',
-  FINANCIAL: 'Finanțe & Drepturi',
+  LABEL_MANAGER: 'Director General',
+  FINANCIAL: 'Manager Financiar',
 }
 
 export function getRoleDisplayName(role: string): string {

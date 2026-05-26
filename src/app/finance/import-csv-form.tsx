@@ -25,7 +25,7 @@ export function ImportCsvForm() {
         <button
           type="button"
           className="btn btn-secondary"
-          style={{ fontSize: 13 }}
+          style={{ fontSize: 13, height: 36, padding: '0 16px', boxSizing: 'border-box' }}
           onClick={() => inputRef.current?.click()}
         >
           ↑ Import CSV

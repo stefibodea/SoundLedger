@@ -2,6 +2,10 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { SessionPayload } from '@/lib/session'
 import { AppShell } from '@/components/app-shell'
+import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
+import { RevenueCharts } from '@/components/revenue-charts'
+import { AiReportPanel } from '@/app/finance/ai-report-panel'
+import { generateFinanceReportAction } from '@/app/actions/ai'
 
 function getCurrentPeriod(): string {
   const d = new Date()
@@ -35,13 +39,17 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
   const today = getTodayStr()
 
   const [
+    currentUser,
     totalRevenueAgg,
     thisMonthAgg,
     pendingRoyaltiesAgg,
     pendingDetectionsCount,
     expiringContracts,
     topArtistsRevenue,
+    allRevenues,
+    latestAiReport,
   ] = await Promise.all([
+    prisma.user.findUnique({ where: { id: session.userId }, select: { firstName: true } }),
     prisma.revenue.aggregate({ where: { labelId }, _sum: { amount: true } }),
     prisma.revenue.aggregate({ where: { labelId, period: currentPeriod }, _sum: { amount: true } }),
     prisma.royaltyPayment.aggregate({ where: { labelId, status: 'PENDING' }, _sum: { amount: true } }),
@@ -62,6 +70,15 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
       _sum: { amount: true },
       orderBy: { _sum: { amount: 'desc' } },
       take: 3,
+    }),
+    prisma.revenue.findMany({
+      where: { labelId },
+      select: { period: true, source: true, amount: true },
+      orderBy: { period: 'asc' },
+    }),
+    prisma.notification.findFirst({
+      where: { userId: session.userId, type: 'AI_FINANCE' },
+      orderBy: { createdAt: 'desc' },
     }),
   ])
 
@@ -85,65 +102,44 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
   const thisMonth = thisMonthAgg._sum.amount ?? 0
   const pendingRoyalties = pendingRoyaltiesAgg._sum.amount ?? 0
 
+  // Chart data
+  const currentYear = new Date().getFullYear().toString()
+  const monthlySourceMap = new Map<string, Map<string, number>>()
+  for (const r of allRevenues) {
+    if (!r.period.startsWith(currentYear)) continue
+    if (!monthlySourceMap.has(r.period)) monthlySourceMap.set(r.period, new Map())
+    const srcMap = monthlySourceMap.get(r.period)!
+    srcMap.set(r.source, (srcMap.get(r.source) ?? 0) + r.amount)
+  }
+  const activeSources = Array.from(new Set(
+    allRevenues.filter((r) => r.period.startsWith(currentYear)).map((r) => r.source)
+  ))
+  const monthlyBySource = Array.from(monthlySourceMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([period, srcMap]) => {
+      const entry: Record<string, number | string> = { period }
+      for (const src of activeSources) entry[src] = srcMap.get(src) ?? 0
+      return entry
+    })
+  const sourceMap = new Map<string, number>()
+  for (const r of allRevenues) {
+    sourceMap.set(r.source, (sourceMap.get(r.source) ?? 0) + r.amount)
+  }
+  const bySource = Array.from(sourceMap.entries())
+    .map(([source, total]) => ({ source, total }))
+    .sort((a, b) => b.total - a.total)
+
   return (
-    <AppShell session={session} title="Acasă">
-
-      {/* ── KPI cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
-
-        <div className="card card-stat">
-          <div>
-            <div className="stat-value" style={{ fontSize: 28, color: totalRevenue > 0 ? 'var(--role-ar-dark)' : undefined }}>
-              {totalRevenue >= 1000
-                ? `${(totalRevenue / 1000).toFixed(1)}k €`
-                : `${totalRevenue.toFixed(0)} €`}
-            </div>
-            <div className="stat-label">Total venituri</div>
-          </div>
+    <AppShell session={session}>
+      <header className="page-header">
+        <div>
+          <h1 className="page-title">Bună, {currentUser?.firstName ?? 'Rebecca'}!</h1>
+          <p className="page-subtitle">Iată situația financiară a labelului.</p>
         </div>
+      </header>
 
-        <div className="card card-stat">
-          <div>
-            <div className="stat-value" style={{ fontSize: 28 }}>
-              {thisMonth >= 1000
-                ? `${(thisMonth / 1000).toFixed(1)}k €`
-                : `${thisMonth.toFixed(0)} €`}
-            </div>
-            <div className="stat-label">Luna aceasta</div>
-          </div>
-        </div>
-
-        <div className="card card-stat">
-          <div>
-            <div className="stat-value" style={{ fontSize: 28, color: pendingRoyalties > 0 ? 'var(--role-finance-dark)' : undefined }}>
-              {pendingRoyalties >= 1000
-                ? `${(pendingRoyalties / 1000).toFixed(1)}k €`
-                : `${pendingRoyalties.toFixed(0)} €`}
-            </div>
-            <div className="stat-label">Royalties neplatite</div>
-          </div>
-        </div>
-
-        <Link href="/compliance" style={{ textDecoration: 'none' }}>
-          <div
-            className="card card-stat"
-            style={{
-              cursor: 'pointer',
-              height: '100%',
-            }}
-          >
-            <div>
-              <div
-                className="stat-value"
-                style={{ fontSize: 32, color: pendingDetectionsCount > 0 ? 'var(--role-artist-dark)' : '#22d3ee' }}
-              >
-                {pendingDetectionsCount}
-              </div>
-              <div className="stat-label">Detecții AI deschise</div>
-            </div>
-          </div>
-        </Link>
-      </div>
+      {/* ── Grafice venituri ── */}
+      <RevenueCharts monthlyBySource={monthlyBySource} activeSources={activeSources} bySource={bySource} />
 
       {/* ── Contracte care expiră + Top artiști ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16, marginBottom: 20 }}>
@@ -232,6 +228,34 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
           )}
         </div>
       </div>
+
+      {/* ── Raport financiar AI ── */}
+      <AiReportPanel latestAiReport={latestAiReport} generateFinanceReportAction={generateFinanceReportAction} />
+
+      <KpiVinylSidebar kpis={[
+        {
+          value: totalRevenue >= 1000 ? `${(totalRevenue / 1000).toFixed(1)}k €` : `${totalRevenue.toFixed(0)} €`,
+          label: 'Venituri totale',
+          accentColor: 'green',
+        },
+        {
+          value: thisMonth >= 1000 ? `${(thisMonth / 1000).toFixed(1)}k €` : `${thisMonth.toFixed(0)} €`,
+          label: 'Luna aceasta',
+          accentColor: 'blue',
+        },
+        {
+          value: pendingRoyalties >= 1000 ? `${(pendingRoyalties / 1000).toFixed(1)}k €` : `${pendingRoyalties.toFixed(0)} €`,
+          label: 'Redevențe',
+          sublabel: 'neachitate',
+          accentColor: 'yellow',
+        },
+        {
+          value: pendingDetectionsCount,
+          label: 'Detecții AI',
+          sublabel: 'deschise',
+          accentColor: pendingDetectionsCount > 0 ? 'red' : 'gray',
+        },
+      ]} />
 
       {/* ── Alert royalties neplatite ── */}
       {pendingRoyalties > 0 && (
