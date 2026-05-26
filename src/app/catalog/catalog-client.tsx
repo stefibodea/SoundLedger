@@ -1,8 +1,8 @@
-'use client'
+﻿'use client'
 
 import { useState, useMemo, useTransition, useRef, useEffect, type ReactNode } from 'react'
 import Link from 'next/link'
-import { Search, Music, Circle, User, Music2, ArrowUpDown, ChevronDown } from 'lucide-react'
+import { Search, Music, Circle, User, Music2, ArrowUpDown } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { DataTable, type Column } from '@/components/ui/DataTable'
@@ -202,22 +202,16 @@ function fmtDuration(seconds: number | null) {
 
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000
 
-// ── FilterSection collapsible ─────────────────────────────────────────────────
+// ── FilterLabel ───────────────────────────────────────────────────────────────
 
-function FilterSection({ label, icon, children }: { label: string; icon: ReactNode; children: ReactNode }) {
-  const [open, setOpen] = useState(true)
+function FilterLabel({ children }: { children: ReactNode }) {
   return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        style={{ display: 'flex', alignItems: 'center', gap: 5, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 8px', marginTop: 20 }}
-      >
-        <span style={{ color: 'rgba(200,198,188,0.40)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>
-        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.50)', flex: 1, textAlign: 'left' }}>{label}</span>
-        <ChevronDown size={12} style={{ color: 'rgba(200,198,188,0.30)', transition: 'transform 0.2s ease', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
-      </button>
-      <div style={{ overflow: 'hidden', maxHeight: open ? 500 : 0, transition: 'max-height 0.2s ease' }}>{children}</div>
+    <div style={{
+      fontSize: 10, fontWeight: 700, letterSpacing: '0.10em',
+      textTransform: 'uppercase', color: 'rgba(200,198,188,0.40)',
+      marginBottom: 10,
+    }}>
+      {children}
     </div>
   )
 }
@@ -494,7 +488,7 @@ export function CatalogClient({ tracks, artists, canWrite, labelName, initialArt
           background: rgba(255,255,255,0.04);
           border: 1px solid rgba(255,255,255,0.08);
           border-radius: 8px;
-          color: var(--text-secondary);
+          color: var(--text-primary);
           font-size: 12px;
           padding: 7px 28px 7px 10px;
           appearance: none;
@@ -521,144 +515,222 @@ export function CatalogClient({ tracks, artists, canWrite, labelName, initialArt
         }
       `}</style>
 
+      {/* ── Header pagină cu titlu + buton ──────────────────────────────── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h1 className="page-title" style={{ margin: 0 }}>Catalog Muzical</h1>
+        {canWrite && (
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            onMouseEnter={() => setAddHover(true)}
+            onMouseLeave={() => setAddHover(false)}
+            style={{
+              padding: '8px 20px', borderRadius: 8, border: 'none',
+              background: 'linear-gradient(135deg, #9B94F0 0%, #38bdf8 100%)',
+              color: 'white', fontWeight: 600, fontSize: 13,
+              cursor: 'pointer', fontFamily: 'inherit',
+              boxShadow: addHover
+                ? '0 0 20px rgba(56,189,248,0.45), 0 0 40px rgba(155,148,240,0.25), 0 4px 12px rgba(0,0,0,0.3)'
+                : '0 0 10px rgba(56,189,248,0.2)',
+              transform: addHover ? 'translateY(-2px)' : 'translateY(0)',
+              transition: 'box-shadow 0.2s ease, transform 0.15s ease',
+            }}
+          >
+            + Adaugă piesă
+          </button>
+        )}
+      </div>
+
       {/* ── Layout: filtre absolute stânga + conținut full-width ───────── */}
       <div style={{ position: 'relative' }}>
 
         {/* ── Filtre: absolute în stânga conținutului ──────────────────── */}
-        <div style={{ position: 'absolute', right: 'calc(100% + 24px)', top: 0, width: 200, height: '100%' }}>
-          <div style={{ position: 'sticky', top: 80, display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <FilterSection label="Caută" icon={<Search size={11} />}>
-              <div data-search-wrap style={{ position: 'relative' }}>
-                <Search size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', pointerEvents: 'none', zIndex: 1 }} />
-                <input
-                  ref={searchRef}
-                  type="text"
-                  placeholder="Titlu sau artist..."
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setShowSugg(true) }}
-                  onFocus={() => { setSearchFocused(true); if (search) setShowSugg(true) }}
-                  onBlur={() => { setSearchFocused(false); setTimeout(() => setShowSugg(false), 150) }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') { if (filteredSugg.length > 0) setSearch(filteredSugg[0]); setShowSugg(false) }
-                    else if (e.key === 'Escape') setShowSugg(false)
-                  }}
-                  className="filter-search-input"
-                  style={{ paddingRight: search ? '36px' : '16px' }}
-                />
-                {search && (
-                  <button type="button" onClick={() => { setSearch(''); setShowSugg(false) }}
-                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 14, padding: 2, lineHeight: 1 }}>
-                    ×
+        <div style={{ position: 'absolute', right: 'calc(100% + 20px)', top: 0, width: 252, height: '100%' }}>
+          <div style={{ position: 'sticky', top: 80 }}>
+
+            {/* Panel glassmorphism */}
+            <div style={{
+              background: 'rgba(16,14,28,0.72)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(155,148,240,0.10)',
+              borderRadius: 14,
+              padding: '18px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 0,
+            }}>
+
+              {/* Panel header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(155,148,240,0.65)' }}>
+                  Filtrează
+                </span>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      fontSize: 10, color: 'rgba(155,148,240,0.55)', fontFamily: 'inherit',
+                      padding: '2px 4px', borderRadius: 4,
+                      transition: 'color 0.15s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#9B94F0' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(155,148,240,0.55)' }}
+                  >
+                    Resetează
                   </button>
                 )}
-                {showSugg && filteredSugg.length > 0 && (
-                  <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200, background: 'var(--bg-primary)', border: '1px solid var(--border-medium)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.35)', overflow: 'hidden' }}>
-                    {filteredSugg.map((s, i) => (
-                      <button key={s} type="button" onMouseDown={() => { setSearch(s); setShowSugg(false) }}
-                        style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--text-primary)', borderBottom: i < filteredSugg.length - 1 ? '1px solid var(--border-light)' : 'none' }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-secondary)' }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-                      > {s}</button>
-                    ))}
-                  </div>
-                )}
               </div>
-            </FilterSection>
 
-            <FilterSection label="Tip piesă" icon={<Music size={11} />}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {([
-                  { value: 'all', label: 'Toate' },
-                  { value: 'SINGLE', label: 'Single' },
-                  { value: 'ALBUM_TRACK', label: 'Album' },
-                  { value: 'EP_TRACK', label: 'EP' },
-                ] as { value: TypeFilter; label: string }[]).map(({ value, label }) => (
-                  <button key={value} type="button" onClick={() => setTypeFilter(value)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 12, cursor: 'pointer', transition: 'all 0.15s ease', fontFamily: 'inherit', background: typeFilter === value ? 'rgba(155,148,240,0.15)' : 'rgba(255,255,255,0.04)', border: typeFilter === value ? '1px solid rgba(155,148,240,0.35)' : '1px solid rgba(255,255,255,0.08)', color: typeFilter === value ? '#9B94F0' : 'rgba(200,198,188,0.60)', fontWeight: typeFilter === value ? 500 : 400 }}>{label}</button>
-                ))}
+              {/* ── Caută ── */}
+              <div style={{ marginBottom: 16 }}>
+                <FilterLabel><Search size={9} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Caută</FilterLabel>
+                <div data-search-wrap style={{ position: 'relative' }}>
+                  <Search size={13} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'rgba(200,198,188,0.4)', pointerEvents: 'none', zIndex: 1 }} />
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    placeholder="Titlu sau artist..."
+                    value={search}
+                    onChange={(e) => { setSearch(e.target.value); setShowSugg(true) }}
+                    onFocus={() => { setSearchFocused(true); if (search) setShowSugg(true) }}
+                    onBlur={() => { setSearchFocused(false); setTimeout(() => setShowSugg(false), 150) }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { if (filteredSugg.length > 0) setSearch(filteredSugg[0]); setShowSugg(false) }
+                      else if (e.key === 'Escape') setShowSugg(false)
+                    }}
+                    className="filter-search-input"
+                    style={{ paddingRight: search ? '32px' : '12px', height: 36 }}
+                  />
+                  {search && (
+                    <button type="button" onClick={() => { setSearch(''); setShowSugg(false) }}
+                      style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 14, padding: 2, lineHeight: 1 }}>
+                      ×
+                    </button>
+                  )}
+                  {showSugg && filteredSugg.length > 0 && (
+                    <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 200, background: 'rgba(16,14,28,0.96)', border: '1px solid rgba(155,148,240,0.15)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', overflow: 'hidden', backdropFilter: 'blur(12px)' }}>
+                      {filteredSugg.map((s, i) => (
+                        <button key={s} type="button" onMouseDown={() => { setSearch(s); setShowSugg(false) }}
+                          style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--text-primary)', borderBottom: i < filteredSugg.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(155,148,240,0.08)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+                        >{s}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </FilterSection>
 
-            <FilterSection label="Status" icon={<Circle size={11} />}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {([
-                  { value: 'all', label: 'Toate' },
-                  { value: 'RELEASED', label: 'Lansat' },
-                  { value: 'UNRELEASED', label: 'Nelansat' },
-                ] as { value: StatusFilter; label: string }[]).map(({ value, label }) => (
-                  <button key={value} type="button" onClick={() => setStatusFilter(value)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 12, cursor: 'pointer', transition: 'all 0.15s ease', fontFamily: 'inherit', background: statusFilter === value ? 'rgba(155,148,240,0.15)' : 'rgba(255,255,255,0.04)', border: statusFilter === value ? '1px solid rgba(155,148,240,0.35)' : '1px solid rgba(255,255,255,0.08)', color: statusFilter === value ? '#9B94F0' : 'rgba(200,198,188,0.60)', fontWeight: statusFilter === value ? 500 : 400 }}>{label}</button>
-                ))}
+              <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
+
+              {/* ── Tip piesă ── */}
+              <div style={{ marginBottom: 16 }}>
+                <FilterLabel><Music size={9} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Tip piesă</FilterLabel>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {([
+                    { value: 'all', label: 'Toate' },
+                    { value: 'SINGLE', label: 'Single' },
+                    { value: 'ALBUM_TRACK', label: 'Album' },
+                    { value: 'EP_TRACK', label: 'EP' },
+                  ] as { value: TypeFilter; label: string }[]).map(({ value, label }) => {
+                    const active = typeFilter === value
+                    return (
+                      <button key={value} type="button" onClick={() => setTypeFilter(value)} style={{
+                        padding: '4px 9px', borderRadius: 6, fontSize: 11, cursor: 'pointer',
+                        fontFamily: 'inherit', fontWeight: active ? 600 : 400,
+                        background: active ? 'rgba(155,148,240,0.18)' : 'rgba(255,255,255,0.04)',
+                        border: active ? '1px solid rgba(155,148,240,0.40)' : '1px solid rgba(255,255,255,0.07)',
+                        color: active ? '#9B94F0' : 'var(--text-primary)',
+                        boxShadow: active ? '0 0 8px rgba(155,148,240,0.15)' : 'none',
+                        transition: 'all 0.15s ease',
+                      }}>
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </FilterSection>
 
-            <FilterSection label="Artist" icon={<User size={11} />}>
-              <select value={artistFilter} onChange={(e) => setArtistFilter(e.target.value)} style={{ width: '100%', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', padding: '8px 28px 8px 12px', fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit', outline: 'none', cursor: 'pointer', appearance: 'none', backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b6a62'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}>
-                <option value="">Toți artiștii</option>
-                {artists.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
-            </FilterSection>
+              <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
 
-            {genreOptions.length > 0 && (
-              <FilterSection label="Gen muzical" icon={<Music2 size={11} />}>
-                <select value={genreFilter} onChange={(e) => setGenreFilter(e.target.value)} style={{ width: '100%', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', padding: '8px 28px 8px 12px', fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit', outline: 'none', cursor: 'pointer', appearance: 'none', backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b6a62'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}>
-                  <option value="">Toate genurile</option>
-                  {genreOptions.map((g) => <option key={g} value={g}>{g}</option>)}
+              {/* ── Status ── */}
+              <div style={{ marginBottom: 16 }}>
+                <FilterLabel><Circle size={9} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Status</FilterLabel>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {([
+                    { value: 'all', label: 'Toate', dot: 'rgba(200,198,188,0.3)' },
+                    { value: 'RELEASED', label: 'Lansat', dot: '#4ade80' },
+                    { value: 'UNRELEASED', label: 'Nelansat', dot: 'rgba(200,198,188,0.3)' },
+                  ] as { value: StatusFilter; label: string; dot: string }[]).map(({ value, label, dot }) => {
+                    const active = statusFilter === value
+                    return (
+                      <button key={value} type="button" onClick={() => setStatusFilter(value)} style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '6px 8px', borderRadius: 8, fontSize: 12, cursor: 'pointer',
+                        fontFamily: 'inherit', fontWeight: active ? 600 : 400,
+                        background: active ? 'rgba(155,148,240,0.12)' : 'transparent',
+                        border: active ? '1px solid rgba(155,148,240,0.25)' : '1px solid transparent',
+                        color: active ? 'var(--text-primary)' : 'var(--text-primary)',
+                        textAlign: 'left', width: '100%',
+                        transition: 'all 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
+                      onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                      >
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: dot, flexShrink: 0, boxShadow: value === 'RELEASED' ? '0 0 5px #4ade8088' : 'none' }} />
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
+
+              {/* ── Artist ── */}
+              <div style={{ marginBottom: 16 }}>
+                <FilterLabel><User size={9} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Artist</FilterLabel>
+                <select value={artistFilter} onChange={(e) => setArtistFilter(e.target.value)} className="cat-sidebar-select">
+                  <option value="">Toți artiștii</option>
+                  {artists.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                 </select>
-              </FilterSection>
-            )}
-
-            <FilterSection label="Sortare" icon={<ArrowUpDown size={11} />}>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} style={{ width: '100%', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', padding: '8px 28px 8px 12px', fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit', outline: 'none', cursor: 'pointer', appearance: 'none', backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b6a62'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}>
-                <option value="date">Dată adăugare</option>
-                <option value="title">Titlu</option>
-                <option value="artist">Artist</option>
-                <option value="bpm">BPM</option>
-              </select>
-            </FilterSection>
-
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 14, marginTop: 20 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: hasActiveFilters ? 8 : 0 }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{filtered.length}</span>
-                {' '}{filtered.length === 1 ? 'piesă' : 'piese'}
               </div>
-              {hasActiveFilters && (
-                <button type="button" className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 10px', width: '100%' }} onClick={resetFilters}>
-                  Resetează filtrele
-                </button>
-              )}
-            </div>
 
+              {/* ── Gen muzical ── */}
+              {genreOptions.length > 0 && (
+                <>
+                  <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
+                  <div style={{ marginBottom: 16 }}>
+                    <FilterLabel><Music2 size={9} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Gen muzical</FilterLabel>
+                    <select value={genreFilter} onChange={(e) => setGenreFilter(e.target.value)} className="cat-sidebar-select">
+                      <option value="">Toate genurile</option>
+                      {genreOptions.map((g) => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
+
+              {/* ── Sortare ── */}
+              <div>
+                <FilterLabel><ArrowUpDown size={9} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Sortare</FilterLabel>
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} className="cat-sidebar-select">
+                  <option value="date">Dată adăugare</option>
+                  <option value="title">Titlu</option>
+                  <option value="artist">Artist</option>
+                  <option value="bpm">BPM</option>
+                </select>
+              </div>
+
+            </div>
           </div>
         </div>
 
         {/* ── Conținut ────────────────────────────────────────────────── */}
-
-          {/* Bara de acțiuni */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <Link href="/catalog/albums" className="btn btn-ghost" style={{ fontSize: 13 }}>
-               Albume & EP-uri
-            </Link>
-            {canWrite && (
-              <button
-                type="button"
-                onClick={() => setModalOpen(true)}
-                onMouseEnter={() => setAddHover(true)}
-                onMouseLeave={() => setAddHover(false)}
-                style={{
-                  padding: '8px 20px', borderRadius: 8, border: 'none',
-                  background: 'linear-gradient(135deg, #9B94F0 0%, #38bdf8 100%)',
-                  color: 'white', fontWeight: 600, fontSize: 13,
-                  cursor: 'pointer', fontFamily: 'inherit',
-                  boxShadow: addHover
-                    ? '0 0 20px rgba(56,189,248,0.45), 0 0 40px rgba(155,148,240,0.25), 0 4px 12px rgba(0,0,0,0.3)'
-                    : '0 0 10px rgba(56,189,248,0.2)',
-                  transform: addHover ? 'translateY(-2px)' : 'translateY(0)',
-                  transition: 'box-shadow 0.2s ease, transform 0.15s ease',
-                }}
-              >
-                + Adaugă piesă
-              </button>
-            )}
-          </div>
 
           {/* Tabel */}
           <section className="card catalog-table">

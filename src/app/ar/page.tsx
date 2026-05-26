@@ -47,7 +47,7 @@ export default async function ARPage({
     : null
 
   return (
-    <AppShell session={session} title="A&R Scouting">
+    <AppShell session={session}>
 
       {errorMsg && (
         <div className="card" style={{ marginBottom: 16, borderLeft: '3px solid var(--status-expired)', padding: '12px 16px' }}>

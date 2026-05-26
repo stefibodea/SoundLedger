@@ -10,6 +10,7 @@ import { createRevenueAction, reconcileRevenueAction } from '@/app/actions/reven
 import { generateFinanceReportAction } from '@/app/actions/ai'
 import { SuccessBanner } from './SuccessBanner'
 import { AddRevenueForm } from './add-revenue-form'
+import { ImportCsvForm } from './import-csv-form'
 import { enforceOnboarding } from '@/lib/onboarding'
 import { AiReportPanel } from './ai-report-panel'
 
@@ -213,6 +214,7 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
             {canManage && (
               <AddRevenueForm artists={artists} createRevenueAction={createRevenueAction} />
             )}
+            {canManage && <ImportCsvForm />}
             <a href={exportUrl} className="btn btn-secondary" style={{ fontSize: 13 }}>
               ↓ Export CSV{hasFilters ? ' (filtrat)' : ''}
             </a>

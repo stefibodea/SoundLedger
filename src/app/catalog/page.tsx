@@ -87,7 +87,7 @@ export default async function CatalogPage({
   const canWrite = canManageArtists(session.role)
 
   return (
-    <AppShell session={session} title="Catalog Muzical">
+    <AppShell session={session}>
 
       {/* ── Client Component: filtre + tabel + modal ──────────────────────── */}
       <CatalogClient

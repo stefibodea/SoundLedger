@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 
 type AppShellProps = {
   session: SessionPayload
-  title: string
+  title?: string
   subtitle?: string
   children: React.ReactNode
 }
@@ -44,12 +44,14 @@ export async function AppShell({ session, title, subtitle, children }: AppShellP
             padding: '24px 24px',
           }}
         >
-          <header className="page-header">
-            <div>
-              <h1 className="page-title">{title}</h1>
-              {subtitle ? <p className="page-subtitle">{subtitle}</p> : null}
-            </div>
-          </header>
+          {title && (
+            <header className="page-header">
+              <div>
+                <h1 className="page-title">{title}</h1>
+                {subtitle ? <p className="page-subtitle">{subtitle}</p> : null}
+              </div>
+            </header>
+          )}
           {children}
         </main>
       </div>

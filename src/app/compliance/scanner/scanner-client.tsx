@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, type ReactNode } from 'react'
-import { Search, Circle, ChevronDown } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Search, Circle } from 'lucide-react'
 import { StatusBadge, detectionStatusVariant } from '@/components/ui/StatusBadge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { DataTable, type Column } from '@/components/ui/DataTable'
@@ -43,22 +43,16 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-// ── FilterSection collapsible ─────────────────────────────────────────────────
+// ── FilterLabel ───────────────────────────────────────────────────────────────
 
-function FilterSection({ label, icon, children }: { label: string; icon: ReactNode; children: ReactNode }) {
-  const [open, setOpen] = useState(true)
+function FilterLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        style={{ display: 'flex', alignItems: 'center', gap: 5, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 8px', marginTop: 20 }}
-      >
-        <span style={{ color: 'rgba(200,198,188,0.40)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>
-        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.50)', flex: 1, textAlign: 'left' }}>{label}</span>
-        <ChevronDown size={12} style={{ color: 'rgba(200,198,188,0.30)', transition: 'transform 0.2s ease', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
-      </button>
-      <div style={{ overflow: 'hidden', maxHeight: open ? 500 : 0, transition: 'max-height 0.2s ease' }}>{children}</div>
+    <div style={{
+      fontSize: 10, fontWeight: 700, letterSpacing: '0.10em',
+      textTransform: 'uppercase', color: 'rgba(200,198,188,0.40)',
+      marginBottom: 10,
+    }}>
+      {children}
     </div>
   )
 }
@@ -187,54 +181,50 @@ export function ScannerClient({ detections, canManage, canAct, serviceOnline, fi
       <div style={{ position: 'relative' }}>
 
         {/* ── Filtre: absolute în stânga conținutului ──────────────────── */}
-        <div style={{ position: 'absolute', right: 'calc(100% + 24px)', top: 0, width: 200, height: '100%' }}>
+        <div style={{ position: 'absolute', right: 'calc(100% + 20px)', top: 0, width: 220, height: '100%' }}>
           <div style={{ position: 'sticky', top: 80 }}>
-
-            <FilterSection label="Caută" icon={<Search size={11} />}>
-              <div style={{ position: 'relative' }}>
-                <Search size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', pointerEvents: 'none' }} />
-                <input className="filter-search-input" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Artist sau titlu..." />
+            <div style={{ background: 'rgba(16,14,28,0.72)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(155,148,240,0.10)', borderRadius: 14, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(155,148,240,0.65)' }}>Filtrează</span>
+                {hasActiveFilters && (
+                  <button type='button' onClick={resetFilters} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: 'rgba(155,148,240,0.55)', fontFamily: 'inherit', padding: '2px 4px', borderRadius: 4 }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#9B94F0' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(155,148,240,0.55)' }}>Resetează</button>
+                )}
               </div>
-            </FilterSection>
-
-            <FilterSection label="Status" icon={<Circle size={11} />}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {([
-                  { value: 'all',       label: 'Toate' },
-                  { value: 'PENDING',   label: 'Analiză' },
-                  { value: 'CONFIRMED', label: 'Confirmat' },
-                  { value: 'RESOLVED',  label: 'Rezolvat' },
-                  { value: 'DISMISSED', label: 'Respins' },
-                ] as { value: StatusFilter; label: string }[]).map(({ value, label }) => (
-                  <button key={value} type="button" onClick={() => setStatusFilter(value)} style={{
-                    padding: '4px 10px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-                    transition: 'all 0.15s ease', fontFamily: 'inherit',
-                    background: statusFilter === value ? 'rgba(155,148,240,0.15)' : 'rgba(255,255,255,0.04)',
-                    border: statusFilter === value ? '1px solid rgba(155,148,240,0.35)' : '1px solid rgba(255,255,255,0.08)',
-                    color: statusFilter === value ? '#9B94F0' : 'rgba(200,198,188,0.60)',
-                    fontWeight: statusFilter === value ? 500 : 400,
-                  }}>
-                    {label}
-                  </button>
-                ))}
+              <div style={{ marginBottom: 16 }}>
+                <FilterLabel>Caută</FilterLabel>
+                <div style={{ position: 'relative' }}>
+                  <Search size={13} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'rgba(200,198,188,0.4)', pointerEvents: 'none', zIndex: 1 }} />
+                  <input className='filter-search-input' value={search} onChange={(e) => setSearch(e.target.value)} placeholder='Artist sau titlu...' style={{ height: 36 }} />
+                </div>
               </div>
-            </FilterSection>
-
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 20, paddingTop: 14 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: hasActiveFilters ? 8 : 0 }}>
+              <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
+              <div style={{ marginBottom: 16 }}>
+                <FilterLabel>Status</FilterLabel>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {([
+                    { value: 'all',       label: 'Toate' },
+                    { value: 'PENDING',   label: 'Analiză' },
+                    { value: 'CONFIRMED', label: 'Confirmat' },
+                    { value: 'RESOLVED',  label: 'Rezolvat' },
+                    { value: 'DISMISSED', label: 'Respins' },
+                  ] as { value: StatusFilter; label: string }[]).map(({ value, label }) => {
+                    const active = statusFilter === value
+                    return (
+                      <button key={value} type='button' onClick={() => setStatusFilter(value)} style={{ padding: '4px 9px', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', fontWeight: active ? 600 : 400, background: active ? 'rgba(155,148,240,0.18)' : 'rgba(255,255,255,0.04)', border: active ? '1px solid rgba(155,148,240,0.40)' : '1px solid rgba(255,255,255,0.07)', color: active ? '#9B94F0' : 'var(--text-primary)', boxShadow: active ? '0 0 8px rgba(155,148,240,0.15)' : 'none', transition: 'all 0.15s ease' }}>
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{filtered.length}</span>
                 {' '}{filtered.length === 1 ? 'detecție' : 'detecții'}
               </div>
-              {hasActiveFilters && (
-                <button type="button" className="btn btn-ghost"
-                  style={{ fontSize: 12, padding: '4px 10px', width: '100%' }}
-                  onClick={resetFilters}
-                >
-                  Resetează filtrele
-                </button>
-              )}
             </div>
-
           </div>
         </div>
 

@@ -1,10 +1,11 @@
-'use client'
+﻿'use client'
 
 import { useState, useMemo, type ReactNode } from 'react'
 import Link from 'next/link'
-import { Search, ListFilter, ArrowUpDown, ChevronDown } from 'lucide-react'
+import { Search, ListFilter, ArrowUpDown } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { DataTable, type Column } from '@/components/ui/DataTable'
 import { createProspectAction, moveProspectAction } from '@/app/actions/ar'
 import { generateProspectAIScoreAction } from '@/app/actions/ai'
 
@@ -67,20 +68,14 @@ function fmtDate(iso: string) {
 
 // ── FilterSection collapsible ─────────────────────────────────────────────────
 
-function FilterSection({ label, icon, children }: { label: string; icon: ReactNode; children: ReactNode }) {
-  const [open, setOpen] = useState(true)
+function FilterLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        style={{ display: 'flex', alignItems: 'center', gap: 5, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 8px', marginTop: 20 }}
-      >
-        <span style={{ color: 'rgba(200,198,188,0.40)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>
-        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.50)', flex: 1, textAlign: 'left' }}>{label}</span>
-        <ChevronDown size={12} style={{ color: 'rgba(200,198,188,0.30)', transition: 'transform 0.2s ease', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
-      </button>
-      <div style={{ overflow: 'hidden', maxHeight: open ? 500 : 0, transition: 'max-height 0.2s ease' }}>{children}</div>
+    <div style={{
+      fontSize: 10, fontWeight: 700, letterSpacing: '0.10em',
+      textTransform: 'uppercase', color: 'rgba(200,198,188,0.40)',
+      marginBottom: 10,
+    }}>
+      {children}
     </div>
   )
 }
@@ -127,6 +122,7 @@ export function ARClient({ prospects }: Props) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [sortBy,       setSortBy]       = useState<SortKey>('date')
   const [modalOpen,    setModalOpen]    = useState(false)
+  const [viewMode,     setViewMode]     = useState<'kanban' | 'tabel'>('kanban')
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
@@ -145,6 +141,81 @@ export function ARClient({ prospects }: Props) {
 
   const hasActiveFilters = Boolean(search || statusFilter !== 'all')
   const resetFilters = () => { setSearch(''); setStatusFilter('all') }
+
+  const tableColumns: Column<ProspectRow>[] = [
+    {
+      key: 'name',
+      header: 'Artist',
+      render: (p) => (
+        <Link href={`/ar/${p.id}`} style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', textDecoration: 'none' }}>
+          {p.name}
+        </Link>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      width: '140px',
+      render: (p) => {
+        const col = COLUMNS.find((c) => c.key === p.status)
+        return (
+          <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: col ? col.headerBg : 'rgba(255,255,255,0.05)', color: col ? col.textColor : 'var(--text-secondary)', border: col ? `1px solid ${col.borderColor}` : '1px solid rgba(255,255,255,0.08)' }}>
+            {STATUS_LABELS[p.status] ?? p.status}
+          </span>
+        )
+      },
+    },
+    {
+      key: 'score',
+      header: 'Scor AI',
+      width: '110px',
+      render: (p) => {
+        if (p.aiScore == null) return <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>—</span>
+        const color = p.aiScore >= 70 ? '#22d3ee' : p.aiScore >= 40 ? '#facc15' : '#ff7b7b'
+        return (
+          <div>
+            <span style={{ fontSize: 13, fontWeight: 700, color }}>{p.aiScore}/100</span>
+            <div className="score-bar-track" style={{ marginTop: 4 }}>
+              <div className="score-bar-fill" style={{ width: `${p.aiScore}%`, background: color }} />
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      key: 'source',
+      header: 'Sursă',
+      width: '130px',
+      render: (p) => p.source
+        ? <span className="badge">{p.source}</span>
+        : <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>—</span>,
+    },
+    {
+      key: 'notes',
+      header: 'Note',
+      render: (p) => (
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>
+          {p.notes ?? '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'date',
+      header: 'Adăugat',
+      width: '95px',
+      render: (p) => <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{fmtDate(p.createdAt)}</span>,
+    },
+    {
+      key: 'link',
+      header: '',
+      width: '80px',
+      render: (p) => (
+        <Link href={`/ar/${p.id}`} className="btn btn-sm btn-ghost" style={{ fontSize: 12 }}>
+          Detalii
+        </Link>
+      ),
+    },
+  ]
 
   return (
     <>
@@ -187,81 +258,94 @@ export function ARClient({ prospects }: Props) {
         .score-bar-fill  { height: 4px; border-radius: 3px; transition: width 0.4s ease; }
       `}</style>
 
-      {/* ── Layout: filtre absolute stânga + conținut full-width ───────── */}
-      <div style={{ position: 'relative' }}>
-
-        {/* ── Filtre: absolute în stânga conținutului ──────────────────── */}
-        <div style={{ position: 'absolute', right: 'calc(100% + 24px)', top: 0, width: 200, height: '100%' }}>
-          <div style={{ position: 'sticky', top: 80 }}>
-            <FilterSection label="Caută" icon={<Search size={11} />}>
-              <div style={{ position: 'relative' }}>
-                <Search size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', pointerEvents: 'none' }} />
-                <input className="filter-search-input" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nume sau note..." />
-              </div>
-            </FilterSection>
-
-            <FilterSection label="Etapă pipeline" icon={<ListFilter size={11} />}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {([
-                  { value: 'all',         label: 'Toate' },
-                  { value: 'ANALYZING',   label: 'Analiză' },
-                  { value: 'CONTACTED',   label: 'Contactat' },
-                  { value: 'NEGOTIATION', label: 'Negociere' },
-                  { value: 'SIGNED',      label: 'De semnat' },
-                  { value: 'REJECTED',    label: 'Respins' },
-                ] as { value: StatusFilter; label: string }[]).map(({ value, label }) => (
-                  <button key={value} type="button" onClick={() => setStatusFilter(value)} style={{
-                    padding: '4px 10px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-                    transition: 'all 0.15s ease', fontFamily: 'inherit',
-                    background: statusFilter === value ? 'rgba(155,148,240,0.15)' : 'rgba(255,255,255,0.04)',
-                    border: statusFilter === value ? '1px solid rgba(155,148,240,0.35)' : '1px solid rgba(255,255,255,0.08)',
-                    color: statusFilter === value ? '#9B94F0' : 'rgba(200,198,188,0.60)',
-                    fontWeight: statusFilter === value ? 500 : 400,
-                  }}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </FilterSection>
-
-            <FilterSection label="Sortare" icon={<ArrowUpDown size={11} />}>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} style={{
-                width: '100%', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)',
-                background: 'rgba(255,255,255,0.04)', padding: '8px 28px 8px 12px',
-                fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit',
-                outline: 'none', cursor: 'pointer', appearance: 'none',
-                backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b6a62'/%3E%3C/svg%3E\")",
-                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center',
-              }}>
-                <option value="date">Dată adăugare</option>
-                <option value="name">Nume</option>
-                <option value="score">Scor AI</option>
-              </select>
-            </FilterSection>
-
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 20, paddingTop: 14 }}>
-              {hasActiveFilters && (
-                <button type="button" className="btn btn-ghost"
-                  style={{ fontSize: 12, padding: '4px 10px', width: '100%' }}
-                  onClick={resetFilters}
-                >
-                  Resetează filtrele
-                </button>
-              )}
-            </div>
-
+      {/* ── Page header: titlu + toggle + buton ──────────────────────── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>A&R Scouting</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: 3 }}>
+            {([
+              { id: 'kanban', label: 'Pipeline' },
+              { id: 'tabel',  label: 'Tabel' },
+            ] as const).map((mode) => (
+              <button key={mode.id} type="button" onClick={() => setViewMode(mode.id)}
+                style={{
+                  padding: '5px 12px', borderRadius: 8, fontSize: 13, fontWeight: 500,
+                  border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                  background: viewMode === mode.id ? 'var(--bg-secondary)' : 'transparent',
+                  color: viewMode === mode.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  boxShadow: viewMode === mode.id ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {mode.label}
+              </button>
+            ))}
           </div>
-        </div>
-
-        {/* ── Conținut ────────────────────────────────────────────────── */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
           <button type="button" className="btn btn-primary" onClick={() => setModalOpen(true)} style={{ fontSize: 13 }}>
             + Adaugă candidat
           </button>
         </div>
+      </div>
 
-        {/* ── Kanban ─────────────────────────────────────────────────── */}
-        {filtered.length === 0 ? (
+      {/* ── Layout: filtre absolute stânga + conținut full-width ───────── */}
+      <div style={{ position: 'relative' }}>
+
+        {/* ── Filtre: absolute în stânga conținutului ──────────────────── */}
+        <div style={{ position: 'absolute', right: 'calc(100% + 20px)', top: 0, width: 220, height: '100%' }}>
+          <div style={{ position: 'sticky', top: 80 }}>
+            <div style={{ background: 'rgba(16,14,28,0.72)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(155,148,240,0.10)', borderRadius: 14, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(155,148,240,0.65)' }}>Filtrează</span>
+                {hasActiveFilters && (
+                  <button type='button' onClick={resetFilters} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: 'rgba(155,148,240,0.55)', fontFamily: 'inherit', padding: '2px 4px', borderRadius: 4 }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#9B94F0' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(155,148,240,0.55)' }}>Resetează</button>
+                )}
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <FilterLabel>Caută</FilterLabel>
+                <div style={{ position: 'relative' }}>
+                  <Search size={13} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'rgba(200,198,188,0.4)', pointerEvents: 'none', zIndex: 1 }} />
+                  <input className='filter-search-input' value={search} onChange={(e) => setSearch(e.target.value)} placeholder='Nume sau note...' style={{ height: 36 }} />
+                </div>
+              </div>
+              <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
+              <div style={{ marginBottom: 16 }}>
+                <FilterLabel>Etapă pipeline</FilterLabel>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {([
+                    { value: 'all',         label: 'Toate' },
+                    { value: 'ANALYZING',   label: 'Analiză' },
+                    { value: 'CONTACTED',   label: 'Contactat' },
+                    { value: 'NEGOTIATION', label: 'Negociere' },
+                    { value: 'SIGNED',      label: 'De semnat' },
+                    { value: 'REJECTED',    label: 'Respins' },
+                  ] as { value: StatusFilter; label: string }[]).map(({ value, label }) => {
+                    const active = statusFilter === value
+                    return (
+                      <button key={value} type='button' onClick={() => setStatusFilter(value)} style={{ padding: '4px 9px', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', fontWeight: active ? 600 : 400, background: active ? 'rgba(155,148,240,0.18)' : 'rgba(255,255,255,0.04)', border: active ? '1px solid rgba(155,148,240,0.40)' : '1px solid rgba(255,255,255,0.07)', color: active ? '#9B94F0' : 'var(--text-primary)', boxShadow: active ? '0 0 8px rgba(155,148,240,0.15)' : 'none', transition: 'all 0.15s ease' }}>
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
+              <div>
+                <FilterLabel>Sortare</FilterLabel>
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} className='cat-sidebar-select'>
+                  <option value='date'>Dată adăugare</option>
+                  <option value='name'>Nume</option>
+                  <option value='score'>Scor AI</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* ── Conținut ────────────────────────────────────────────────── */}
+
+        {viewMode === 'kanban' ? (
+          filtered.length === 0 ? (
           <div className="card">
             <EmptyState
               icon=""
@@ -420,6 +504,28 @@ export function ARClient({ prospects }: Props) {
               )
             })}
           </div>
+          )
+        ) : (
+          <section className="card">
+            <DataTable
+              data={filtered}
+              columns={tableColumns}
+              getRowKey={(p) => p.id}
+              pageSize={25}
+              emptyState={
+                <EmptyState
+                  icon=""
+                  title="Niciun candidat găsit"
+                  description={hasActiveFilters ? 'Niciun candidat nu corespunde filtrelor curente.' : 'Nu ai adăugat încă niciun candidat în pipeline.'}
+                  action={
+                    !hasActiveFilters
+                      ? <button type="button" className="btn btn-primary" onClick={() => setModalOpen(true)}>+ Adaugă primul candidat</button>
+                      : <button type="button" className="btn btn-ghost" onClick={resetFilters}>Resetează filtrele</button>
+                  }
+                />
+              }
+            />
+          </section>
         )}
 
       </div>{/* end relative */}
