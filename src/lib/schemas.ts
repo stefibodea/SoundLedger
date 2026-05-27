@@ -109,7 +109,13 @@ export const createTrackSchema = z.object({
   title:    requiredString('Titlul piesei este obligatoriu').max(200),
   artistId: requiredString('Artistul este obligatoriu'),
   genre:    z.string().transform((v) => v.trim() || null),
-  isrc:     z.string().max(12, 'ISRC invalid').transform((v) => v.trim() || null),
+  isrc:     z.string()
+    .transform((v) => v.trim().toUpperCase().replace(/-/g, ''))
+    .refine(
+      (v) => v === '' || /^[A-Z]{2}[A-Z0-9]{3}[0-9]{7}$/.test(v),
+      'ISRC invalid. Format corect: CC-XXX-YY-NNNNN (ex: RO-ABC-24-00001)',
+    )
+    .transform((v) => v || null),
   bpm:      z.string().transform((v) => v.trim()).refine(
     (v) => v === '' || (Number.isInteger(Number(v)) && Number(v) > 0 && Number(v) < 300),
     'BPM trebuie să fie un număr întreg între 1 și 299',

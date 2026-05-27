@@ -144,6 +144,8 @@ export async function signAndOnboardArtistAction(formData: FormData) {
       startDate,
       endDate,
       status:        'ACTIVE',
+      territories:   '[]',
+      rights:        '[]',
     },
   })
 

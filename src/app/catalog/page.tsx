@@ -29,7 +29,7 @@ export default async function CatalogPage({
       where: { labelId: session.labelId },
       include: {
         artist:        { select: { id: true, name: true, photo: true } },
-        creativeRecord: { select: { aiCompozitie: true, aiVersuri: true, aiVoce: true, aiProductie: true, aiAltele: true, rolesCompozitie: true, rolesVersuri: true, rolesProductie: true, rolesMixaj: true } },
+        creativeRecord: { select: { aiCompozitie: true, aiVersuri: true, aiVoce: true, aiProductie: true, aiAltele: true, rolesCompozitie: true, rolesVersuri: true, rolesProductie: true, rolesMixaj: true, declarationCode: true, declaration: true, declaredAt: true } },
         humanMadeCert: { select: { id: true, isRevoked: true, certificateCode: true, issuedAt: true, declaration: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -77,6 +77,22 @@ export default async function CatalogPage({
             rolesVersuri:    t.creativeRecord?.rolesVersuri    ?? null,
             rolesProductie:  t.creativeRecord?.rolesProductie  ?? null,
             rolesMixaj:      t.creativeRecord?.rolesMixaj      ?? null,
+          }
+        : null,
+      aiDecl: t.creativeRecord?.declarationCode
+        ? {
+            code:        t.creativeRecord.declarationCode,
+            declaration: t.creativeRecord.declaration ?? '',
+            declaredAt:  t.creativeRecord.declaredAt?.toISOString() ?? null,
+            aiCompozitie: t.creativeRecord.aiCompozitie,
+            aiVersuri:    t.creativeRecord.aiVersuri,
+            aiVoce:       t.creativeRecord.aiVoce,
+            aiProductie:  t.creativeRecord.aiProductie,
+            aiAltele:     t.creativeRecord.aiAltele ?? null,
+            rolesCompozitie: t.creativeRecord.rolesCompozitie ?? null,
+            rolesVersuri:    t.creativeRecord.rolesVersuri    ?? null,
+            rolesProductie:  t.creativeRecord.rolesProductie  ?? null,
+            rolesMixaj:      t.creativeRecord.rolesMixaj      ?? null,
           }
         : null,
     }

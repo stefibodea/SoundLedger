@@ -419,6 +419,12 @@ model CreativeRecord {
   instruments String?
   statement   String?
 
+  // Declarație formală AI — generat automat la creare/actualizare
+  declarationCode String?  // ex: AI-2026-XXXXXX
+  declaration     String?  // textul complet al declarației
+  declaredAt      DateTime?
+  declaredById    String?  // userId-ul celui care a declarat
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -47,6 +47,82 @@ export async function createTrackAction(formData: FormData) {
     data: { title, artistId, labelId: session.labelId, genre, isrc, bpm: null, key, type, status: 'UNRELEASED' },
   })
 
+  // ── Declarație creativă ──────────────────────────────────────────────────
+  const aiCompozitie = formData.get('aiCompozitie') === 'on'
+  const aiVersuri    = formData.get('aiVersuri')    === 'on'
+  const aiVoce       = formData.get('aiVoce')       === 'on'
+  const aiProductie  = formData.get('aiProductie')  === 'on'
+  const hasAI        = aiCompozitie || aiVersuri || aiVoce || aiProductie
+
+  const rolesCompozitie = String(formData.get('rolesCompozitie') || '').trim() || null
+  const rolesVersuri    = String(formData.get('rolesVersuri')    || '').trim() || null
+  const rolesProductie  = String(formData.get('rolesProductie')  || '').trim() || null
+  const rolesMixaj      = String(formData.get('rolesMixaj')      || '').trim() || null
+
+  // ── Construiește textul de credite (comun pentru ambele tipuri de declarație)
+  const roleParts: string[] = []
+  if (rolesCompozitie) roleParts.push(`Compoziție: ${rolesCompozitie}`)
+  if (rolesVersuri)    roleParts.push(`Versuri: ${rolesVersuri}`)
+  if (rolesProductie)  roleParts.push(`Producție: ${rolesProductie}`)
+  if (rolesMixaj)      roleParts.push(`Mixaj: ${rolesMixaj}`)
+  const creditsLine = roleParts.length > 0 ? ` Credite: ${roleParts.join('; ')}.` : ''
+
+  const year = new Date().getFullYear()
+  const rand = () => Math.random().toString(36).substring(2, 8).toUpperCase()
+
+  if (!hasAI) {
+    // ── Certificat Human Made ──────────────────────────────────────────────
+    const declaration =
+      `Prin prezenta se atestă că piesa "${track.title}" a fost creată integral prin mijloace umane, fără utilizarea inteligenței artificiale în niciuna dintre etapele de producție.${creditsLine}`
+    const code = `HM-${year}-${rand()}`
+
+    await prisma.humanMadeCertificate.create({
+      data: {
+        trackId:         track.id,
+        labelId:         session.labelId!,
+        certificateCode: code,
+        issuedById:      session.userId,
+        declaration,
+        isRevoked:       false,
+      },
+    })
+
+    await prisma.creativeRecord.upsert({
+      where:  { trackId: track.id },
+      create: { trackId: track.id, labelId: session.labelId!, aiCompozitie, aiVersuri, aiVoce, aiProductie, rolesCompozitie, rolesVersuri, rolesProductie, rolesMixaj },
+      update: { aiCompozitie, aiVersuri, aiVoce, aiProductie, rolesCompozitie, rolesVersuri, rolesProductie, rolesMixaj },
+    })
+  } else {
+    // ── Declarație AI ──────────────────────────────────────────────────────
+    const aiParts: string[] = []
+    if (aiCompozitie) aiParts.push('compoziție / melodie')
+    if (aiVersuri)    aiParts.push('versuri / text')
+    if (aiVoce)       aiParts.push('voce sintetizată sau clonată')
+    if (aiProductie)  aiParts.push('producție / beat')
+    const aiList = aiParts.join(', ')
+
+    const declaration =
+      `Prin prezenta se declară că piesa "${track.title}" a utilizat inteligența artificială în următoarele etape de producție: ${aiList}.${creditsLine} Această declarație este emisă în conformitate cu prevederile EU AI Act și ale Directivei UE privind drepturile de autor.`
+    const code = `AI-${year}-${rand()}`
+
+    await prisma.creativeRecord.upsert({
+      where:  { trackId: track.id },
+      create: {
+        trackId: track.id, labelId: session.labelId!,
+        aiCompozitie, aiVersuri, aiVoce, aiProductie,
+        rolesCompozitie, rolesVersuri, rolesProductie, rolesMixaj,
+        declaration, declarationCode: code,
+        declaredAt: new Date(), declaredById: session.userId,
+      },
+      update: {
+        aiCompozitie, aiVersuri, aiVoce, aiProductie,
+        rolesCompozitie, rolesVersuri, rolesProductie, rolesMixaj,
+        declaration, declarationCode: code,
+        declaredAt: new Date(), declaredById: session.userId,
+      },
+    })
+  }
+
   const audioFile = formData.get('audioFile') as File | null
   if (audioFile && audioFile.size > 0) {
     try {
@@ -258,7 +334,7 @@ export async function declareCreativeRecordAction(formData: FormData) {
 
   const track = await prisma.track.findUnique({
     where: { id: trackId },
-    include: { humanMadeCert: true },
+    include: { humanMadeCert: true, creativeRecord: true },
   })
   if (!track || track.labelId !== session.labelId) redirect('/catalog')
 
@@ -275,33 +351,22 @@ export async function declareCreativeRecordAction(formData: FormData) {
 
   const hasAI = aiCompozitie || aiVersuri || aiVoce || aiProductie || !!aiAltele
 
-  await prisma.creativeRecord.upsert({
-    where: { trackId },
-    create: {
-      trackId,
-      labelId:  session.labelId,
-      aiCompozitie, aiVersuri, aiVoce, aiProductie, aiAltele,
-      rolesCompozitie, rolesVersuri, rolesProductie, rolesMixaj,
-    },
-    update: {
-      aiCompozitie, aiVersuri, aiVoce, aiProductie, aiAltele,
-      rolesCompozitie, rolesVersuri, rolesProductie, rolesMixaj,
-    },
-  })
+  // ── Construiește textul de credite (comun)
+  const roleParts: string[] = []
+  if (rolesCompozitie) roleParts.push(`Compoziție: ${rolesCompozitie}`)
+  if (rolesVersuri)    roleParts.push(`Versuri: ${rolesVersuri}`)
+  if (rolesProductie)  roleParts.push(`Producție: ${rolesProductie}`)
+  if (rolesMixaj)      roleParts.push(`Mixaj: ${rolesMixaj}`)
+  const creditsLine = roleParts.length > 0 ? ` Credite: ${roleParts.join('; ')}.` : ''
+  const year = new Date().getFullYear()
+  const rand = () => Math.random().toString(36).substring(2, 8).toUpperCase()
 
   if (!hasAI) {
-    const roleParts: string[] = []
-    if (rolesCompozitie) roleParts.push(`Compoziție: ${rolesCompozitie}`)
-    if (rolesVersuri)    roleParts.push(`Versuri: ${rolesVersuri}`)
-    if (rolesProductie)  roleParts.push(`Producție: ${rolesProductie}`)
-    if (rolesMixaj)      roleParts.push(`Mixaj: ${rolesMixaj}`)
-    const creditsLine = roleParts.length > 0 ? ` Credite: ${roleParts.join('; ')}.` : ''
-
+    // ── Certificat Human Made ──────────────────────────────────────────────
     const declaration =
       `Prin prezenta se atestă că piesa "${track.title}" a fost creată integral prin mijloace umane, fără utilizarea inteligenței artificiale în niciuna dintre etapele de producție.${creditsLine}`
 
-    const code = track.humanMadeCert?.certificateCode
-      ?? `HM-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+    const code = track.humanMadeCert?.certificateCode ?? `HM-${year}-${rand()}`
 
     await prisma.humanMadeCertificate.upsert({
       where: { trackId },
@@ -315,19 +380,64 @@ export async function declareCreativeRecordAction(formData: FormData) {
       },
       update: {
         declaration,
-        isRevoked:  false,
-        revokedAt:  null,
+        isRevoked:    false,
+        revokedAt:    null,
         revokedReason: null,
-        issuedAt:   new Date(),
-        issuedById: session.userId,
+        issuedAt:     new Date(),
+        issuedById:   session.userId,
+      },
+    })
+
+    await prisma.creativeRecord.upsert({
+      where:  { trackId },
+      create: {
+        trackId, labelId: session.labelId,
+        aiCompozitie, aiVersuri, aiVoce, aiProductie, aiAltele,
+        rolesCompozitie, rolesVersuri, rolesProductie, rolesMixaj,
+        declaration: null, declarationCode: null, declaredAt: null, declaredById: null,
+      },
+      update: {
+        aiCompozitie, aiVersuri, aiVoce, aiProductie, aiAltele,
+        rolesCompozitie, rolesVersuri, rolesProductie, rolesMixaj,
+        declaration: null, declarationCode: null, declaredAt: null, declaredById: null,
       },
     })
   } else {
-    // Piesă cu AI — revocă certificatul dacă există
+    // ── Declarație AI ──────────────────────────────────────────────────────
+    const aiParts: string[] = []
+    if (aiCompozitie) aiParts.push('compoziție / melodie')
+    if (aiVersuri)    aiParts.push('versuri / text')
+    if (aiVoce)       aiParts.push('voce sintetizată sau clonată')
+    if (aiProductie)  aiParts.push('producție / beat')
+    if (aiAltele)     aiParts.push(aiAltele)
+    const aiList = aiParts.join(', ')
+
+    const declaration =
+      `Prin prezenta se declară că piesa "${track.title}" a utilizat inteligența artificială în următoarele etape de producție: ${aiList}.${creditsLine} Această declarație este emisă în conformitate cu prevederile EU AI Act și ale Directivei UE privind drepturile de autor.`
+
+    // Păstrează codul existent dacă există, altfel generează unul nou
+    const code = track.creativeRecord?.declarationCode ?? `AI-${year}-${rand()}`
+
+    await prisma.creativeRecord.upsert({
+      where:  { trackId },
+      create: {
+        trackId, labelId: session.labelId,
+        aiCompozitie, aiVersuri, aiVoce, aiProductie, aiAltele,
+        rolesCompozitie, rolesVersuri, rolesProductie, rolesMixaj,
+        declaration, declarationCode: code, declaredAt: new Date(), declaredById: session.userId,
+      },
+      update: {
+        aiCompozitie, aiVersuri, aiVoce, aiProductie, aiAltele,
+        rolesCompozitie, rolesVersuri, rolesProductie, rolesMixaj,
+        declaration, declarationCode: code, declaredAt: new Date(), declaredById: session.userId,
+      },
+    })
+
+    // Revocă certificatul Human Made dacă există
     if (track.humanMadeCert && !track.humanMadeCert.isRevoked) {
       await prisma.humanMadeCertificate.update({
-        where:  { trackId },
-        data:   { isRevoked: true, revokedAt: new Date(), revokedReason: 'Declarație actualizată: utilizare AI confirmată.' },
+        where: { trackId },
+        data:  { isRevoked: true, revokedAt: new Date(), revokedReason: 'Declarație actualizată: utilizare AI confirmată.' },
       })
     }
   }

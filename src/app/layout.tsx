@@ -10,8 +10,8 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "SoundLedger — Platformă Management Case de Discuri",
-  description: "Gestionează artiștii, catalogul muzical, contractele și veniturile casei tale de discuri cu insights AI.",
+  title: "SoundLedger — Protecție AI pentru casa ta de discuri",
+  description: "Singura platformă care combină managementul complet al casei de discuri cu detecție audio prin amprentă digitală. Protejează-ți catalogul de AI.",
   icons: { icon: '/favicon.png' },
 };
 

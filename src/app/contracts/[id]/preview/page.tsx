@@ -47,8 +47,8 @@ export default async function ContractPreviewPage({ params }: PageProps) {
 
   let territories: string[] = []
   let rights: string[] = []
-  try { territories = JSON.parse(contract.territories as string) } catch { /* noop */ }
-  try { rights      = JSON.parse(contract.rights as string) }      catch { /* noop */ }
+  try { const t = JSON.parse(contract.territories as string); if (Array.isArray(t)) territories = t } catch { /* noop */ }
+  try { const r = JSON.parse(contract.rights as string);      if (Array.isArray(r)) rights = r      } catch { /* noop */ }
 
   const issuedDate = new Date(contract.createdAt).toLocaleDateString('ro-RO', { day: '2-digit', month: 'long', year: 'numeric' })
 

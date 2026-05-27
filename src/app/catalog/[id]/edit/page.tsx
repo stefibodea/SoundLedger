@@ -74,7 +74,15 @@ export default async function EditTrackPage({ params, searchParams }: PageProps)
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">ISRC</label>
-              <input name="isrc" className="form-input" defaultValue={track.isrc ?? ''} placeholder="ROABC2400001" />
+              <input
+                name="isrc"
+                className="form-input"
+                defaultValue={track.isrc ? `${track.isrc.slice(0,2)}-${track.isrc.slice(2,5)}-${track.isrc.slice(5,7)}-${track.isrc.slice(7)}` : ''}
+                placeholder="RO-ABC-24-00001"
+                pattern="[A-Za-z]{2}-[A-Za-z0-9]{3}-[0-9]{2}-[0-9]{5}"
+                maxLength={15}
+                title="Format ISRC: 2 litere țară + 3 caractere registrant + 2 cifre an + 5 cifre (ex: RO-ABC-24-00001)"
+              />
             </div>
             <div className="form-group">
               <label className="form-label">Data lansării</label>

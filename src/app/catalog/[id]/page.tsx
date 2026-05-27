@@ -192,13 +192,46 @@ export default async function TrackDetailPage({ params, searchParams }: PageProp
           {/* Declaratie creativa */}
           {canDeclare && (
             <section className="card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
                 <h3>Declaratie creativa</h3>
-                {hasCert && (
-                  <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 999, background: 'rgba(110,231,183,0.1)', border: '1px solid rgba(110,231,183,0.3)', color: 'var(--role-ar-dark)', fontWeight: 500 }}>
-                    Certificat activ · {track.humanMadeCert!.certificateCode}
-                  </span>
-                )}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {hasCert && (
+                    <Link
+                      href={`/compliance/certificates/${track.humanMadeCert!.id}`}
+                      style={{
+                        fontSize: 12, padding: '4px 12px', borderRadius: 999,
+                        background: 'rgba(110,231,183,0.10)', border: '1px solid rgba(110,231,183,0.30)',
+                        color: 'var(--role-ar-dark)', fontWeight: 600, textDecoration: 'none',
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                        transition: 'background 0.15s ease',
+                      }}
+                      title="Deschide certificatul Human Made"
+                    >
+                      ✓ Human Made · {track.humanMadeCert!.certificateCode}
+                    </Link>
+                  )}
+                  {declarationType === 'AI' && cr?.declarationCode && (
+                    <span style={{
+                      fontSize: 12, padding: '4px 12px', borderRadius: 999,
+                      background: 'rgba(253,230,138,0.10)', border: '1px solid rgba(253,230,138,0.30)',
+                      color: 'var(--role-finance-dark)', fontWeight: 600,
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                    }}
+                      title={cr.declaration ?? ''}
+                    >
+                      ⚡ AI Declarat · {cr.declarationCode}
+                    </span>
+                  )}
+                  {declarationType === 'AI' && !cr?.declarationCode && (
+                    <span style={{
+                      fontSize: 12, padding: '4px 12px', borderRadius: 999,
+                      background: 'rgba(253,230,138,0.06)', border: '1px solid rgba(253,230,138,0.15)',
+                      color: 'rgba(253,230,138,0.5)', fontWeight: 500,
+                    }}>
+                      ⚡ AI · fără declarație formală
+                    </span>
+                  )}
+                </div>
               </div>
               <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 20 }}>
                 Specifica cine a creat piesa si daca a fost implicat AI in productie.

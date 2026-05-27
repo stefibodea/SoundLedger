@@ -173,6 +173,12 @@ export type TrackRow = {
     rolesCompozitie: string | null; rolesVersuri: string | null
     rolesProductie: string | null; rolesMixaj: string | null
   } | null
+  aiDecl: {
+    code: string; declaration: string; declaredAt: string | null
+    aiCompozitie: boolean; aiVersuri: boolean; aiVoce: boolean; aiProductie: boolean; aiAltele: string | null
+    rolesCompozitie: string | null; rolesVersuri: string | null
+    rolesProductie: string | null; rolesMixaj: string | null
+  } | null
 }
 
 export type ArtistOption = { id: string; name: string }
@@ -227,9 +233,39 @@ export function CatalogClient({ tracks, artists, canWrite, labelName, initialArt
   const [sortBy,       setSortBy]       = useState<SortKey>('date')
   const [modalOpen,    setModalOpen]    = useState(false)
   const [certTrack,    setCertTrack]    = useState<TrackRow | null>(null)
+  const [aiDeclTrack,  setAiDeclTrack]  = useState<TrackRow | null>(null)
+
+  useEffect(() => {
+    if (!aiDeclTrack) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setAiDeclTrack(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [aiDeclTrack])
   const [showSugg,     setShowSugg]     = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
   const [addHover,     setAddHover]     = useState(false)
+  const [isrcInput,    setIsrcInput]    = useState('')
+  const [isAdding,     startAddTransition] = useTransition()
+
+  function handleAddSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    setModalOpen(false)
+    setIsrcInput('')
+    startAddTransition(async () => {
+      await createTrackAction(formData)
+    })
+  }
+
+  function handleIsrcChange(raw: string) {
+    const clean = raw.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12)
+    // Inserează cratime: CC-XXX-YY-NNNNN
+    let fmt = clean
+    if (clean.length > 7) fmt = clean.slice(0, 2) + '-' + clean.slice(2, 5) + '-' + clean.slice(5, 7) + '-' + clean.slice(7)
+    else if (clean.length > 5) fmt = clean.slice(0, 2) + '-' + clean.slice(2, 5) + '-' + clean.slice(5)
+    else if (clean.length > 2) fmt = clean.slice(0, 2) + '-' + clean.slice(2)
+    setIsrcInput(fmt)
+  }
 
   const searchRef = useRef<HTMLInputElement>(null)
 
@@ -410,6 +446,21 @@ export function CatalogClient({ tracks, artists, canWrite, labelName, initialArt
               }}
             >
               Uman
+            </button>
+          )
+        }
+        if (t.aiDecl) {
+          return (
+            <button
+              type="button"
+              onClick={() => setAiDeclTrack(t)}
+              style={{
+                display: 'inline-block', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600,
+                background: 'rgba(253,230,138,0.10)', border: '1px solid rgba(253,230,138,0.25)',
+                color: '#fde68a', cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              AI
             </button>
           )
         }
@@ -774,12 +825,12 @@ export function CatalogClient({ tracks, artists, canWrite, labelName, initialArt
       {/* ── Modal adăugare ───────────────────────────────────────────────────── */}
       <Modal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => { setModalOpen(false); setIsrcInput('') }}
         title="Adaugă piesă nouă"
         description="Completează detaliile de bază. Poți edita informațiile complete din pagina piesei."
         size="lg"
       >
-        <form action={createTrackAction}>
+        <form onSubmit={handleAddSubmit}>
           <div className="form-row" style={{ marginBottom: 12 }}>
             <div className="form-group">
               <label className="form-label" htmlFor="m-title">Titlu piesă *</label>
@@ -812,10 +863,30 @@ export function CatalogClient({ tracks, artists, canWrite, labelName, initialArt
           <div className="form-row" style={{ marginBottom: 12 }}>
             <div className="form-group">
               <label className="form-label" htmlFor="m-isrc">ISRC *</label>
-              <input id="m-isrc" name="isrc" className="form-input" placeholder="ex: ROABC2400001" required />
+              <input
+                id="m-isrc"
+                name="isrc"
+                className="form-input"
+                placeholder="ex: RO-ABC-24-00001"
+                value={isrcInput}
+                onChange={(e) => handleIsrcChange(e.target.value)}
+                required
+                title="Format ISRC: 2 litere țară + 3 caractere registrant + 2 cifre an + 5 cifre (ex: RO-ABC-24-00001)"
+              />
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
+                Format: <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>CC-XXX-YY-NNNNN</span>
+                {isrcInput.replace(/-/g, '').length > 0 && isrcInput.replace(/-/g, '').length < 12 && (
+                  <span style={{ color: 'var(--role-artist-dark)', marginLeft: 6 }}>
+                    ({12 - isrcInput.replace(/-/g, '').length} caractere rămase)
+                  </span>
+                )}
+                {isrcInput.replace(/-/g, '').length === 12 && (
+                  <span style={{ color: 'var(--role-ar-dark)', marginLeft: 6 }}>✓ valid</span>
+                )}
+              </div>
             </div>
           </div>
-          <div className="form-group" style={{ marginBottom: 20 }}>
+          <div className="form-group" style={{ marginBottom: 16 }}>
             <label className="form-label" htmlFor="m-audioFile">Fișier audio *</label>
             <input
               id="m-audioFile"
@@ -830,9 +901,69 @@ export function CatalogClient({ tracks, artists, canWrite, labelName, initialArt
               MP3, WAV, FLAC • Max 50MB
             </p>
           </div>
+
+          {/* ── Declarație creativă ── */}
+          <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: 16, marginBottom: 20 }}>
+            <p className="form-label" style={{ marginBottom: 4 }}>Declarație creativă *</p>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14 }}>
+              Completează echipa creativă și bifează dacă AI a fost folosit în vreun element al piesei (conform EU AI Act).
+            </p>
+
+            {/* Echipă creativă */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="m-rolesCompozitie">Compoziție / melodie</label>
+                  <input id="m-rolesCompozitie" name="rolesCompozitie" className="form-input" placeholder="ex: Ion Popescu" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="m-rolesVersuri">Versuri / text</label>
+                  <input id="m-rolesVersuri" name="rolesVersuri" className="form-input" placeholder="ex: Maria Ionescu" />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="m-rolesProductie">Producție / beat</label>
+                  <input id="m-rolesProductie" name="rolesProductie" className="form-input" placeholder="ex: DJ Andrei" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="m-rolesMixaj">Mixaj / mastering</label>
+                  <input id="m-rolesMixaj" name="rolesMixaj" className="form-input" placeholder="ex: Studio X" />
+                </div>
+              </div>
+            </div>
+
+            {/* AI usage */}
+            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
+              Bifează dacă AI a contribuit la:
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+              {[
+                { name: 'aiCompozitie', label: 'Compoziție / melodie' },
+                { name: 'aiVersuri',    label: 'Versuri / text' },
+                { name: 'aiVoce',       label: 'Voce / vocal sintetic sau clonat' },
+                { name: 'aiProductie',  label: 'Producție / beat' },
+              ].map(({ name, label }) => (
+                <label key={name} style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer',
+                }}>
+                  <input
+                    type="checkbox"
+                    name={name}
+                    style={{ width: 15, height: 15, accentColor: 'var(--primary)', cursor: 'pointer' }}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <button type="button" className="btn btn-ghost" onClick={() => setModalOpen(false)}>Anulează</button>
-            <button type="submit" className="btn btn-primary">Salvează piesă</button>
+            <button type="button" className="btn btn-ghost" onClick={() => { setModalOpen(false); setIsrcInput('') }}>Anulează</button>
+            <button type="submit" className="btn btn-primary" disabled={isAdding}>
+              {isAdding ? 'Se procesează...' : 'Salvează piesă'}
+            </button>
           </div>
         </form>
       </Modal>
@@ -996,6 +1127,142 @@ export function CatalogClient({ tracks, artists, canWrite, labelName, initialArt
                   <div style={{ height: 6, background: 'linear-gradient(90deg, #1a3a1a, #2e7d32, #1a3a1a)' }} />
                 </div>
               </div>
+              </div>
+            </div>
+          </>
+        )
+      })()}
+
+      {/* ── Modal declarație AI ────────────────────────────────────────────── */}
+      {aiDeclTrack && aiDeclTrack.aiDecl && (() => {
+        const decl = aiDeclTrack.aiDecl!
+        const declaredDate = decl.declaredAt
+          ? new Date(decl.declaredAt).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' })
+          : '—'
+        const aiFlags = [
+          decl.aiCompozitie && 'Compoziție / melodie',
+          decl.aiVersuri    && 'Versuri / text',
+          decl.aiVoce       && 'Voce sintetizată sau clonată',
+          decl.aiProductie  && 'Producție / beat',
+          decl.aiAltele     && decl.aiAltele,
+        ].filter(Boolean) as string[]
+
+        return (
+          <>
+            {/* Overlay */}
+            <div
+              onClick={() => setAiDeclTrack(null)}
+              style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(10,9,18,0.65)', backdropFilter: 'blur(6px)' }}
+            />
+
+            {/* Panel */}
+            <div style={{ position: 'fixed', inset: 0, zIndex: 301, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', overflowY: 'auto' }}>
+              <div style={{ width: '100%', maxWidth: 620, position: 'relative' }}>
+
+                {/* Document */}
+                <div style={{ background: '#fff', borderRadius: 4, boxShadow: '0 4px 40px rgba(0,0,0,0.25)', overflow: 'hidden', position: 'relative' }}>
+
+                  {/* Buton X — colț dreapta sus, fix în document */}
+                  <button
+                    type="button"
+                    onClick={() => setAiDeclTrack(null)}
+                    title="Închide (Esc)"
+                    style={{
+                      position: 'absolute', top: 12, right: 12, zIndex: 10,
+                      width: 30, height: 30, borderRadius: '50%',
+                      background: 'rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.10)',
+                      color: '#888', cursor: 'pointer', fontSize: 14, fontFamily: 'inherit',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      lineHeight: 1, transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.12)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.06)' }}
+                  >
+                    ✕
+                  </button>
+                  <div style={{ height: 6, background: 'linear-gradient(90deg, #78350f, #d97706, #78350f)' }} />
+
+                  <div style={{ padding: '44px 56px' }}>
+                    {/* Antet */}
+                    <div style={{ textAlign: 'center', marginBottom: 36 }}>
+                      <div style={{ fontSize: 12, letterSpacing: 5, color: '#d97706', textTransform: 'uppercase', marginBottom: 6 }}>{labelName}</div>
+                      <div style={{ fontSize: 9, letterSpacing: 3, color: '#aaa', textTransform: 'uppercase', marginBottom: 18 }}>Declarație de Utilizare AI · SoundLedger</div>
+                      <h1 style={{ fontSize: 28, fontWeight: 400, color: '#111', margin: '0 0 4px', letterSpacing: 2, textTransform: 'uppercase' }}>AI Assisted</h1>
+                      <div style={{ width: 50, height: 2, background: '#d97706', margin: '10px auto 0' }} />
+                    </div>
+
+                    {/* Titlu piesă */}
+                    <div style={{ textAlign: 'center', marginBottom: 28 }}>
+                      <p style={{ fontSize: 13, color: '#666', lineHeight: 2, margin: 0, fontStyle: 'italic' }}>Prin prezentul document se declară că opera muzicală</p>
+                      <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111', margin: '8px 0 6px' }}>„{aiDeclTrack.title}"</h2>
+                      <p style={{ fontSize: 15, color: '#d97706', margin: 0 }}>de {aiDeclTrack.artist.name}</p>
+                    </div>
+
+                    {/* Etape AI */}
+                    <div style={{ marginBottom: 24, padding: '18px 24px', background: '#fffbeb', borderLeft: '3px solid #d97706', borderRadius: 2 }}>
+                      <div style={{ fontSize: 10, letterSpacing: 2, color: '#d97706', textTransform: 'uppercase', marginBottom: 10 }}>Etape cu implicare AI</div>
+                      {aiFlags.map((f) => (
+                        <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#444', marginBottom: 4 }}>
+                          <span style={{ color: '#d97706', fontWeight: 700 }}>▸</span> {f}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Declarație completă */}
+                    <div style={{ marginBottom: 24, padding: '18px 24px', background: '#f9f9f7', borderLeft: '3px solid #e5e7eb', borderRadius: 2 }}>
+                      <p style={{ fontSize: 12, color: '#444', lineHeight: 1.9, margin: 0, fontStyle: 'italic' }}>{decl.declaration}</p>
+                    </div>
+
+                    {/* Grid detalii */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, border: '1px solid #e0e0e0', borderRadius: 4, overflow: 'hidden', marginBottom: 28 }}>
+                      {[
+                        { label: 'Cod declarație', value: decl.code, mono: true },
+                        { label: 'Data declarației', value: declaredDate },
+                        decl.rolesCompozitie ? { label: 'Compoziție', value: decl.rolesCompozitie } : null,
+                        decl.rolesVersuri    ? { label: 'Versuri',     value: decl.rolesVersuri }    : null,
+                        decl.rolesProductie  ? { label: 'Producție',   value: decl.rolesProductie }  : null,
+                        decl.rolesMixaj      ? { label: 'Mixaj',       value: decl.rolesMixaj }      : null,
+                      ].filter(Boolean).map(({ label, value, mono }: any) => (
+                        <div key={label} style={{ padding: '14px 18px', background: '#fff', borderBottom: '1px solid #e8e8e8' }}>
+                          <div style={{ fontSize: 9, letterSpacing: 2, color: '#d97706', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#111', fontFamily: mono ? 'monospace' : 'inherit' }}>{value}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Footer */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: 20, borderTop: '1px solid #e0e0e0' }}>
+                      <div>
+                        <div style={{ fontSize: 9, color: '#bbb', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 3 }}>Emis prin platforma</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#333' }}>SoundLedger</div>
+                        <div style={{ fontSize: 9, color: '#bbb', marginTop: 2 }}>Conformitate EU AI Act</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 10, color: '#bbb', marginBottom: 2 }}>Cod unic</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#d97706', letterSpacing: 1 }}>{decl.code}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bara de acțiuni sub document */}
+                  <div style={{ padding: '10px 16px', borderTop: '1px solid #f0ede6', background: '#fafaf8', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <a
+                      href={`/catalog/${aiDeclTrack.id}`}
+                      style={{ fontSize: 12, color: '#d97706', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                    >
+                      ↗ Vezi pagina piesei
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setAiDeclTrack(null)}
+                      style={{ fontSize: 12, color: '#888', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '4px 8px' }}
+                    >
+                      Închide
+                    </button>
+                  </div>
+
+                  <div style={{ height: 6, background: 'linear-gradient(90deg, #78350f, #d97706, #78350f)' }} />
+                </div>
               </div>
             </div>
           </>

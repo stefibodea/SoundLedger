@@ -317,12 +317,24 @@ export function ScannerClient({ detections, canManage, canAct, serviceOnline, fi
                 borderLeft: '3px solid var(--role-artist-dark)',
                 marginBottom: 12,
                 padding: '10px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                flexWrap: 'wrap',
               }}
             >
               <p style={{ margin: 0, fontSize: 13, color: 'var(--role-artist-dark)' }}>
                 Serviciul de analiză audio este offline. Pornește-l cu{' '}
-                <code>npm run dev:all</code>.
+                <code>npm run dev:all</code>, apoi reîncarcă pagina.
               </p>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => window.location.reload()}
+              >
+                ↻ Reîncarcă
+              </button>
             </div>
           )}
 
