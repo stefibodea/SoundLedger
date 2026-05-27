@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canManageReleases } from '@/lib/roles'
 import { enforceOnboarding } from '@/lib/onboarding'
-import { ReleasesClient, type ReleaseRow, type TrackOption } from './releases-client'
+import { ReleasesClient, type ReleaseRow } from './releases-client'
 
 export default async function ReleasesPage() {
   const session = await requireSession()
@@ -15,21 +15,14 @@ export default async function ReleasesPage() {
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
-  const [rawReleases, rawTracks] = await Promise.all([
-    prisma.release.findMany({
-      where: { labelId: session.labelId },
-      include: {
-        track: { include: { artist: { select: { name: true, photo: true } } } },
-        album: { select: { id: true, title: true } },
-      },
-      orderBy: { releaseDate: 'asc' },
-    }),
-    prisma.track.findMany({
-      where: { labelId: session.labelId },
-      include: { artist: { select: { name: true } } },
-      orderBy: { createdAt: 'desc' },
-    }),
-  ])
+  const rawReleases = await prisma.release.findMany({
+    where: { labelId: session.labelId },
+    include: {
+      track: { include: { artist: { select: { name: true, photo: true } } } },
+      album: { select: { id: true, title: true } },
+    },
+    orderBy: { releaseDate: 'asc' },
+  })
 
   const totalReleases   = rawReleases.length
   const releasedCount   = rawReleases.filter((r) => r.status === 'RELEASED').length
@@ -49,16 +42,10 @@ export default async function ReleasesPage() {
     album: r.album ? { id: r.album.id, title: r.album.title } : null,
   }))
 
-  const tracks: TrackOption[] = rawTracks.map((t) => ({
-    id:    t.id,
-    label: `${t.artist.name} — ${t.title}`,
-  }))
-
   return (
     <AppShell session={session} title="Lansări">
 
-      {/* ── Client Component: filtre + carduri + modal ─────────────────────── */}
-      <ReleasesClient releases={releases} tracks={tracks} />
+      <ReleasesClient releases={releases} />
 
       <KpiVinylSidebar kpis={[
         { value: totalReleases, label: 'Total',             accentColor: 'purple' },

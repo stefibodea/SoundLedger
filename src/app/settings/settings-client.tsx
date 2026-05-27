@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect } from 'react'
 import { ProfileForm } from '@/app/profile/profile-form'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { PrintButton } from './print-button'
@@ -162,26 +162,90 @@ function Notification({ type, message }: { type: 'success' | 'error' | 'warning'
   )
 }
 
+const UPGRADE_PLANS: { value: string; label: string; color: string; bg: string; border: string; features: string[] }[] = [
+  {
+    value: 'PRO', label: 'Pro', color: '#9B94F0',
+    bg: 'rgba(155,148,240,0.08)', border: 'rgba(155,148,240,0.25)',
+    features: ['Artiști nelimitați', 'Toate rapoartele', 'AI Compliance + Certificate', 'Scanner piracy avansat', 'Scouting A&R AI'],
+  },
+  {
+    value: 'ENTERPRISE', label: 'Enterprise', color: '#fde68a',
+    bg: 'rgba(253,230,138,0.08)', border: 'rgba(253,230,138,0.25)',
+    features: ['Tot din Pro', 'SLA garantat', 'Suport dedicat', 'Integrări custom', 'Multi-label management'],
+  },
+]
+
+function PlanUpgradeForm({ currentPlan }: { currentPlan: string }) {
+  const availablePlans = UPGRADE_PLANS.filter((p) =>
+    !(p.value === 'PRO' && currentPlan === 'PRO'),
+  )
+  const [selected, setSelected] = useState(availablePlans[0]?.value ?? 'PRO')
+  const plan = UPGRADE_PLANS.find((p) => p.value === selected)
+
+  return (
+    <form action={requestUpgradeAction} style={{ display: 'grid', gap: 16 }}>
+      <input type="hidden" name="desiredPlan" value={selected} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${availablePlans.length}, 1fr)`, gap: 10 }}>
+        {availablePlans.map((p) => {
+          const active = selected === p.value
+          return (
+            <button
+              key={p.value}
+              type="button"
+              onClick={() => setSelected(p.value)}
+              style={{
+                padding: '14px 16px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
+                textAlign: 'left', transition: 'all 0.15s ease',
+                background: active ? p.bg : 'rgba(255,255,255,0.02)',
+                border: `1.5px solid ${active ? p.color : 'rgba(255,255,255,0.07)'}`,
+                boxShadow: active ? `0 0 16px ${p.bg}` : 'none',
+              }}
+            >
+              <div style={{ fontSize: 15, fontWeight: 700, color: active ? p.color : 'var(--text-secondary)', marginBottom: 6 }}>
+                {p.label}
+              </div>
+              <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none', display: 'grid', gap: 4 }}>
+                {p.features.map((f) => (
+                  <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11, color: active ? 'var(--text-secondary)' : 'rgba(200,198,188,0.35)' }}>
+                    <span style={{ width: 4, height: 4, borderRadius: '50%', background: active ? p.color : 'rgba(255,255,255,0.2)', flexShrink: 0, display: 'inline-block' }} />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </button>
+          )
+        })}
+      </div>
+
+      {plan && (
+        <div style={{ padding: '10px 14px', borderRadius: 8, background: `${plan.bg}`, border: `1px solid ${plan.border}`, fontSize: 13, color: 'var(--text-secondary)' }}>
+          Vei solicita trecerea la planul <strong style={{ color: plan.color }}>{plan.label}</strong>. Echipa SoundLedger te va contacta cu o ofertă.
+        </div>
+      )}
+
+      <div className="form-group" style={{ margin: 0 }}>
+        <label className="form-label" htmlFor="up-msg">Mesaj (opțional)</label>
+        <textarea id="up-msg" name="message" className="form-input" rows={3}
+          placeholder="Ex: avem 5 utilizatori, ne interesează funcțiile enterprise..."
+          style={{ resize: 'none' }} />
+      </div>
+
+      <button type="submit" className="btn btn-primary" style={{ fontSize: 13 }}>
+        Trimite cererea
+      </button>
+    </form>
+  )
+}
+
 export function SettingsClient({
   initialTab, success, error, revoked, inviteToken, inviteMailStatus, appUrl,
   user, label, optOut, tracksCount, canManageLabel, canOptOut,
   members, invitations, currentUserId,
 }: Props) {
   const [activeSection,    setActiveSection]    = useState('cont')
-  const [revokeHover,      setRevokeHover]      = useState(false)
-  const [inviteOpen,       setInviteOpen]       = useState(false)
-  const [memberRoleFilter, setMemberRoleFilter] = useState('toate')
-  const [, startTransition] = useTransition()
-
-  const filteredMembers = memberRoleFilter === 'toate'
-    ? members
-    : members.filter(m => m.role === memberRoleFilter)
-
-  const MEMBER_ROLES = [
-    { value: 'LABEL_MANAGER', label: 'Director General', bg: 'rgba(155,148,240,0.12)', color: '#9B94F0', border: 'rgba(155,148,240,0.3)' },
-    { value: 'FINANCIAL',     label: 'Manager Financiar', bg: 'rgba(218,165,32,0.12)', color: '#f0c040', border: 'rgba(218,165,32,0.3)' },
-    { value: 'SUPER_ADMIN',   label: 'Super Admin',      bg: 'rgba(252,165,165,0.12)', color: '#fca5a5', border: 'rgba(252,165,165,0.3)' },
-  ]
+  const [revokeHover, setRevokeHover] = useState(false)
+  const [inviteOpen,  setInviteOpen]  = useState(false)
 
   const successMsg = success ? (SUCCESS_MESSAGES[success] ?? null) : null
   const errorMsg   = error   ? (ERROR_MESSAGES[error]     ?? decodeURIComponent(error)) : null
@@ -372,7 +436,7 @@ export function SettingsClient({
             <div style={GLASS}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-                  Echipa ({members.length})
+                  Echipa
                 </h3>
                 <button
                   type="button"
@@ -384,37 +448,9 @@ export function SettingsClient({
                 </button>
               </div>
 
-              {/* KPI per rol */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
-                {MEMBER_ROLES.map((r) => {
-                  const count = members.filter(m => m.role === r.value).length
-                  const active = memberRoleFilter === r.value
-                  return (
-                    <button
-                      key={r.value}
-                      type="button"
-                      onClick={() => setMemberRoleFilter(active ? 'toate' : r.value)}
-                      style={{
-                        padding: '12px 14px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-                        background: active ? r.bg : 'var(--bg-secondary)',
-                        border: `1px solid ${active ? r.border : 'rgba(255,255,255,0.05)'}`,
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <div style={{ fontSize: 22, fontWeight: 700, color: active ? r.color : 'var(--text-primary)', lineHeight: 1, marginBottom: 4 }}>
-                        {count}
-                      </div>
-                      <div style={{ fontSize: 11, color: active ? r.color : 'var(--text-secondary)', fontWeight: active ? 600 : 400, lineHeight: 1.3 }}>
-                        {r.label}
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-
               {/* Member list */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: invitations.length > 0 ? 20 : 0 }}>
-                {filteredMembers.map((m) => {
+                {members.map((m) => {
                   const badge = ROLE_BADGE[m.role] ?? { bg: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }
                   const initials = `${m.firstName[0] ?? ''}${m.lastName[0] ?? ''}`.toUpperCase()
                   const isMe = m.id === currentUserId
@@ -445,9 +481,9 @@ export function SettingsClient({
                     </div>
                   )
                 })}
-                {filteredMembers.length === 0 && (
+                {members.length === 0 && (
                   <p style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center', padding: '16px 0', margin: 0 }}>
-                    Niciun membru în această categorie.
+                    Niciun membru în echipă.
                   </p>
                 )}
               </div>
@@ -494,7 +530,7 @@ export function SettingsClient({
                   <div className="form-group">
                     <label className="form-label">Rol</label>
                     <select name="role" className="form-input form-select" defaultValue={ROLES.FINANCIAL}>
-                      <option value={ROLES.FINANCIAL}>Departament Financiar</option>
+                      <option value={ROLES.FINANCIAL}>Manager Financiar</option>
                     </select>
                   </div>
                   <button type="submit" className="btn btn-primary">Trimite invitație</button>
@@ -584,29 +620,11 @@ export function SettingsClient({
 
               {label.plan !== 'ENTERPRISE' && (
                 <div style={{ ...GLASS, background: 'rgba(155,148,240,0.04)', border: '1px solid rgba(155,148,240,0.12)' }}>
-                  <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 12px' }}>Upgrade plan</h3>
+                  <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 12px' }}>Schimbare plan</h3>
                   <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.6 }}>
                     Trimite o cerere echipei SoundLedger și te contactăm cu o ofertă personalizată.
                   </p>
-                  <form action={requestUpgradeAction} style={{ display: 'grid', gap: 14 }}>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label" htmlFor="up-plan">Plan dorit *</label>
-                      <select id="up-plan" name="desiredPlan" className="form-select" required>
-                        {label.plan === 'FREE_TRIAL' && <option value="INDIE">Indie</option>}
-                        {(label.plan === 'FREE_TRIAL' || label.plan === 'INDIE') && <option value="PRO">Pro</option>}
-                        <option value="ENTERPRISE">Enterprise</option>
-                      </select>
-                    </div>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label" htmlFor="up-msg">Mesaj (opțional)</label>
-                      <textarea id="up-msg" name="message" className="form-input" rows={3}
-                        placeholder="Ex: avem 5 utilizatori, ne interesează funcțiile enterprise..."
-                        style={{ resize: 'none' }} />
-                    </div>
-                    <div>
-                      <button type="submit" className="btn btn-primary" style={{ fontSize: 13 }}>Trimite cererea</button>
-                    </div>
-                  </form>
+                  <PlanUpgradeForm currentPlan={label.plan} />
                 </div>
               )}
             </div>

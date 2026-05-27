@@ -195,6 +195,37 @@ export async function cancelRoyaltyAction(formData: FormData) {
   revalidatePath('/finance')
 }
 
+export async function markPeriodRoyaltiesPaidAction(formData: FormData) {
+  const session = await requireSession()
+  if (!session.labelId || !canManageFinance(session.role)) redirect('/finance/royalties')
+
+  const period = String(formData.get('period') || '').trim()
+  if (!period) redirect('/finance/royalties')
+
+  // Marchează ca plătite doar redevențele cu venit confirmat (sau fără venit asociat)
+  const pending = await prisma.royaltyPayment.findMany({
+    where: { labelId: session.labelId, period, status: 'PENDING' },
+    include: { revenue: { select: { revenueStatus: true } } },
+  })
+
+  const payableIds = pending
+    .filter((r) => !r.revenue || r.revenue.revenueStatus === 'RECONCILIAT')
+    .map((r) => r.id)
+
+  if (payableIds.length === 0) {
+    redirect('/finance/royalties?error=' + encodeURIComponent('Nicio redevență confirmată de plătit pentru această perioadă'))
+  }
+
+  await prisma.royaltyPayment.updateMany({
+    where: { id: { in: payableIds } },
+    data: { status: 'PAID', paidAt: new Date() },
+  })
+
+  revalidatePath('/finance/royalties')
+  revalidatePath('/finance')
+  redirect(`/finance/royalties?success=period_paid&period=${period}&count=${payableIds.length}`)
+}
+
 export async function createRoyaltyPaymentAction(formData: FormData) {
   const session = await requireSession()
   if (!session.labelId || !canManageFinance(session.role)) redirect('/finance/royalties')

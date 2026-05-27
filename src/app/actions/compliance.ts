@@ -287,7 +287,7 @@ export async function revokeCertificateAction(formData: FormData) {
   if (!session.labelId || !canManageCompliance(session.role)) redirect('/compliance/certificates')
 
   const id     = String(formData.get('id')     || '').trim()
-  const reason = String(formData.get('reason') || '').trim() || 'Revocat de Label Manager'
+  const reason = String(formData.get('reason') || '').trim() || 'Revocat de Director General'
 
   const cert = await prisma.humanMadeCertificate.findUnique({ where: { id } })
   if (!cert || cert.labelId !== session.labelId) redirect('/compliance/certificates')

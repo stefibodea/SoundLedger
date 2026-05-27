@@ -3,7 +3,7 @@ import { AppShell } from '@/components/app-shell'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { enforceOnboarding } from '@/lib/onboarding'
-import { getRoleDisplayName, canManageTeam, canManageOptOut } from '@/lib/roles'
+import { getRoleDisplayName, canManageTeam, canManageOptOut, ROLES } from '@/lib/roles'
 import { SettingsClient } from './settings-client'
 import type { UserData, LabelData, OptOutData } from './settings-client'
 
@@ -34,8 +34,8 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const inviteToken = sp.invite ?? undefined
   const mailStatus  = sp.mail   ?? undefined
 
-  const showLabel  = canManageTeam(session.role)
-  const showOptOut = canManageOptOut(session.role)
+  const showLabel  = canManageTeam(session.role)    && session.role !== ROLES.SUPER_ADMIN
+  const showOptOut = canManageOptOut(session.role)  && session.role !== ROLES.SUPER_ADMIN
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000'
 

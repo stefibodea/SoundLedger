@@ -63,6 +63,7 @@ model Label {
   aiOptOutDecl      AIOptOutDeclaration?
   creativeRecords   CreativeRecord[]
   composers         Composer[]
+  expenses          Expense[]
 }
 
 model Invitation {
@@ -116,6 +117,7 @@ model Artist {
   contracts     Contract[]
   revenues      Revenue[]
   royaltyPayments RoyaltyPayment[]
+  expenses      Expense[]
 }
 
 model Track {
@@ -434,6 +436,23 @@ model Composer {
 
   labelId String
   label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@index([labelId])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  category    String   // STUDIO, VIDEO, PROMO, DISTRIBUTIE, ALTELE
+  amount      Float
+  description String?
+  period      String   // "YYYY-MM"
+  isRecoupable Boolean @default(false)
+  createdAt   DateTime @default(now())
+
+  labelId     String
+  label       Label    @relation(fields: [labelId], references: [id])
+  artistId    String?
+  artist      Artist?  @relation(fields: [artistId], references: [id])
 
   @@index([labelId])
 }

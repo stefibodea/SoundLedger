@@ -718,12 +718,20 @@ export function CatalogClient({ tracks, artists, canWrite, labelName, initialArt
               {/* ── Sortare ── */}
               <div>
                 <FilterLabel><ArrowUpDown size={9} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />Sortare</FilterLabel>
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} className="cat-sidebar-select">
-                  <option value="date">Dată adăugare</option>
-                  <option value="title">Titlu</option>
-                  <option value="artist">Artist</option>
-                  <option value="bpm">BPM</option>
-                </select>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {([
+                    { value: 'date',   label: 'Dată' },
+                    { value: 'title',  label: 'Titlu' },
+                    { value: 'artist', label: 'Artist' },
+                    { value: 'bpm',    label: 'BPM' },
+                  ] as { value: SortKey; label: string }[]).map((opt) => (
+                    <button key={opt.value} type="button"
+                      onClick={() => setSortBy(opt.value)}
+                      className={`cat-filter-chip${sortBy === opt.value ? ' active' : ''}`}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
             </div>

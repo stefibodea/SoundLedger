@@ -4,10 +4,9 @@ import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canViewFinance, canManageFinance } from '@/lib/roles'
-import { createRevenueAction } from '@/app/actions/revenues'
+import { createRevenueAction, importRevenueCsvAction } from '@/app/actions/revenues'
 import { SuccessBanner } from './SuccessBanner'
 import { AddRevenueForm } from './add-revenue-form'
-import { ImportCsvForm } from './import-csv-form'
 import { enforceOnboarding } from '@/lib/onboarding'
 import { FinanceClient, type RevenueRow, type ArtistOption } from './finance-client'
 
@@ -75,10 +74,7 @@ export default async function FinancePage({ searchParams }: { searchParams?: Sea
       <header className="page-header">
         <h1 className="page-title">Venituri</h1>
         {canManage && (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <AddRevenueForm artists={rawArtists} createRevenueAction={createRevenueAction} />
-            <ImportCsvForm />
-          </div>
+          <AddRevenueForm artists={rawArtists} createRevenueAction={createRevenueAction} importRevenueCsvAction={importRevenueCsvAction} />
         )}
       </header>
 

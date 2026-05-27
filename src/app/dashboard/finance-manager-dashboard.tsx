@@ -257,31 +257,6 @@ export async function FinanceManagerDashboard({ session }: { session: SessionPay
         },
       ]} />
 
-      {/* ── Alert royalties neplatite ── */}
-      {pendingRoyalties > 0 && (
-        <div
-          style={{
-            padding: '12px 16px',
-            background: 'rgba(251, 191, 36, 0.1)',
-            border: '1px solid rgba(251, 191, 36, 0.3)',
-            borderRadius: 8,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-          }}
-        >
-          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--role-finance-dark)' }}>!</span>
-          <span style={{ color: 'var(--role-finance-dark)', fontWeight: 500 }}>
-            Royalties neplatite:{' '}
-            {pendingRoyalties >= 1000
-              ? `${(pendingRoyalties / 1000).toFixed(1)}k €`
-              : `${pendingRoyalties.toFixed(0)} €`}
-          </span>
-          <Link href="/finance" style={{ color: 'var(--primary)', fontSize: 13, textDecoration: 'none' }}>
-            Mergi la Finanțe
-          </Link>
-        </div>
-      )}
 
     </AppShell>
   )

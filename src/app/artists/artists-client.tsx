@@ -308,12 +308,19 @@ export function ArtistsClient({
               <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
               <div>
                 <FilterLabel>Sortare</FilterLabel>
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)} className='cat-sidebar-select'>
-                  <option value='name'>Nume</option>
-                  <option value='date'>Dată adăugare</option>
-                  <option value='genre'>Gen muzical</option>
-                  <option value='tracks'>Nr. piese</option>
-                </select>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {([
+                    { value: 'name',   label: 'Nume' },
+                    { value: 'date',   label: 'Dată' },
+                    { value: 'tracks', label: 'Nr. piese' },
+                  ] as { value: SortOption; label: string }[]).map((opt) => (
+                    <button key={opt.value} type='button'
+                      onClick={() => setSortBy(opt.value)}
+                      className={`genre-chip${sortBy === opt.value ? ' active' : ''}`}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

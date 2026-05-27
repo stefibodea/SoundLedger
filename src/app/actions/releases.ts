@@ -24,17 +24,19 @@ export async function createReleaseAction(formData: FormData) {
     redirect('/dashboard')
   }
 
+  const returnTo = (formData.get('returnTo') as string | null) || '/releases'
+
   const result = createReleaseSchema.safeParse({
     trackId:     formData.get('trackId'),
     releaseDate: formData.get('releaseDate'),
   })
   if (!result.success) {
     const msg = result.error.issues[0]?.message ?? 'Date invalide'
-    redirect(`/releases?error=${encodeURIComponent(msg)}`)
+    redirect(`${returnTo}?error=${encodeURIComponent(msg)}`)
   }
   const { trackId, releaseDate } = result.data
 
-  await assertTrackBelongsToLabel(trackId, session.labelId, '/releases?error=Piesa+invalida')
+  await assertTrackBelongsToLabel(trackId, session.labelId, `${returnTo}?error=Piesa+invalida`)
 
   await prisma.release.create({
     data: {
@@ -64,7 +66,7 @@ export async function updateReleaseAction(formData: FormData) {
   const release = await prisma.release.findUnique({ where: { id } })
   if (!release || release.labelId !== session.labelId) redirect('/releases')
 
-  await prisma.release.update({
+  const updated = await prisma.release.update({
     where: { id },
     data: {
       releaseDate,
@@ -72,6 +74,14 @@ export async function updateReleaseAction(formData: FormData) {
       checklist: checklistRaw || null,
     },
   })
+
+  // Sincronizează statusul piesei când lansarea devine RELEASED
+  if (status === 'RELEASED' && updated.trackId) {
+    await prisma.track.update({
+      where: { id: updated.trackId },
+      data: { status: 'RELEASED' },
+    })
+  }
 
   revalidatePath('/releases')
   redirect('/releases')
@@ -96,5 +106,14 @@ export async function updateReleaseStatusAction(formData: FormData) {
   }
 
   await prisma.release.update({ where: { id: releaseId }, data: { status } })
+
+  // Sincronizează statusul piesei când lansarea devine RELEASED
+  if (status === 'RELEASED' && release.trackId) {
+    await prisma.track.update({
+      where: { id: release.trackId },
+      data: { status: 'RELEASED' },
+    })
+  }
+
   redirect('/releases')
 }

@@ -47,24 +47,24 @@ const SOURCE_LABELS: Record<string, string> = {
   SYNC:                'Sync (legacy)',
 }
 
-const SOURCE_STYLES: Record<string, { bg: string; color: string }> = {
-  SPOTIFY:             { bg: '#dcfce7',                      color: '#15803d' },
-  APPLE_MUSIC:         { bg: '#fce7f3',                      color: '#be185d' },
-  YOUTUBE_MUSIC:       { bg: '#fee2e2',                      color: '#b91c1c' },
-  YOUTUBE_CONTENT_ID:  { bg: '#fef9c3',                      color: '#854d0e' },
-  TIKTOK:              { bg: '#f0f9ff',                      color: '#0369a1' },
-  DEEZER:              { bg: '#ede9fe',                      color: '#6d28d9' },
-  RADIO_TV:            { bg: 'var(--role-finance-light)',     color: 'var(--role-finance-dark)' },
-  SYNC_LICENSING:      { bg: 'var(--role-ar-light)',          color: 'var(--role-ar-dark)' },
-  LICENTIERE:          { bg: 'var(--role-label-light)',       color: 'var(--role-label-dark)' },
-  VANZARI_FIZICE:      { bg: 'var(--bg-tertiary)',            color: 'var(--text-secondary)' },
-  MERCHANDISE:         { bg: '#fdf2f8',                      color: '#9d174d' },
-  ALTE_SURSE:          { bg: 'var(--bg-tertiary)',            color: 'var(--text-secondary)' },
-  STREAMING:           { bg: '#dcfce7',                      color: '#15803d' },
-  YOUTUBE:             { bg: '#fee2e2',                      color: '#b91c1c' },
-  LICENSING:           { bg: 'var(--role-label-light)',       color: 'var(--role-label-dark)' },
-  PHYSICAL:            { bg: 'var(--bg-tertiary)',            color: 'var(--text-secondary)' },
-  SYNC:                { bg: 'var(--role-finance-light)',     color: 'var(--role-finance-dark)' },
+const SOURCE_STYLES: Record<string, { bg: string; color: string; border: string }> = {
+  SPOTIFY:             { bg: 'rgba(110,231,183,0.12)', color: '#6ee7b7',  border: 'rgba(110,231,183,0.3)' },
+  APPLE_MUSIC:         { bg: 'rgba(252,165,165,0.12)', color: '#fca5a5',  border: 'rgba(252,165,165,0.3)' },
+  YOUTUBE_MUSIC:       { bg: 'rgba(252,165,165,0.12)', color: '#fca5a5',  border: 'rgba(252,165,165,0.3)' },
+  YOUTUBE_CONTENT_ID:  { bg: 'rgba(253,230,138,0.12)', color: '#fde68a',  border: 'rgba(253,230,138,0.3)' },
+  TIKTOK:              { bg: 'rgba(147,197,253,0.12)', color: '#93c5fd',  border: 'rgba(147,197,253,0.3)' },
+  DEEZER:              { bg: 'rgba(155,148,240,0.12)', color: '#9B94F0',  border: 'rgba(155,148,240,0.3)' },
+  RADIO_TV:            { bg: 'rgba(253,230,138,0.12)', color: '#fde68a',  border: 'rgba(253,230,138,0.3)' },
+  SYNC_LICENSING:      { bg: 'rgba(110,231,183,0.12)', color: '#6ee7b7',  border: 'rgba(110,231,183,0.3)' },
+  LICENTIERE:          { bg: 'rgba(147,197,253,0.12)', color: '#93c5fd',  border: 'rgba(147,197,253,0.3)' },
+  VANZARI_FIZICE:      { bg: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', border: 'rgba(255,255,255,0.1)' },
+  MERCHANDISE:         { bg: 'rgba(252,165,165,0.12)', color: '#fca5a5',  border: 'rgba(252,165,165,0.3)' },
+  ALTE_SURSE:          { bg: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', border: 'rgba(255,255,255,0.1)' },
+  STREAMING:           { bg: 'rgba(110,231,183,0.12)', color: '#6ee7b7',  border: 'rgba(110,231,183,0.3)' },
+  YOUTUBE:             { bg: 'rgba(252,165,165,0.12)', color: '#fca5a5',  border: 'rgba(252,165,165,0.3)' },
+  LICENSING:           { bg: 'rgba(147,197,253,0.12)', color: '#93c5fd',  border: 'rgba(147,197,253,0.3)' },
+  PHYSICAL:            { bg: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', border: 'rgba(255,255,255,0.1)' },
+  SYNC:                { bg: 'rgba(110,231,183,0.12)', color: '#6ee7b7',  border: 'rgba(110,231,183,0.3)' },
 }
 
 const FILTER_LABEL: React.CSSProperties = {
@@ -178,78 +178,96 @@ export function FinanceClient({ revenues, artists, canManage }: Props) {
       </div>
 
       {/* ── Tabel ── */}
-      <section className="card" style={{ marginBottom: 20 }}>
-        {hasFilters && (
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 14 }}>
-            {filtered.length} rezultat{filtered.length !== 1 ? 'e' : ''} — total: <strong>{totalFiltered.toFixed(2)} €</strong>
-          </p>
-        )}
-
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Sursă</th>
-                <th>Sumă</th>
-                <th>Perioadă</th>
-                <th>Artist</th>
-                <th>Streamuri</th>
-                <th>Descriere</th>
-                {canManage && <th></th>}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={canManage ? 7 : 6}>Nu există venituri pentru filtrele selectate.</td></tr>
-              ) : (
-                filtered.map((r) => (
-                  <tr key={r.id}>
-                    <td>
-                      <span className="badge" style={{
-                        background: SOURCE_STYLES[r.source]?.bg ?? 'var(--bg-tertiary)',
-                        color: SOURCE_STYLES[r.source]?.color ?? 'var(--text-secondary)',
-                        fontSize: 12,
-                      }}>
-                        {SOURCE_LABELS[r.source] ?? r.source}
+      <style>{`
+        .fn-tr:hover td { background: rgba(255,255,255,0.02); }
+      `}</style>
+      <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 20 }}>
+        {filtered.length === 0 ? (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>
+            {revenues.length === 0 ? 'Niciun venit înregistrat.' : 'Niciun rezultat pentru filtrele selectate.'}
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  {(['Sursă', 'Perioadă', 'Artist', 'Streamuri', 'Descriere'] as const).map((h) => (
+                    <th key={h} style={{ padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.5)', borderBottom: '1px solid rgba(255,255,255,0.06)', textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                  <th style={{ padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.5)', borderBottom: '1px solid rgba(255,255,255,0.06)', textAlign: 'right', whiteSpace: 'nowrap' }}>Sumă</th>
+                  {canManage && <th style={{ padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }} />}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((r) => {
+                  const style = SOURCE_STYLES[r.source]
+                  const td: React.CSSProperties = { padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', verticalAlign: 'middle' }
+                  return (
+                    <tr key={r.id} className="fn-tr">
+                      <td style={td}>
+                        <span style={{ background: style?.bg ?? 'rgba(255,255,255,0.06)', color: style?.color ?? 'var(--text-secondary)', border: `1px solid ${style?.border ?? 'rgba(255,255,255,0.1)'}`, fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+                          {SOURCE_LABELS[r.source] ?? r.source}
+                        </span>
+                      </td>
+                      <td style={td}>
+                        <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>{r.period}</span>
+                      </td>
+                      <td style={td}>
+                        <span style={{ fontSize: 13, color: r.artist ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{r.artist?.name ?? '—'}</span>
+                      </td>
+                      <td style={td}>
+                        <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
+                          {r.streams != null ? r.streams.toLocaleString('ro-RO') : '—'}
+                        </span>
+                      </td>
+                      <td style={{ ...td, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{r.description ?? '—'}</span>
+                      </td>
+                      <td style={{ ...td, textAlign: 'right' }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#6ee7b7', fontVariantNumeric: 'tabular-nums' }}>
+                          {r.amount.toFixed(2)} €
+                        </span>
+                      </td>
+                      {canManage && (
+                        <td style={td}>
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'flex-end' }}>
+                            <Link href={`/finance/${r.id}`} className="btn btn-sm btn-secondary" style={{ fontSize: 11 }}>
+                              Editează
+                            </Link>
+                            {r.revenueStatus === 'ESTIMAT' && (
+                              <form action={reconcileRevenueAction} style={{ display: 'inline' }}>
+                                <input type="hidden" name="id" value={r.id} />
+                                <button type="submit" style={{ fontSize: 11, padding: '3px 10px', borderRadius: 6, whiteSpace: 'nowrap', border: '1px solid rgba(110,231,183,0.3)', background: 'rgba(110,231,183,0.1)', color: '#6ee7b7', cursor: 'pointer', fontFamily: 'inherit' }}>
+                                  Reconciliază
+                                </button>
+                              </form>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  )
+                })}
+              </tbody>
+              {filtered.length > 1 && (
+                <tfoot>
+                  <tr>
+                    <td colSpan={canManage ? 5 : 4} style={{ padding: '14px 16px', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                      Total ({filtered.length} înregistrări)
+                    </td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#6ee7b7', fontVariantNumeric: 'tabular-nums' }}>
+                        {totalFiltered.toFixed(2)} €
                       </span>
                     </td>
-                    <td><strong>{r.amount.toFixed(2)} €</strong></td>
-                    <td>{r.period}</td>
-                    <td style={{ fontSize: 13 }}>{r.artist?.name ?? '—'}</td>
-                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                      {r.streams != null ? r.streams.toLocaleString('ro-RO') : '—'}
-                    </td>
-                    <td style={{ fontSize: 12, color: 'var(--text-secondary)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {r.description ?? '—'}
-                    </td>
-                    {canManage && (
-                      <td>
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                          <Link href={`/finance/${r.id}`} className="btn btn-sm btn-secondary" style={{ fontSize: 11 }}>
-                            Editează
-                          </Link>
-                          {r.revenueStatus === 'ESTIMAT' && (
-                            <form action={reconcileRevenueAction} style={{ display: 'inline' }}>
-                              <input type="hidden" name="id" value={r.id} />
-                              <button type="submit" style={{
-                                fontSize: 11, padding: '3px 10px', borderRadius: 6, whiteSpace: 'nowrap',
-                                border: '1px solid rgba(110,231,183,0.3)', background: 'rgba(110,231,183,0.1)',
-                                color: '#6ee7b7', cursor: 'pointer',
-                              }}>
-                                Reconciliază
-                              </button>
-                            </form>
-                          )}
-                        </div>
-                      </td>
-                    )}
+                    {canManage && <td style={{ padding: '14px 16px', borderTop: '1px solid rgba(255,255,255,0.08)' }} />}
                   </tr>
-                ))
+                </tfoot>
               )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+            </table>
+          </div>
+        )}
+      </div>
 
     </div>
   )

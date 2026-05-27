@@ -382,7 +382,7 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
           )}
 
       {/* ── Tabel ──────────────────────────────────────────────────────────── */}
-      <section className="card">
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {filtered.length === 0 ? (
           <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--text-secondary)' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}></div>
@@ -398,12 +398,12 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
           </div>
         ) : (
           <>
-            <div className="table-container">
-              <table className="table">
-                <thead style={{ background: 'rgba(35,33,43,0.8)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
                     {canManage && (
-                      <th style={{ width: 40 }}>
+                      <th style={{ width: 40, padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                         <input
                           type="checkbox"
                           style={{ accentColor: 'var(--primary)', cursor: 'pointer' }}
@@ -416,11 +416,9 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
                         />
                       </th>
                     )}
-                    <th>Titlu piesă</th>
-                    <th>Artist</th>
-                    <th>Gen</th>
-                    <th>Status</th>
-                    <th>Acțiuni</th>
+                    {['Titlu piesă', 'Artist', 'Gen', 'Status', 'Acțiuni'].map((h) => (
+                      <th key={h} style={{ padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.5)', borderBottom: '1px solid rgba(255,255,255,0.06)', textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -429,10 +427,11 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
                     const isRevoked    = track.cert?.isRevoked === true
                     const isSelectable = selectableIds.has(track.id)
 
+                    const td = { padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', verticalAlign: 'middle' as const }
                     return (
                       <tr key={track.id} className="cert-table-row">
                         {canManage && (
-                          <td>
+                          <td style={td}>
                             {isSelectable && (
                               <input
                                 type="checkbox"
@@ -444,8 +443,8 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
                           </td>
                         )}
 
-                        <td>
-                          <strong style={{ fontSize: 14 }}>{track.title}</strong>
+                        <td style={td}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{track.title}</span>
                           {track.cert && (
                             <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
                               {track.cert.certificateCode}
@@ -453,36 +452,34 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
                           )}
                         </td>
 
-                        <td style={{ fontSize: 13 }}>{track.artist.name}</td>
+                        <td style={td}><span style={{ fontSize: 13 }}>{track.artist.name}</span></td>
 
-                        <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                          {track.genre ?? '—'}
-                        </td>
+                        <td style={td}><span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{track.genre ?? '—'}</span></td>
 
-                        <td>
+                        <td style={td}>
                           {isCertified ? (
                             <>
-                              <span className="badge" style={{ background: 'var(--role-ar-light)', color: 'var(--role-ar-dark)', boxShadow: '0 0 8px rgba(110,231,183,0.4), 0 0 16px rgba(110,231,183,0.15)' }}>
+                              <span style={{ background: 'rgba(110,231,183,0.12)', color: '#6ee7b7', border: '1px solid rgba(110,231,183,0.3)', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap', boxShadow: '0 0 8px rgba(110,231,183,0.2)' }}>
                                 Certificat
                               </span>
                               {track.cert && (
-                                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
+                                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
                                   {fmtDate(track.cert.issuedAt)}
                                 </div>
                               )}
                             </>
                           ) : isRevoked ? (
-                            <span className="badge" style={{ background: 'var(--role-artist-light)', color: 'var(--role-artist-dark)', boxShadow: '0 0 8px rgba(252,165,165,0.4), 0 0 16px rgba(252,165,165,0.15)' }}>
+                            <span style={{ background: 'rgba(252,165,165,0.12)', color: '#fca5a5', border: '1px solid rgba(252,165,165,0.3)', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap' }}>
                               Revocat
                             </span>
                           ) : (
-                            <span className="badge" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
+                            <span style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap' }}>
                               Necertificat
                             </span>
                           )}
                         </td>
 
-                        <td>
+                        <td style={td}>
                           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                             {isCertified && track.cert && (
                               <>
@@ -496,7 +493,7 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
                                 {canManage && (
                                   <form action={revokeCertificateAction}>
                                     <input type="hidden" name="id" value={track.cert.id} />
-                                    <input type="hidden" name="reason" value="Revocat manual de Label Manager" />
+                                    <input type="hidden" name="reason" value="Revocat manual de Director General" />
                                     <button
                                       type="submit"
                                       className="btn btn-sm btn-ghost revoke-btn"
@@ -571,7 +568,7 @@ export function CertificatesClient({ tracks, canManage, defaultDeclaration }: Pr
             )}
           </>
         )}
-      </section>
+      </div>
 
       </div>{/* end relative */}
 

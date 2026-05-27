@@ -6,6 +6,7 @@ import { requireSession } from '@/lib/auth-guards'
 import { canViewCatalog, canManageArtists, canManageCompliance } from '@/lib/roles'
 import { enforceOnboarding } from '@/lib/onboarding'
 import { toggleTrackStatusAction, declareCreativeRecordAction } from '@/app/actions/catalog'
+import { createReleaseAction } from '@/app/actions/releases'
 import { computeFingerprintFromCatalogPage, deleteFingerprintForTrack } from '@/app/actions/fingerprints'
 import { getAudioFileUrl } from '@/lib/file-upload'
 
@@ -29,6 +30,8 @@ export default async function TrackDetailPage({ params, searchParams }: PageProp
     ? 'Declarația creativă a fost salvată.'
     : sp.fpOk === '1'
     ? 'Amprenta audio a fost calculată și salvată.'
+    : sp.success === 'release_created'
+    ? 'Lansarea a fost creată. O poți gestiona din pagina Lansări.'
     : null
   const errorMsg = sp.error ? decodeURIComponent(sp.error) : (sp.fpError ? decodeURIComponent(sp.fpError) : null)
 
@@ -46,6 +49,7 @@ export default async function TrackDetailPage({ params, searchParams }: PageProp
         fingerprint:    true,
         creativeRecord: true,
         humanMadeCert:  true,
+        releases:       { orderBy: { createdAt: 'desc' }, take: 1 },
       },
     }),
     prisma.composer.findMany({
@@ -324,6 +328,40 @@ export default async function TrackDetailPage({ params, searchParams }: PageProp
                   </div>
                 ))}
               </div>
+            </section>
+          )}
+
+          {/* Lansare */}
+          {canWrite && track.status !== 'RELEASED' && (
+            <section className="card">
+              <h3 style={{ marginBottom: 12, fontSize: 14 }}>Lansare</h3>
+              {track.releases[0] ? (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0', borderBottom: '1px solid var(--border-light)', marginBottom: 10 }}>
+                    <span style={{ color: 'var(--text-tertiary)' }}>Dată planificată</span>
+                    <strong>{track.releases[0].releaseDate}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0', borderBottom: '1px solid var(--border-light)', marginBottom: 12 }}>
+                    <span style={{ color: 'var(--text-tertiary)' }}>Status</span>
+                    <strong>{track.releases[0].status === 'RELEASED' ? 'Lansat' : track.releases[0].status === 'READY' ? 'Gata' : 'Planificat'}</strong>
+                  </div>
+                  <Link href="/releases" className="btn btn-secondary btn-sm" style={{ width: '100%', textAlign: 'center', display: 'block' }}>
+                    Gestionează lansarea
+                  </Link>
+                </div>
+              ) : (
+                <form action={createReleaseAction}>
+                  <input type="hidden" name="trackId" value={id} />
+                  <input type="hidden" name="returnTo" value={`/catalog/${id}?success=release_created`} />
+                  <div className="form-group" style={{ marginBottom: 12 }}>
+                    <label className="form-label" style={{ fontSize: 11 }}>Dată lansare *</label>
+                    <input name="releaseDate" type="date" className="form-input" required style={{ fontSize: 13 }} />
+                  </div>
+                  <button type="submit" className="btn btn-primary btn-sm" style={{ width: '100%' }}>
+                    Planifică lansare
+                  </button>
+                </form>
+              )}
             </section>
           )}
 

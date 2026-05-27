@@ -7,7 +7,7 @@ import { canViewFinance, canManageFinance } from '@/lib/roles'
 import { enforceOnboarding } from '@/lib/onboarding'
 import { RoyaltiesClient } from './royalties-client'
 import { AddRoyaltyForm } from './add-royalty-form'
-import type { RoyaltyRow, ArtistOption } from './royalties-client'
+import type { RoyaltyRow, ArtistOption, PendingPeriod } from './royalties-client'
 
 export default async function RoyaltiesPage({
   searchParams,
@@ -26,7 +26,7 @@ export default async function RoyaltiesPage({
       where: { labelId: session.labelId },
       include: {
         artist: { select: { id: true, name: true, photo: true } },
-        revenue: { select: { id: true, source: true, period: true } },
+        revenue: { select: { id: true, source: true, period: true, revenueStatus: true } },
       },
       orderBy: { createdAt: 'desc' },
     }),
@@ -51,6 +51,26 @@ export default async function RoyaltiesPage({
   const pendingSum = pending.reduce((s, r) => s + r.amount, 0)
   const paidSum    = paid.reduce((s, r) => s + r.amount, 0)
   const totalSum   = rawRoyalties.reduce((s, r) => s + r.amount, 0)
+
+  // Grupează redevențele PENDING plătibile pe perioadă
+  const periodMap = new Map<string, { count: number; total: number; artistNames: Set<string> }>()
+  for (const r of pending) {
+    const payable = !r.revenue || r.revenue.revenueStatus === 'RECONCILIAT'
+    if (!payable) continue
+    const entry = periodMap.get(r.period) ?? { count: 0, total: 0, artistNames: new Set() }
+    entry.count++
+    entry.total += r.amount
+    entry.artistNames.add(r.artist.name)
+    periodMap.set(r.period, entry)
+  }
+  const pendingPeriods: PendingPeriod[] = Array.from(periodMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([period, { count, total, artistNames }]) => ({
+      period,
+      count,
+      total,
+      artistCount: artistNames.size,
+    }))
 
   const royalties: RoyaltyRow[] = rawRoyalties.map((r) => ({
     ...r,
@@ -83,6 +103,7 @@ export default async function RoyaltiesPage({
         royalties={royalties}
         canManage={canManage}
         artistOptions={artistOptions}
+        pendingPeriods={pendingPeriods}
         success={sp.success}
         error={sp.error}
       />

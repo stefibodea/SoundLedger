@@ -288,73 +288,64 @@ export function CreativeClient({ tracks, composers, canManage }: Props) {
       </div>
 
       {/* Tabel */}
-      <section className="card" style={{ marginBottom: 20 }}>
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Piesă</th>
-                <th>Artist</th>
-                <th>Implicare AI</th>
-                <th>Certificat HM</th>
-                {canManage && <th></th>}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={canManage ? 5 : 4} style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: '24px 0' }}>
-                  Nicio piesă găsită.
-                </td></tr>
-              ) : filtered.map((t) => {
-                const st = aiStatus(t)
-                return (
-                  <tr key={t.id}>
-                    <td style={{ fontWeight: 500 }}>{t.title}</td>
-                    <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{t.artistName}</td>
-                    <td>
-                      <span style={{ fontSize: 12, fontWeight: 500, color: st.color }}>{st.label}</span>
-                    </td>
-                    <td>
-                      {t.cert ? (
-                        <div>
-                          <Link
-                            href={`/compliance/certificates/${t.cert.id}`}
-                            style={{ fontSize: 12, fontWeight: 500, color: 'var(--role-ar-dark)', textDecoration: 'none' }}
-                          >
-                             {t.cert.certificateCode}
-                          </Link>
-                          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 1 }}>{fmtDate(t.cert.issuedAt)}</div>
-                        </div>
-                      ) : t.creativeRecord && !hasAIUsage(t.creativeRecord) && canManage ? (
-                        <form action={issueCertFromCreativeAction} style={{ display: 'inline' }}>
-                          <input type="hidden" name="trackId" value={t.id} />
-                          <button type="submit" className="btn btn-sm btn-ghost" style={{ fontSize: 11, color: 'var(--role-ar-dark)' }}>
-                            + Emite cert.
-                          </button>
-                        </form>
-                      ) : (
-                        <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>—</span>
-                      )}
-                    </td>
-                    {canManage && (
-                      <td>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-secondary"
-                          style={{ fontSize: 11 }}
-                          onClick={() => openModal(t)}
-                        >
-                          {t.creativeRecord ? 'Editează' : '+ Declară'}
-                        </button>
+      <style>{`.cr-row:hover td { background: rgba(255,255,255,0.02); }`}</style>
+      <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 20 }}>
+        {filtered.length === 0 ? (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>Nicio piesă găsită.</div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  {(['Piesă', 'Artist', 'Implicare AI', 'Certificat HM'] as const).map((h) => (
+                    <th key={h} style={{ padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.5)', borderBottom: '1px solid rgba(255,255,255,0.06)', textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                  {canManage && <th style={{ padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }} />}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((t) => {
+                  const st = aiStatus(t)
+                  const td = { padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', verticalAlign: 'middle' as const }
+                  return (
+                    <tr key={t.id} className="cr-row">
+                      <td style={td}><span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{t.title}</span></td>
+                      <td style={td}><span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t.artistName}</span></td>
+                      <td style={td}><span style={{ fontSize: 12, fontWeight: 600, color: st.color }}>{st.label}</span></td>
+                      <td style={td}>
+                        {t.cert ? (
+                          <div>
+                            <Link href={`/compliance/certificates/${t.cert.id}`} style={{ fontSize: 12, fontWeight: 500, color: 'var(--role-ar-dark)', textDecoration: 'none' }}>
+                               {t.cert.certificateCode}
+                            </Link>
+                            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>{fmtDate(t.cert.issuedAt)}</div>
+                          </div>
+                        ) : t.creativeRecord && !hasAIUsage(t.creativeRecord) && canManage ? (
+                          <form action={issueCertFromCreativeAction} style={{ display: 'inline' }}>
+                            <input type="hidden" name="trackId" value={t.id} />
+                            <button type="submit" className="btn btn-sm btn-ghost" style={{ fontSize: 11, color: 'var(--role-ar-dark)' }}>
+                              + Emite cert.
+                            </button>
+                          </form>
+                        ) : (
+                          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>—</span>
+                        )}
                       </td>
-                    )}
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
+                      {canManage && (
+                        <td style={td}>
+                          <button type="button" className="btn btn-sm btn-secondary" style={{ fontSize: 11 }} onClick={() => openModal(t)}>
+                            {t.creativeRecord ? 'Editează' : '+ Declară'}
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Modal */}
       {selected && (

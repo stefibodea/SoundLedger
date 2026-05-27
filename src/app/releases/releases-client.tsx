@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Search, Circle, ChevronDown, X, ChevronLeft, ChevronRight, CalendarDays, List } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { createReleaseAction, updateReleaseAction } from '@/app/actions/releases'
+import { updateReleaseAction } from '@/app/actions/releases'
 
 // ── Tipuri ─────────────────────────────────────────────────────────────────────
 
@@ -17,14 +17,11 @@ export type ReleaseRow = {
   album: { id: string; title: string } | null
 }
 
-export type TrackOption = { id: string; label: string }
-
 type ChecklistItem = { label: string; done: boolean }
 type StatusFilter  = 'all' | 'PLANNING' | 'READY' | 'RELEASED'
 
 type Props = {
   releases: ReleaseRow[]
-  tracks:   TrackOption[]
 }
 
 // ── Constante ──────────────────────────────────────────────────────────────────
@@ -124,7 +121,7 @@ function FilterLabel({ children }: { children: React.ReactNode }) {
 
 // ── Component principal ────────────────────────────────────────────────────────
 
-export function ReleasesClient({ releases, tracks }: Props) {
+export function ReleasesClient({ releases }: Props) {
   const [viewMode,        setViewMode]        = useState<'calendar' | 'list'>('calendar')
   const [currentMonth,    setCurrentMonth]    = useState(() => new Date())
   const [selectedRelease, setSelectedRelease] = useState<ReleaseRow | null>(null)
@@ -133,7 +130,6 @@ export function ReleasesClient({ releases, tracks }: Props) {
   const [showMonthPicker, setShowMonthPicker] = useState(false)
   const [pickerYear,      setPickerYear]      = useState(() => new Date().getFullYear())
   const [editChecklist,   setEditChecklist]   = useState<ChecklistItem[]>([])
-  const [modalOpen,       setModalOpen]       = useState(false)
   const [search,          setSearch]          = useState('')
   const [statusFilter,    setStatusFilter]    = useState<StatusFilter>('all')
   const [sortOrder,       setSortOrder]       = useState<'asc' | 'desc'>('asc')
@@ -397,9 +393,6 @@ export function ReleasesClient({ releases, tracks }: Props) {
               </button>
             ))}
           </div>
-          <button type="button" className="btn btn-primary" onClick={() => setModalOpen(true)} style={{ fontSize: 13 }}>
-            + Lansare nouă
-          </button>
         </div>
       </div>
 
@@ -719,9 +712,9 @@ export function ReleasesClient({ releases, tracks }: Props) {
                 title="Nicio lansare găsită"
                 description={hasActiveFilters ? 'Nicio lansare nu corespunde filtrelor.' : 'Nu există lansări planificate.'}
                 action={
-                  !hasActiveFilters
-                    ? <button type="button" className="btn btn-primary" onClick={() => setModalOpen(true)}>+ Lansare nouă</button>
-                    : <button type="button" className="btn btn-ghost" onClick={resetFilters}>Resetează filtrele</button>
+                  hasActiveFilters
+                    ? <button type="button" className="btn btn-ghost" onClick={resetFilters}>Resetează filtrele</button>
+                    : undefined
                 }
               />
             </div>
@@ -1019,50 +1012,6 @@ export function ReleasesClient({ releases, tracks }: Props) {
       )}
 
       {/* ══════════════════════════════════════════════════════════════ */}
-      {/* MODAL CREARE LANSARE                                           */}
-      {/* ══════════════════════════════════════════════════════════════ */}
-      {modalOpen && (
-        <>
-          <div onClick={() => setModalOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 200, backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} />
-          <div style={{
-            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-            width: 440, background: 'var(--bg-secondary)',
-            border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, padding: 24, zIndex: 201,
-            boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Lansare nouă</h3>
-              <button type="button" onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 4, borderRadius: 6 }}>
-                <X size={18} />
-              </button>
-            </div>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
-              Selectează piesa și data de lansare. Checklist-ul implicit va fi generat automat.
-            </p>
-            <form action={createReleaseAction}>
-              <div className="form-group" style={{ marginBottom: 14 }}>
-                <label className="form-label">Piesă *</label>
-                <select name="trackId" className="form-select" required>
-                  <option value="">Selectează piesă...</option>
-                  {tracks.map((t) => (
-                    <option key={t.id} value={t.id}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group" style={{ marginBottom: 20 }}>
-                <label className="form-label">Data lansării *</label>
-                <input name="releaseDate" className="form-input" type="date" required />
-              </div>
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginBottom: 8 }}>
-                Adaugă lansare
-              </button>
-              <button type="button" className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setModalOpen(false)}>
-                Anulează
-              </button>
-            </form>
-          </div>
-        </>
-      )}
     </>
   )
 }

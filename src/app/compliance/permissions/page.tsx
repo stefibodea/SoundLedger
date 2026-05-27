@@ -73,7 +73,7 @@ export default async function CompliancePermissionsPage({
       {!canManage && (
         <div className="card" style={{ borderLeft: '3px solid var(--role-finance-dark)', marginBottom: 20 }}>
           <p style={{ color: 'var(--role-finance-dark)', margin: 0, fontSize: 13 }}>
-            👁️ Mod vizualizare — doar Label Manager poate modifica permisiunile.
+            👁️ Mod vizualizare — doar Directorul General poate modifica permisiunile.
           </p>
         </div>
       )}

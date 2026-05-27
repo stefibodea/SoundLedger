@@ -256,6 +256,19 @@ export function ARClient({ prospects }: Props) {
         }
         .score-bar-track { background: var(--border-light); border-radius: 3px; height: 4px; overflow: hidden; }
         .score-bar-fill  { height: 4px; border-radius: 3px; transition: width 0.4s ease; }
+        .cat-filter-chip {
+          padding: 4px 10px; border-radius: 6px; font-size: 11px;
+          cursor: pointer; font-family: inherit;
+          transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.05);
+          color: #d4d2c8; font-weight: 400;
+        }
+        .cat-filter-chip:hover { background: rgba(255,255,255,0.09); color: #f0efe8; }
+        .cat-filter-chip.active {
+          background: rgba(155,148,240,0.18); border-color: rgba(155,148,240,0.45);
+          color: #9B94F0; font-weight: 600;
+        }
       `}</style>
 
       {/* ── Page header: titlu + toggle + buton ──────────────────────── */}
@@ -333,11 +346,19 @@ export function ARClient({ prospects }: Props) {
               <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
               <div>
                 <FilterLabel>Sortare</FilterLabel>
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} className='cat-sidebar-select'>
-                  <option value='date'>Dată adăugare</option>
-                  <option value='name'>Nume</option>
-                  <option value='score'>Scor AI</option>
-                </select>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {([
+                    { value: 'date',  label: 'Dată' },
+                    { value: 'name',  label: 'Nume' },
+                    { value: 'score', label: 'Scor AI' },
+                  ] as { value: SortKey; label: string }[]).map((opt) => (
+                    <button key={opt.value} type='button'
+                      onClick={() => setSortBy(opt.value)}
+                      className={`cat-filter-chip${sortBy === opt.value ? ' active' : ''}`}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

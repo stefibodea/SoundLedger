@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { DataTable, type Column } from '@/components/ui/DataTable'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { markRoyaltyPaidAction, cancelRoyaltyAction } from '@/app/actions/revenues'
+import { markPeriodRoyaltiesPaidAction, cancelRoyaltyAction } from '@/app/actions/revenues'
 
 export type RoyaltyRow = {
   id: string
@@ -14,7 +14,14 @@ export type RoyaltyRow = {
   notes: string | null
   createdAt: string
   artist: { id: string; name: string; photo: string | null }
-  revenue: { id: string; source: string; period: string } | null
+  revenue: { id: string; source: string; period: string; revenueStatus: string } | null
+}
+
+export type PendingPeriod = {
+  period: string
+  count: number
+  total: number
+  artistCount: number
 }
 
 export type ArtistOption = {
@@ -124,26 +131,54 @@ function exportCsv(rows: RoyaltyRow[]) {
 }
 
 type Props = {
-  royalties:     RoyaltyRow[]
-  canManage:     boolean
-  artistOptions: ArtistOption[]
-  success?:      string
-  error?:        string
+  royalties:      RoyaltyRow[]
+  canManage:      boolean
+  artistOptions:  ArtistOption[]
+  pendingPeriods: PendingPeriod[]
+  success?:       string
+  error?:         string
 }
 
-export function RoyaltiesClient({ royalties, canManage, artistOptions, success, error }: Props) {
-  const [search,       setSearch]       = useState('')
+export function RoyaltiesClient({ royalties, canManage, artistOptions, pendingPeriods, success, error }: Props) {
+  const [artistFilter, setArtistFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [periodFilter, setPeriodFilter] = useState('')
 
   const filtered = useMemo(() => royalties.filter((r) => {
-    if (search && !r.artist.name.toLowerCase().includes(search.toLowerCase())) return false
+    if (artistFilter && r.artist.id !== artistFilter) return false
     if (statusFilter !== 'all' && r.status !== statusFilter) return false
     if (periodFilter && r.period !== periodFilter.trim()) return false
     return true
-  }), [royalties, search, statusFilter, periodFilter])
+  }), [royalties, artistFilter, statusFilter, periodFilter])
 
-  const hasFilters = Boolean(search || statusFilter !== 'all' || periodFilter)
+  const hasFilters = Boolean(artistFilter || statusFilter !== 'all' || periodFilter)
+
+  type AggRow = {
+    source: string
+    totalAmount: number
+    paidAmount: number
+    pendingAmount: number
+    paidCount: number
+    pendingCount: number
+    periods: string[]
+  }
+
+  const aggregated = useMemo<AggRow[]>(() => {
+    if (!artistFilter) return []
+    const map = new Map<string, AggRow>()
+    for (const r of filtered) {
+      const source = r.revenue?.source ?? 'unknown'
+      if (!map.has(source)) {
+        map.set(source, { source, totalAmount: 0, paidAmount: 0, pendingAmount: 0, paidCount: 0, pendingCount: 0, periods: [] })
+      }
+      const entry = map.get(source)!
+      entry.totalAmount += r.amount
+      if (r.status === 'PAID')    { entry.paidAmount    += r.amount; entry.paidCount++ }
+      if (r.status === 'PENDING') { entry.pendingAmount += r.amount; entry.pendingCount++ }
+      if (!entry.periods.includes(r.period)) entry.periods.push(r.period)
+    }
+    return Array.from(map.values()).sort((a, b) => b.totalAmount - a.totalAmount)
+  }, [filtered, artistFilter])
 
   const columns: Column<RoyaltyRow>[] = [
     {
@@ -188,9 +223,20 @@ export function RoyaltiesClient({ royalties, canManage, artistOptions, success, 
     {
       key: 'revenue',
       header: 'Venit asociat',
-      render: (r) => r.revenue
-        ? <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{SOURCE_LABELS[r.revenue.source] ?? r.revenue.source} · {r.revenue.period}</span>
-        : <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>—</span>,
+      render: (r) => {
+        if (!r.revenue) return <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>—</span>
+        const confirmed = r.revenue.revenueStatus === 'RECONCILIAT'
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              {SOURCE_LABELS[r.revenue.source] ?? r.revenue.source} · {r.revenue.period}
+            </span>
+            <span style={{ fontSize: 10, color: confirmed ? '#6ee7b7' : '#fde68a' }}>
+              {confirmed ? '✓ Confirmat' : '⏳ Estimat'}
+            </span>
+          </div>
+        )
+      },
     },
     {
       key: 'paidAt',
@@ -210,28 +256,19 @@ export function RoyaltiesClient({ royalties, canManage, artistOptions, success, 
             </span>
           )
         }
+        if (r.status === 'CANCELLED') return null
         if (r.status === 'PENDING' && canManage) {
           return (
-            <div style={{ display: 'flex', gap: 6 }}>
-              <form action={markRoyaltyPaidAction}>
-                <input type="hidden" name="royaltyId" value={r.id} />
-                <button
-                  type="submit"
-                  style={{ fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '1px solid rgba(110,231,183,0.3)', background: 'rgba(110,231,183,0.1)', color: '#6ee7b7', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                >
-                  Marchează plătit
-                </button>
-              </form>
-              <form action={cancelRoyaltyAction}>
-                <input type="hidden" name="royaltyId" value={r.id} />
-                <button
-                  type="submit"
-                  style={{ fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '1px solid rgba(252,165,165,0.3)', background: 'rgba(252,165,165,0.1)', color: '#fca5a5', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                >
-                  ✗ Anulează
-                </button>
-              </form>
-            </div>
+            <form action={cancelRoyaltyAction}>
+              <input type="hidden" name="royaltyId" value={r.id} />
+              <button
+                type="submit"
+                title="Anulează (doar pentru corecție erori)"
+                style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: 'rgba(252,165,165,0.45)', cursor: 'pointer' }}
+              >
+                ✗
+              </button>
+            </form>
           )
         }
         return null
@@ -248,7 +285,55 @@ export function RoyaltiesClient({ royalties, canManage, artistOptions, success, 
         border: `1px solid ${success ? 'rgba(74,222,128,0.25)' : 'rgba(252,165,165,0.25)'}`,
         color: success ? '#4ade80' : '#fca5a5',
       }}>
-        {success ? 'Plata a fost înregistrată cu succes.' : decodeURIComponent(error ?? '')}
+        {success === 'period_paid'
+          ? (() => {
+              const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+              const period = params.get('period') ?? ''
+              const count  = params.get('count')  ?? ''
+              return `${count} redevență${Number(count) !== 1 ? 'e' : ''} marcate ca plătite pentru luna ${period}.`
+            })()
+          : success
+            ? 'Plata a fost înregistrată cu succes.'
+            : decodeURIComponent(error ?? '')
+        }
+      </div>
+    )}
+
+    {/* ── Luni cu plăți în așteptare ── */}
+    {canManage && pendingPeriods.length > 0 && (
+      <div className="card" style={{ marginBottom: 20 }}>
+        <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700 }}>Luni cu redevențe de plătit</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {pendingPeriods.map((p) => (
+            <div key={p.period} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 8,
+              border: '1px solid rgba(255,255,255,0.06)',
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{p.period}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                  {p.count} redevență{p.count !== 1 ? 'e' : ''} · {p.artistCount} artist{p.artistCount !== 1 ? 'i' : ''}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#fde68a' }}>
+                  {p.total >= 1000 ? `${(p.total / 1000).toFixed(1)}k €` : `${p.total.toFixed(2)} €`}
+                </span>
+                <form action={markPeriodRoyaltiesPaidAction}>
+                  <input type="hidden" name="period" value={p.period} />
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    style={{ fontSize: 12, height: 32, padding: '0 14px', whiteSpace: 'nowrap' }}
+                  >
+                    Plătește luna {p.period}
+                  </button>
+                </form>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     )}
 
@@ -270,7 +355,7 @@ export function RoyaltiesClient({ royalties, canManage, artistOptions, success, 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
               <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(155,148,240,0.65)' }}>Filtrează</span>
               {hasFilters && (
-                <button type="button" onClick={() => { setSearch(''); setStatusFilter('all'); setPeriodFilter('') }}
+                <button type="button" onClick={() => { setArtistFilter(''); setStatusFilter('all'); setPeriodFilter('') }}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: 'rgba(155,148,240,0.55)', fontFamily: 'inherit', padding: '2px 4px', borderRadius: 4 }}
                   onMouseEnter={(e) => { e.currentTarget.style.color = '#9B94F0' }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(155,148,240,0.55)' }}>
@@ -280,14 +365,18 @@ export function RoyaltiesClient({ royalties, canManage, artistOptions, success, 
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.40)', marginBottom: 8 }}>Caută artist</div>
-              <input
-                className="form-input"
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.40)', marginBottom: 8 }}>Artist</div>
+              <select
+                className="form-input form-select"
                 style={{ fontSize: 13 }}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Nume artist..."
-              />
+                value={artistFilter}
+                onChange={(e) => setArtistFilter(e.target.value)}
+              >
+                <option value="">Toți artiștii</option>
+                {artistOptions.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
             </div>
 
             <div style={{ height: 1, background: 'rgba(155,148,240,0.07)', margin: '0 -16px 16px' }} />
@@ -334,21 +423,68 @@ export function RoyaltiesClient({ royalties, canManage, artistOptions, success, 
       </div>
 
       {/* ── Tabel ── */}
-      <section className="card">
-        <DataTable
-          data={filtered}
-          columns={columns}
-          getRowKey={(r) => r.id}
-          pageSize={25}
-          emptyState={
-            <EmptyState
-              icon=""
-              title="Nicio plată"
-              description={hasFilters ? 'Nicio plată corespunde filtrelor selectate.' : 'Nu există plăți royalty înregistrate.'}
-            />
-          }
-        />
-      </section>
+      {artistFilter && aggregated.length > 0 ? (
+        <section className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 14 }}>
+              {artistOptions.find(a => a.id === artistFilter)?.name} — redevențe per platformă
+            </h3>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{aggregated.length} platforme</span>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                {['Platformă', 'Redevențe cuvenite', 'Plătit', 'În așteptare', 'Perioade'].map(h => (
+                  <th key={h} style={{ padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.5)', borderBottom: '1px solid rgba(255,255,255,0.06)', textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {aggregated.map((row) => (
+                <tr key={row.source}>
+                  <td style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', fontWeight: 600, fontSize: 13 }}>
+                    {SOURCE_LABELS[row.source] ?? row.source}
+                  </td>
+                  <td style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <strong style={{ color: '#f0efe8' }}>{row.totalAmount.toFixed(2)} €</strong>
+                  </td>
+                  <td style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    {row.paidCount > 0
+                      ? <span style={{ color: '#6ee7b7', fontSize: 13 }}>{row.paidAmount.toFixed(2)} €<span style={{ fontSize: 11, color: 'rgba(110,231,183,0.6)', marginLeft: 4 }}>({row.paidCount})</span></span>
+                      : <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>—</span>
+                    }
+                  </td>
+                  <td style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    {row.pendingCount > 0
+                      ? <span style={{ color: '#fde68a', fontSize: 13 }}>{row.pendingAmount.toFixed(2)} €<span style={{ fontSize: 11, color: 'rgba(253,230,138,0.6)', marginLeft: 4 }}>({row.pendingCount})</span></span>
+                      : <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>—</span>
+                    }
+                  </td>
+                  <td style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: 12, color: 'var(--text-secondary)' }}>
+                    {row.periods.sort().join(', ')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      ) : (
+        <section className="card">
+          <DataTable
+            data={filtered}
+            columns={columns}
+            getRowKey={(r) => r.id}
+            pageSize={25}
+            emptyState={
+              <EmptyState
+                icon=""
+                title="Nicio plată"
+                description={hasFilters ? 'Nicio plată corespunde filtrelor selectate.' : 'Nu există plăți royalty înregistrate.'}
+              />
+            }
+          />
+        </section>
+      )}
     </div>
 
     </>

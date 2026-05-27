@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
-import { KPICard } from '@/components/ui/KPICard'
+import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { ROLES } from '@/lib/roles'
@@ -55,43 +55,39 @@ export default async function AdminPage() {
 
   return (
     <AppShell session={session} title="Platformă Admin" subtitle="Gestionare case de discuri înregistrate">
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <KPICard label="Labels totale" value={totalLabels}    accentColor="blue"   />
-        <KPICard label="Active"        value={activeLabels}   accentColor="green"  />
-        <KPICard label="Suspendate"    value={suspendedCount} accentColor={suspendedCount > 0 ? 'red' : 'gray'} />
-        <KPICard label="Venituri" value={fmtEur(totalRevenue)} accentColor="purple" />
-      </div>
+      <KpiVinylSidebar kpis={[
+        { value: totalLabels,          label: 'Labels totale', accentColor: 'blue' },
+        { value: activeLabels,         label: 'Active',        accentColor: 'green' },
+        { value: suspendedCount,       label: 'Suspendate',    accentColor: suspendedCount > 0 ? 'red' : 'gray' },
+        { value: fmtEur(totalRevenue), label: 'Venituri',      accentColor: 'purple' },
+      ]} />
 
-      <section className="card">
-        <h3 style={{ marginBottom: 16 }}>Case de discuri înregistrate</h3>
-        <div className="table-container">
-          <table className="table">
+      <section className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <h3 style={{ margin: 0 }}>Case de discuri înregistrate</h3>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <th>Label</th>
-                <th>Owner</th>
-                <th>Plan</th>
-                <th>Artiști</th>
-                <th>Piese</th>
-                <th>Echipă</th>
-                <th>Venituri</th>
-                <th>Status</th>
-                <th>Înregistrat</th>
-                <th></th>
+                {['Label', 'Owner', 'Plan', 'Artiști', 'Piese', 'Echipă', 'Venituri', 'Status', 'Înregistrat', ''].map((h) => (
+                  <th key={h} style={{ padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.5)', borderBottom: '1px solid rgba(255,255,255,0.06)', textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {labels.length === 0 ? (
-                <tr><td colSpan={10} style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Nicio casă de discuri înregistrată.</td></tr>
+                <tr><td colSpan={10} style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--text-secondary)' }}>Nicio casă de discuri înregistrată.</td></tr>
               ) : (
                 labels.map((label) => {
                   const planStyle = PLAN_COLORS[label.plan] ?? PLAN_COLORS.FREE_TRIAL
                   const revenue   = revenueMap.get(label.id) ?? 0
                   const isSuspended = Boolean(label.suspendedAt)
+                  const td = { padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', verticalAlign: 'middle' as const }
 
                   return (
                     <tr key={label.id} style={{ opacity: isSuspended ? 0.6 : 1 }}>
-                      <td>
+                      <td style={td}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           {label.logo ? (
                             <img src={label.logo} alt="" style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover' }} />
@@ -106,34 +102,36 @@ export default async function AdminPage() {
                           </div>
                         </div>
                       </td>
-                      <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                        <p style={{ margin: 0 }}>{label.owner.firstName} {label.owner.lastName}</p>
-                        <p style={{ margin: 0, fontSize: 11 }}>{label.owner.email}</p>
+                      <td style={td}>
+                        <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>{label.owner.firstName} {label.owner.lastName}</p>
+                        <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)' }}>{label.owner.email}</p>
                       </td>
-                      <td>
-                        <span style={{ background: planStyle.bg, color: planStyle.color, border: `1px solid ${planStyle.color}33`, fontSize: 11, padding: '2px 8px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+                      <td style={td}>
+                        <span style={{ background: planStyle.bg, color: planStyle.color, border: `1px solid ${planStyle.color}33`, fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap' }}>
                           {PLAN_LABELS[label.plan] ?? label.plan}
                         </span>
                       </td>
-                      <td style={{ textAlign: 'center', fontSize: 13 }}>{label._count.artists}</td>
-                      <td style={{ textAlign: 'center', fontSize: 13 }}>{label._count.tracks}</td>
-                      <td style={{ textAlign: 'center', fontSize: 13 }}>{label._count.members}</td>
-                      <td style={{ fontSize: 13 }}><strong>{fmtEur(revenue)}</strong></td>
-                      <td>
+                      <td style={{ ...td, textAlign: 'center', fontSize: 13 }}>{label._count.artists}</td>
+                      <td style={{ ...td, textAlign: 'center', fontSize: 13 }}>{label._count.tracks}</td>
+                      <td style={{ ...td, textAlign: 'center', fontSize: 13 }}>{label._count.members}</td>
+                      <td style={td}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#6ee7b7' }}>{fmtEur(revenue)}</span>
+                      </td>
+                      <td style={td}>
                         {isSuspended ? (
-                          <span style={{ background: 'rgba(252,165,165,0.15)', color: '#fca5a5', border: '1px solid rgba(252,165,165,0.3)', fontSize: 11, padding: '2px 8px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+                          <span style={{ background: 'rgba(252,165,165,0.12)', color: '#fca5a5', border: '1px solid rgba(252,165,165,0.3)', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap' }}>
                             Suspendat
                           </span>
                         ) : (
-                          <span style={{ background: 'rgba(110,231,183,0.15)', color: '#6ee7b7', border: '1px solid rgba(110,231,183,0.3)', fontSize: 11, padding: '2px 8px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+                          <span style={{ background: 'rgba(110,231,183,0.12)', color: '#6ee7b7', border: '1px solid rgba(110,231,183,0.3)', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap' }}>
                             Activ
                           </span>
                         )}
                       </td>
-                      <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                      <td style={{ ...td, fontSize: 12, color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
                         {new Date(label.createdAt).toLocaleDateString('ro-RO')}
                       </td>
-                      <td>
+                      <td style={td}>
                         <Link href={`/admin/${label.id}`} className="btn btn-sm btn-secondary" style={{ fontSize: 11 }}>
                           Gestionează
                         </Link>

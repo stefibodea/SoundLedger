@@ -26,6 +26,20 @@ export type ComposerRow = {
 const SPEC_CATEGORIES = ['Compoziție', 'Versuri', 'Producție', 'Mixing'] as const
 type SpecCategory = typeof SPEC_CATEGORIES[number]
 
+const SPEC_LABEL: Record<SpecCategory, string> = {
+  'Compoziție': 'Compozitor',
+  'Versuri':    'Textier',
+  'Producție':  'Producător',
+  'Mixing':     'Sound Design',
+}
+
+const SPEC_LABEL_PLURAL: Record<SpecCategory, string> = {
+  'Compoziție': 'Compozitori',
+  'Versuri':    'Textieri',
+  'Producție':  'Producători',
+  'Mixing':     'Sound Design',
+}
+
 const SPEC_STYLE: Record<SpecCategory, { bg: string; color: string; border: string; barColor: string }> = {
   'Compoziție': { bg: 'rgba(155,148,240,0.15)', color: '#9B94F0', border: 'rgba(155,148,240,0.3)',  barColor: '#9B94F0' },
   'Versuri':    { bg: 'rgba(147,197,253,0.15)', color: '#93c5fd', border: 'rgba(147,197,253,0.3)',  barColor: '#93c5fd' },
@@ -51,10 +65,10 @@ function AddComposerModal({ onClose }: { onClose: () => void }) {
           <label className="form-label">Specializare</label>
           <select name="specialization" className="form-input form-select">
             <option value="">— Selectează —</option>
-            <option value="Compoziție">Compoziție</option>
-            <option value="Versuri">Versuri</option>
-            <option value="Producție">Producție</option>
-            <option value="Mixing">Mixing</option>
+            <option value="Compoziție">Compozitor</option>
+            <option value="Versuri">Textier</option>
+            <option value="Producție">Producător</option>
+            <option value="Mixing">Sound Design</option>
           </select>
         </div>
         <button type="submit" className="btn btn-primary">Adaugă membru</button>
@@ -185,7 +199,7 @@ function ComposerCard({ composer, canManage }: { composer: ComposerRow; canManag
           padding: '3px 10px', borderRadius: 20,
           letterSpacing: '0.02em',
         }}>
-          {spec ?? 'Compozitor'}
+          {spec ? (SPEC_LABEL[spec] ?? spec) : 'Compozitor'}
         </span>
       </div>
     </div>
@@ -213,12 +227,18 @@ export function TeamPageClient({
 
   const hasFilters = Boolean(search || specFilter !== 'toate')
 
-  const kpis = [
-    { value: composers.filter(c => specOf(c) === 'Compoziție').length, label: 'Compozitori',  accentColor: 'purple' as const },
-    { value: composers.filter(c => specOf(c) === 'Versuri').length,    label: 'Textieri',     accentColor: 'blue'   as const },
-    { value: composers.filter(c => specOf(c) === 'Producție').length,  label: 'Producători',  accentColor: 'green'  as const },
-    { value: composers.filter(c => specOf(c) === 'Mixing').length,     label: 'Sound Design', accentColor: 'yellow' as const },
-  ]
+  const KPI_COLORS: Record<SpecCategory, 'purple' | 'blue' | 'green' | 'yellow'> = {
+    'Compoziție': 'purple',
+    'Versuri':    'blue',
+    'Producție':  'green',
+    'Mixing':     'yellow',
+  }
+
+  const kpis = SPEC_CATEGORIES.map((cat) => ({
+    value:       composers.filter(c => specOf(c) === cat).length,
+    label:       SPEC_LABEL_PLURAL[cat],
+    accentColor: KPI_COLORS[cat],
+  }))
 
   return (
     <div>
@@ -290,7 +310,7 @@ export function TeamPageClient({
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {(['toate', ...SPEC_CATEGORIES] as const).map((val) => {
-                    const label  = val === 'toate' ? 'Toți' : val
+                    const label  = val === 'toate' ? 'Toți' : SPEC_LABEL[val]
                     const active = specFilter === val
                     const s      = val !== 'toate' ? SPEC_STYLE[val] : null
                     return (

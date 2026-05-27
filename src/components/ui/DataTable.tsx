@@ -3,13 +3,10 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 
-// ── Tipuri ─────────────────────────────────────────────────────────────────────
-
 export type Column<T> = {
   key: string
   header: string
   render: (row: T) => ReactNode
-  /** Lățime CSS opțională (ex: "40px", "auto") */
   width?: string
 }
 
@@ -20,27 +17,36 @@ export type BulkAction<T> = {
 }
 
 type Props<T> = {
-  /** Datele deja filtrate și sortate de componenta părinte */
   data: T[]
   columns: Column<T>[]
-  /** Cheie unică per rând */
   getRowKey: (row: T) => string
-  /** Număr rânduri per pagină */
   pageSize?: number
-  /** Acțiuni bulk — dacă există, adaugă coloana de checkbox */
   bulkActions?: BulkAction<T>[]
-  /** Componentă afișată când `data` este gol */
   emptyState?: ReactNode
-  /** Funcție apelată la click pe rând (opțional) */
   onRowClick?: (row: T) => void
 }
 
 const DEFAULT_PAGE_SIZE = 25
 
-/**
- * Tabel generic cu paginare și selecție bulk.
- * Primește datele deja filtrate — nu gestionează filtrarea intern.
- */
+const TH: React.CSSProperties = {
+  padding: '10px 16px',
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'rgba(200,198,188,0.5)',
+  borderBottom: '1px solid rgba(255,255,255,0.06)',
+  textAlign: 'left',
+  whiteSpace: 'nowrap',
+}
+
+const TD: React.CSSProperties = {
+  padding: '14px 16px',
+  borderBottom: '1px solid rgba(255,255,255,0.04)',
+  verticalAlign: 'middle',
+  fontSize: 13,
+}
+
 export function DataTable<T>({
   data,
   columns,
@@ -56,8 +62,6 @@ export function DataTable<T>({
   const totalPages  = Math.max(1, Math.ceil(data.length / pageSize))
   const currentPage = Math.min(page, totalPages)
   const pageRows    = data.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-
-  // ── Handlers selecție ──────────────────────────────────────────────────────
 
   const toggleOne = (key: string) =>
     setSelected((prev) => {
@@ -81,8 +85,6 @@ export function DataTable<T>({
   const hasBulk = Boolean(bulkActions?.length)
   const allPageSelected = pageRows.length > 0 && pageRows.every((r) => selected.has(getRowKey(r)))
 
-  // ── Empty state ────────────────────────────────────────────────────────────
-
   if (data.length === 0) {
     return (
       <>
@@ -95,16 +97,12 @@ export function DataTable<T>({
     )
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-
   return (
     <>
-      {/* Bara bulk actions */}
+      <style>{`.dt-row:hover td { background: rgba(255,255,255,0.02); }`}</style>
+
       {hasBulk && selected.size > 0 && (
-        <div className="card" style={{
-          marginBottom: 12,
-          display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-        }}>
+        <div className="card" style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>
             {selected.size} {selected.size === 1 ? 'element selectat' : 'elemente selectate'}
           </span>
@@ -130,13 +128,12 @@ export function DataTable<T>({
         </div>
       )}
 
-      {/* Tabel */}
-      <div className="table-container">
-        <table className="table">
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
               {hasBulk && (
-                <th style={{ width: 40 }}>
+                <th style={{ ...TH, width: 40 }}>
                   <input
                     type="checkbox"
                     checked={allPageSelected}
@@ -148,7 +145,7 @@ export function DataTable<T>({
                 </th>
               )}
               {columns.map((col) => (
-                <th key={col.key} style={col.width ? { width: col.width } : undefined}>
+                <th key={col.key} style={col.width ? { ...TH, width: col.width } : TH}>
                   {col.header}
                 </th>
               ))}
@@ -160,11 +157,12 @@ export function DataTable<T>({
               return (
                 <tr
                   key={key}
+                  className="dt-row"
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   style={onRowClick ? { cursor: 'pointer' } : undefined}
                 >
                   {hasBulk && (
-                    <td onClick={(e) => e.stopPropagation()}>
+                    <td style={TD} onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selected.has(key)}
@@ -175,7 +173,7 @@ export function DataTable<T>({
                     </td>
                   )}
                   {columns.map((col) => (
-                    <td key={col.key} style={col.width ? { width: col.width } : undefined}>
+                    <td key={col.key} style={col.width ? { ...TD, width: col.width } : TD}>
                       {col.render(row)}
                     </td>
                   ))}
@@ -186,7 +184,6 @@ export function DataTable<T>({
         </table>
       </div>
 
-      {/* Paginare */}
       {totalPages > 1 && (
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',

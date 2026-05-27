@@ -332,7 +332,7 @@ export function ScannerClient({ detections, canManage, canAct, serviceOnline, fi
               type="submit"
               disabled={!serviceOnline || !canManage}
             >
-               Analizează audio cu ML
+               Analizează audio
             </button>
           </div>
         </form>

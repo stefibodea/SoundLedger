@@ -201,13 +201,26 @@ export async function toggleTrackStatusAction(formData: FormData) {
   const track = await prisma.track.findUnique({ where: { id } })
   if (!track || track.labelId !== session.labelId) redirect(returnTo)
 
+  const newStatus = track.status === 'RELEASED' ? 'UNRELEASED' : 'RELEASED'
+
   await prisma.track.update({
     where: { id },
     data: {
-      status: track.status === 'RELEASED' ? 'UNRELEASED' : 'RELEASED',
+      status: newStatus,
       releaseDate: track.status === 'UNRELEASED' ? new Date().toISOString().split('T')[0] : track.releaseDate,
     },
   })
+
+  // Sincronizează Release-ul asociat piesei
+  const release = await prisma.release.findFirst({
+    where: { trackId: id, labelId: session.labelId },
+  })
+  if (release) {
+    await prisma.release.update({
+      where: { id: release.id },
+      data: { status: newStatus === 'RELEASED' ? 'RELEASED' : 'PLANNING' },
+    })
+  }
 
   redirect(returnTo)
 }

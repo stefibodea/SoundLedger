@@ -10,6 +10,7 @@ import {
   CalendarDays,
   FileText,
   TrendingUp,
+  BarChart3,
   Binoculars,
   ShieldCheck,
   Fingerprint,
@@ -277,7 +278,8 @@ export function SidebarNav({ role }: Props) {
             {/* BUSINESS */}
             <SectionHeader label="Business" isCollapsed={isCollapsed} />
             {canViewContracts(role) && <NavItem href="/contracts" icon={FileText}  label="Contracte" pathname={pathname} isCollapsed={isCollapsed} />}
-            {canViewFinance(role)   && <NavItem href="/finance"   icon={TrendingUp} label="Finanțe"   pathname={pathname} isCollapsed={isCollapsed} />}
+            {canViewFinance(role)   && <NavItem href="/finance"              icon={TrendingUp} label="Finanțe"         pathname={pathname} isCollapsed={isCollapsed} />}
+            {canViewFinance(role)   && <NavItem href="/finance/recoupment"  icon={BarChart3}  label="Profit & Pierderi" pathname={pathname} isCollapsed={isCollapsed} />}
             {canUseScouting(role)   && <NavItem href="/ar"        icon={Binoculars} label="Scouting"  pathname={pathname} isCollapsed={isCollapsed} />}
 
             {/* COMPLIANCE */}

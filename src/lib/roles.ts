@@ -25,11 +25,11 @@ export function canManageArtists(role: string): boolean {
 }
 
 export function canViewArtists(role: string): boolean {
-  return true
+  return role !== ROLES.FINANCIAL
 }
 
-export function canViewCatalog(_role: string): boolean {
-  return true
+export function canViewCatalog(role: string): boolean {
+  return role !== ROLES.FINANCIAL
 }
 
 export function canManageCatalog(role: string): boolean {
@@ -65,11 +65,7 @@ export function canUseScouting(role: string): boolean {
 }
 
 export function canViewCompliance(role: string): boolean {
-  return (
-    role === ROLES.SUPER_ADMIN ||
-    role === ROLES.LABEL_MANAGER ||
-    role === ROLES.FINANCIAL
-  )
+  return role === ROLES.SUPER_ADMIN || role === ROLES.LABEL_MANAGER
 }
 
 export function canManageCompliance(role: string): boolean {

@@ -149,7 +149,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
               <div className="form-group">
                 <label className="form-label" htmlFor="role">Rol</label>
                 <select id="role" name="role" className="form-input form-select" defaultValue={ROLES.FINANCIAL}>
-                  <option value={ROLES.FINANCIAL}>Departament Financiar</option>
+                  <option value={ROLES.FINANCIAL}>Manager Financiar</option>
                 </select>
               </div>
             </div>
@@ -159,40 +159,41 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
           {invitations.length > 0 && (
             <div style={{ marginTop: 18 }}>
               <h4 style={{ marginBottom: 8 }}>Invitații active</h4>
-              <div className="table-container">
-                <table className="table">
+              <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
-                      <th>Email</th>
-                      <th>Rol</th>
-                      <th>Expiră</th>
-                      <th>Link</th>
-                      <th>Acțiuni</th>
+                      {['Email', 'Rol', 'Expiră', 'Link', 'Acțiuni'].map((h) => (
+                        <th key={h} style={{ padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(200,198,188,0.5)', borderBottom: '1px solid rgba(255,255,255,0.06)', textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {invitations.map((invitation) => (
-                      <tr key={invitation.id}>
-                        <td>{invitation.email}</td>
-                        <td>{invitation.role}</td>
-                        <td>{invitation.expiresAt.toLocaleDateString('ro-RO')}</td>
-                        <td>
-                          <code>{`${appUrl}/invite/${invitation.token}`}</code>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <form action={resendInvitationAction}>
-                              <input type="hidden" name="invitationId" value={invitation.id} />
-                              <button className="btn btn-sm btn-secondary" type="submit">Resend</button>
-                            </form>
-                            <form action={revokeInvitationAction}>
-                              <input type="hidden" name="invitationId" value={invitation.id} />
-                              <button className="btn btn-sm btn-danger" type="submit">Revoke</button>
-                            </form>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {invitations.map((invitation) => {
+                      const td = { padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', verticalAlign: 'middle' as const, fontSize: 13 }
+                      return (
+                        <tr key={invitation.id}>
+                          <td style={td}>{invitation.email}</td>
+                          <td style={td}><span style={{ color: 'var(--text-secondary)' }}>{invitation.role}</span></td>
+                          <td style={{ ...td, color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>{invitation.expiresAt.toLocaleDateString('ro-RO')}</td>
+                          <td style={td}>
+                            <code style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{`${appUrl}/invite/${invitation.token}`}</code>
+                          </td>
+                          <td style={td}>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <form action={resendInvitationAction}>
+                                <input type="hidden" name="invitationId" value={invitation.id} />
+                                <button className="btn btn-sm btn-secondary" type="submit">Retrimite</button>
+                              </form>
+                              <form action={revokeInvitationAction}>
+                                <input type="hidden" name="invitationId" value={invitation.id} />
+                                <button className="btn btn-sm btn-ghost" type="submit" style={{ color: '#fca5a5' }}>Revocă</button>
+                              </form>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>

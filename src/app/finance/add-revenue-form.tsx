@@ -11,10 +11,23 @@ interface Artist {
 interface AddRevenueFormProps {
   artists: Artist[]
   createRevenueAction: (formData: FormData) => Promise<void>
+  importRevenueCsvAction: (formData: FormData) => Promise<void>
 }
 
-export function AddRevenueForm({ artists, createRevenueAction }: AddRevenueFormProps) {
+type Tab = 'manual' | 'csv'
+
+interface CsvPreview {
+  fileName: string
+  rowCount: number
+  totalAmount: number
+  totalStreams: number
+}
+
+export function AddRevenueForm({ artists, createRevenueAction, importRevenueCsvAction }: AddRevenueFormProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [tab, setTab] = useState<Tab>('manual')
+
+  // Manual tab state
   const [source, setSource] = useState('')
   const [amount, setAmount] = useState('')
   const [periodFrom, setPeriodFrom] = useState('')
@@ -26,143 +39,74 @@ export function AddRevenueForm({ artists, createRevenueAction }: AddRevenueFormP
     ? `${periodFrom}/${periodTo}`
     : periodFrom
 
-  // CSV parsing status
-  const [csvInfo, setCsvInfo] = useState<{
-    fileName: string
-    rowCount: number
-    totalAmount: number
-    totalStreams: number
-  } | null>(null)
-
+  // CSV tab state
+  const [csvPreview, setCsvPreview] = useState<CsvPreview | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Standard sources helper
-  const VALID_REVENUE_SOURCES = [
-    'SPOTIFY', 'APPLE_MUSIC', 'YOUTUBE_MUSIC', 'YOUTUBE_CONTENT_ID', 'TIKTOK', 'DEEZER',
-    'RADIO_TV', 'SYNC_LICENSING', 'LICENTIERE', 'VANZARI_FIZICE', 'MERCHANDISE', 'ALTE_SURSE'
-  ]
+  const parseLine = (line: string): string[] => {
+    const result: string[] = []
+    let current = ''
+    let inQuotes = false
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i]
+      if (char === '"') { inQuotes = !inQuotes }
+      else if (char === ',' && !inQuotes) { result.push(current); current = '' }
+      else { current += char }
+    }
+    result.push(current)
+    return result
+  }
 
-  // Client-side parser for CSV file
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) {
-      setCsvInfo(null)
-      return
-    }
+    if (!file) { setCsvPreview(null); return }
 
     const reader = new FileReader()
     reader.onload = (event) => {
       try {
         const text = event.target?.result as string
         const lines = text.split(/\r?\n/)
-        if (lines.length <= 1) return
-
-        let rowCount = 0
-        let totalAmount = 0
-        let totalStreams = 0
-        let detectedSource = 'SPOTIFY'
-        let detectedPeriod = ''
-        let detectedArtistName = ''
-
-        // Simple parse helper for standard CSV line
-        const parseLine = (line: string) => {
-          const result: string[] = []
-          let current = ''
-          let inQuotes = false
-          for (let i = 0; i < line.length; i++) {
-            const char = line[i]
-            if (char === '"') {
-              inQuotes = !inQuotes
-            } else if (char === ',' && !inQuotes) {
-              result.push(current)
-              current = ''
-            } else {
-              current += char
-            }
-          }
-          result.push(current)
-          return result
-        }
+        let rowCount = 0, totalAmount = 0, totalStreams = 0
 
         for (let i = 1; i < lines.length; i++) {
           const line = lines[i].trim()
           if (!line) continue
-
           const cols = parseLine(line)
           if (cols.length < 6) continue
-
-          const artistName = cols[2]?.trim()
-          const src = cols[3]?.trim()?.toUpperCase() || 'SPOTIFY'
-          const strRaw = cols[4]?.trim()
-          const amtRaw = cols[5]?.trim()
-          const per = cols[6]?.trim()
-
-          const amt = Number(amtRaw)
-          if (!Number.isNaN(amt) && amt > 0) {
-            totalAmount += amt
-          }
-
-          const str = strRaw ? parseInt(strRaw) : 0
-          if (!Number.isNaN(str) && str > 0) {
-            totalStreams += str
-          }
-
-          if (rowCount === 0) {
-            if (VALID_REVENUE_SOURCES.includes(src)) {
-              detectedSource = src
-            }
-            if (per) {
-              detectedPeriod = per
-            }
-            if (artistName) {
-              detectedArtistName = artistName
-            }
-          }
+          const amt = Number(cols[5]?.trim())
+          if (!Number.isNaN(amt) && amt > 0) totalAmount += amt
+          const str = parseInt(cols[4]?.trim())
+          if (!Number.isNaN(str) && str > 0) totalStreams += str
           rowCount++
         }
 
-        // Set state for visual autocompletion feedback
-        setSource(detectedSource)
-        setAmount(totalAmount.toFixed(2))
-        const p = detectedPeriod || new Date().toISOString().substring(0, 7)
-        setPeriodFrom(p)
-        setPeriodTo(p)
-        setStreams(totalStreams > 0 ? String(totalStreams) : '')
-
-        // Map artist name to ID
-        if (detectedArtistName) {
-          const matched = artists.find(
-            (a) => a.name.toLowerCase() === detectedArtistName.toLowerCase()
-          )
-          if (matched) {
-            setArtistId(matched.id)
-          } else {
-            setArtistId('')
-          }
-        }
-
-        setCsvInfo({
-          fileName: file.name,
-          rowCount,
-          totalAmount,
-          totalStreams,
-        })
-      } catch (err) {
-        console.error('Error parsing CSV file client-side:', err)
-      }
+        setCsvPreview({ fileName: file.name, rowCount, totalAmount, totalStreams })
+      } catch { setCsvPreview(null) }
     }
     reader.readAsText(file)
   }
 
-  const handleClearFile = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-    setCsvInfo(null)
-    setAmount('')
-    setStreams('')
-    setArtistId('')
+  const handleClose = () => {
+    setIsOpen(false)
+    setTab('manual')
+    setSource(''); setAmount(''); setPeriodFrom(''); setPeriodTo(''); setStreams(''); setArtistId('')
+    setCsvPreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
+
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    flex: 1,
+    padding: '8px 0',
+    fontSize: 13,
+    fontWeight: active ? 600 : 400,
+    color: active ? 'var(--primary)' : 'var(--text-secondary)',
+    background: 'none',
+    border: 'none',
+    borderBottom: active ? '2px solid var(--primary)' : '2px solid transparent',
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+    fontFamily: 'inherit',
+  })
 
   return (
     <>
@@ -175,53 +119,79 @@ export function AddRevenueForm({ artists, createRevenueAction }: AddRevenueFormP
         + Adaugă venit
       </button>
 
-      <Modal isOpen={isOpen} onClose={() => { setIsOpen(false); handleClearFile() }} title="Adaugă venit" size="lg">
-        <form action={createRevenueAction}>
-          {/* CSV upload + Note */}
-          <div style={{ display: 'flex', gap: 16, marginBottom: 20, alignItems: 'stretch' }}>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label className="form-label">Raport distribuitor</label>
-              <div style={{
-                flex: 1,
-                background: csvInfo ? 'rgba(74,222,128,0.06)' : 'rgba(255,255,255,0.03)',
-                border: csvInfo ? '1px solid #4ade80' : '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 8,
-                padding: '12px 14px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-              }}>
-                <input
-                  type="file"
-                  id="file"
-                  name="file"
-                  accept=".csv"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="form-input"
-                  style={{ width: '100%', paddingTop: 5, paddingBottom: 5, fontSize: 12 }}
-                />
-                {csvInfo ? (
-                  <div style={{ marginTop: 8, fontSize: 11, color: '#4ade80', lineHeight: 1.5 }}>
-                     {csvInfo.fileName} — {csvInfo.rowCount} rânduri, <strong>{csvInfo.totalAmount.toFixed(2)} €</strong>
-                    <button type="button" onClick={handleClearFile} style={{ marginLeft: 8, fontSize: 11, background: 'none', border: 'none', color: 'var(--status-expired)', cursor: 'pointer', padding: 0 }}>
-                      × anulează
-                    </button>
-                  </div>
-                ) : (
-                  <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--text-tertiary)' }}>Format acceptat: .csv</p>
-                )}
+      <Modal isOpen={isOpen} onClose={handleClose} title="Adaugă venit" size="lg">
+        {/* Tab switcher */}
+        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 20 }}>
+          <button style={tabStyle(tab === 'manual')} onClick={() => setTab('manual')}>Introducere manuală</button>
+          <button style={tabStyle(tab === 'csv')} onClick={() => setTab('csv')}>Import raport distribuitor</button>
+        </div>
+
+        {/* ── Tab Manual ── */}
+        {tab === 'manual' && (
+          <form action={createRevenueAction}>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label" htmlFor="source">
+                  Sursă <span style={{ color: 'var(--status-expired)' }}>*</span>
+                </label>
+                <select className="form-input form-select" id="source" name="source" required value={source} onChange={(e) => setSource(e.target.value)}>
+                  <option value="">Selectează o sursă...</option>
+                  <option value="SYNC_LICENSING">Sync Licensing</option>
+                  <option value="RADIO_TV">Radio &amp; TV (CREDIDAM/UCMR-ADA)</option>
+                  <option value="VANZARI_FIZICE">Vânzări fizice</option>
+                  <option value="MERCHANDISE">Merchandise</option>
+                  <option value="LICENTIERE">Licențiere</option>
+                  <option value="ALTE_SURSE">Alte surse</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="amount">
+                  Suma (€) <span style={{ color: 'var(--status-expired)' }}>*</span>
+                </label>
+                <input className="form-input" id="amount" name="amount" type="text" inputMode="decimal" placeholder="ex: 1250.75" required value={amount} onChange={(e) => setAmount(e.target.value)} />
               </div>
             </div>
 
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label" htmlFor="periodFrom">
+                  Perioadă de la <span style={{ color: 'var(--status-expired)' }}>*</span>
+                </label>
+                <input className="form-input" id="periodFrom" type="month" required value={periodFrom} onChange={(e) => setPeriodFrom(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="periodTo">
+                  Perioadă până la <span style={{ color: 'var(--status-expired)' }}>*</span>
+                </label>
+                <input className="form-input" id="periodTo" type="month" required value={periodTo} onChange={(e) => setPeriodTo(e.target.value)} />
+              </div>
+            </div>
+            <input type="hidden" name="period" value={period} />
+
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label" htmlFor="artistId">Artist</label>
+                <select className="form-input form-select" id="artistId" name="artistId" value={artistId} onChange={(e) => setArtistId(e.target.value)}>
+                  <option value="">Fără artist specific</option>
+                  {artists.map((a) => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="streams">Cantitate (unități / difuzări)</label>
+                <input className="form-input" id="streams" name="streams" type="text" inputMode="numeric" placeholder="ex: 250" value={streams} onChange={(e) => setStreams(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="form-group">
               <label className="form-label" htmlFor="description">Note</label>
               <textarea
                 id="description"
                 name="description"
                 placeholder="ex: Contract sync Netflix S3E4, decont CREDIDAM sem. I 2026..."
                 style={{
-                  flex: 1,
+                  width: '100%',
                   background: 'rgba(255,255,255,0.03)',
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: 8,
@@ -232,77 +202,94 @@ export function AddRevenueForm({ artists, createRevenueAction }: AddRevenueFormP
                   resize: 'none',
                   outline: 'none',
                   lineHeight: 1.6,
-                  minHeight: 90,
+                  minHeight: 80,
+                  boxSizing: 'border-box',
                 }}
               />
             </div>
-          </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label" htmlFor="source">
-                Sursă <span style={{ color: 'var(--status-expired)' }}>*</span>
-              </label>
-              <select className="form-input form-select" id="source" name="source" required value={source} onChange={(e) => setSource(e.target.value)}>
-                <option value="">Selectează o sursă...</option>
-                <option value="SYNC_LICENSING">Sync Licensing</option>
-                <option value="RADIO_TV">Radio &amp; TV (CREDIDAM/UCMR-ADA)</option>
-                <option value="VANZARI_FIZICE">Vânzări fizice</option>
-                <option value="MERCHANDISE">Merchandise</option>
-                <option value="LICENTIERE">Licențiere</option>
-                <option value="ALTE_SURSE">Alte surse</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="amount">
-                Suma (€) <span style={{ color: 'var(--status-expired)' }}>*</span>
-              </label>
-              <input className="form-input" id="amount" name="amount" type="text" inputMode="decimal" placeholder="ex: 1250.75" required value={amount} onChange={(e) => setAmount(e.target.value)} />
-            </div>
-          </div>
+            <input type="hidden" name="revenueStatus" value="RECONCILIAT" />
+            <button className="btn btn-primary" type="submit" style={{ marginTop: 14, width: '100%' }}>
+              Salvează venit
+            </button>
+          </form>
+        )}
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label" htmlFor="periodFrom">
-                Perioadă de la <span style={{ color: 'var(--status-expired)' }}>*</span>
-              </label>
-              <input className="form-input" id="periodFrom" type="month" required value={periodFrom} onChange={(e) => setPeriodFrom(e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="periodTo">
-                Perioadă până la <span style={{ color: 'var(--status-expired)' }}>*</span>
-              </label>
-              <input className="form-input" id="periodTo" type="month" required value={periodTo} onChange={(e) => setPeriodTo(e.target.value)} />
-            </div>
-          </div>
-          <input type="hidden" name="period" value={period} />
+        {/* ── Tab Import CSV ── */}
+        {tab === 'csv' && (
+          <form action={importRevenueCsvAction}>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>
+              Importă raportul lunar de la distribuitor (Believe, DistroKid, TuneCore etc.).
+              Fiecare rând din CSV devine o înregistrare separată, cu sursa și artistul detectate automat.
+            </p>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label" htmlFor="artistId">
-                Artist <span style={{ color: 'var(--status-expired)' }}>*</span>
-              </label>
-              <select className="form-input form-select" id="artistId" name="artistId" required value={artistId} onChange={(e) => setArtistId(e.target.value)}>
-                <option value="">Selectează un artist...</option>
-                {artists.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
+            <div style={{
+              border: csvPreview ? '1px solid #4ade80' : '1px dashed rgba(255,255,255,0.15)',
+              borderRadius: 10,
+              padding: '24px 20px',
+              background: csvPreview ? 'rgba(74,222,128,0.05)' : 'rgba(255,255,255,0.02)',
+              textAlign: 'center',
+              transition: 'all 0.2s',
+              marginBottom: 20,
+            }}>
+              <input
+                type="file"
+                id="csvFile"
+                name="file"
+                accept=".csv"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                style={{ display: 'block', width: '100%', fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer' }}
+              />
+              {!csvPreview && (
+                <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--text-tertiary)' }}>
+                  Format acceptat: .csv (raport Believe / distribuitor)
+                </p>
+              )}
             </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="streams">
-                Cantitate (unități / difuzări) <span style={{ color: 'var(--status-expired)' }}>*</span>
-              </label>
-              <input className="form-input" id="streams" name="streams" type="text" inputMode="numeric" placeholder="ex: 250" required value={streams} onChange={(e) => setStreams(e.target.value)} />
-            </div>
-          </div>
 
-          <input type="hidden" name="revenueStatus" value="RECONCILIAT" />
+            {csvPreview && (
+              <div style={{
+                background: 'rgba(74,222,128,0.08)',
+                border: '1px solid rgba(74,222,128,0.25)',
+                borderRadius: 8,
+                padding: '14px 16px',
+                marginBottom: 20,
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr',
+                gap: 12,
+              }}>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 2 }}>Fișier</div>
+                  <div style={{ fontSize: 13, color: '#4ade80', fontWeight: 500 }}>{csvPreview.fileName}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 2 }}>Înregistrări</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{csvPreview.rowCount}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 2 }}>Total venituri</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#4ade80' }}>{csvPreview.totalAmount.toFixed(2)} €</div>
+                </div>
+                {csvPreview.totalStreams > 0 && (
+                  <div style={{ gridColumn: '1/-1' }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 2 }}>Total streamuri</div>
+                    <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{csvPreview.totalStreams.toLocaleString('ro-RO')}</div>
+                  </div>
+                )}
+              </div>
+            )}
 
-          <button className="btn btn-primary" type="submit" style={{ marginTop: 14, width: '100%' }}>
-            {csvInfo ? '🚀 Salvează și Importă Raport' : 'Salvează venit'}
-          </button>
-        </form>
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={!csvPreview}
+              style={{ width: '100%', opacity: csvPreview ? 1 : 0.4, cursor: csvPreview ? 'pointer' : 'not-allowed' }}
+            >
+              {csvPreview ? `Importă ${csvPreview.rowCount} înregistrări` : 'Selectează un fișier CSV'}
+            </button>
+          </form>
+        )}
       </Modal>
     </>
   )

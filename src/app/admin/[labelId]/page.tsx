@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
-import { KPICard } from '@/components/ui/KPICard'
+import { KpiVinylSidebar } from '@/components/kpi-vinyl-sidebar'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { ROLES } from '@/lib/roles'
@@ -17,8 +17,8 @@ const PLAN_LABELS: Record<string, string> = {
 }
 
 const ROLE_LABELS: Record<string, string> = {
-  LABEL_MANAGER: 'Label Manager',
-  FINANCIAL:     'Finanțe',
+  LABEL_MANAGER: 'Director General',
+  FINANCIAL:     'Manager Financiar',
 }
 
 type Props = {
@@ -91,13 +91,12 @@ export default async function AdminLabelPage({ params, searchParams }: Props) {
         </div>
       )}
 
-      {/* KPI-uri */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <KPICard label="Artiști"   value={label._count.artists}   accentColor="blue"   />
-        <KPICard label="Piese"     value={label._count.tracks}    accentColor="purple" />
-        <KPICard label="Venituri"  value={fmtEur(totalRevenue)}   accentColor="green"  />
-        <KPICard label="Royalties" value={fmtEur(pendingRoyal)}   accentColor={royaltyAgg._count > 0 ? 'yellow' : 'gray'} subtitle="în așteptare" />
-      </div>
+      <KpiVinylSidebar kpis={[
+        { value: label._count.artists, label: 'Artiști',   accentColor: 'blue' },
+        { value: label._count.tracks,  label: 'Piese',     accentColor: 'purple' },
+        { value: fmtEur(totalRevenue), label: 'Venituri',  accentColor: 'green' },
+        { value: fmtEur(pendingRoyal), label: 'Royalties', accentColor: royaltyAgg._count > 0 ? 'yellow' : 'gray', sublabel: 'în așteptare' },
+      ]} />
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20, alignItems: 'start' }}>
         {/* Detalii principale */}
@@ -139,7 +138,7 @@ export default async function AdminLabelPage({ params, searchParams }: Props) {
                   <tr style={{ background: 'rgba(155,148,240,0.05)' }}>
                     <td style={{ fontWeight: 600, fontSize: 13 }}>{label.owner.firstName} {label.owner.lastName} <span style={{ fontSize: 11, color: 'var(--primary)' }}>(Owner)</span></td>
                     <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{label.owner.email}</td>
-                    <td><span style={{ fontSize: 11, color: 'var(--primary)' }}>Label Manager</span></td>
+                    <td><span style={{ fontSize: 11, color: 'var(--primary)' }}>Director General</span></td>
                     <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{new Date(label.owner.createdAt).toLocaleDateString('ro-RO')}</td>
                   </tr>
                   {label.members.filter((m) => m.id !== label.owner.id).map((m) => (
