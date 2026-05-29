@@ -18,8 +18,6 @@ export async function getNotificationsForLabel(labelId: string): Promise<Notific
   const [
     expiringContracts,
     pendingDetections,
-    tracksCount,
-    permissionsCount,
     upcomingReleases,
     prospectsNeedingAttention,
   ] = await Promise.all([
@@ -31,11 +29,9 @@ export async function getNotificationsForLabel(labelId: string): Promise<Notific
     prisma.aIDetection.count({
       where: { labelId, status: 'PENDING' },
     }),
-    prisma.track.count({ where: { labelId } }),
-    prisma.aIPermission.count({ where: { labelId } }),
     prisma.release.findMany({
       where: { labelId, status: { not: 'RELEASED' } },
-      include: { track: true, album: true },
+      include: { track: { include: { artist: { select: { name: true } } } } },
       orderBy: { releaseDate: 'asc' },
       take: 5,
     }),
@@ -74,26 +70,12 @@ export async function getNotificationsForLabel(labelId: string): Promise<Notific
     })
   }
 
-  // Piese fără permisiuni AI → acțiune
-  const tracksWithoutPerms = Math.max(0, tracksCount - permissionsCount)
-  if (tracksWithoutPerms > 0) {
-    notes.push({
-      id: 'ai-permissions',
-      priority: 'action',
-      icon: '🔵',
-      color: 'var(--primary)',
-      text: `${tracksWithoutPerms} ${tracksWithoutPerms === 1 ? 'piesă fără' : 'piese fără'} permisiuni AI setate`,
-      href: '/compliance/permissions',
-      linkText: 'Setează acum →',
-    })
-  }
-
   // Lansări în maxim 7 zile → acțiune
   for (const r of upcomingReleases) {
     const releaseDate = new Date(r.releaseDate)
     if (releaseDate <= in7Days) {
       const daysUntil = Math.ceil((releaseDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
-      const name = r.track?.title ?? r.album?.title ?? 'lansare'
+      const name = r.track?.title ?? 'lansare'
       notes.push({
         id: `release-${r.id}`,
         priority: 'action',

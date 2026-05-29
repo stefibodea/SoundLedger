@@ -13,7 +13,6 @@ const DEFAULT_CHECKLIST = [
   { label: 'Cover art aprobat', done: false },
   { label: 'ISRC/UPC atribuit', done: false },
   { label: 'Distribuție setată', done: false },
-  { label: 'Press kit redactat', done: false },
   { label: 'Postări social media programate', done: false },
   { label: 'Playlist pitching trimis', done: false },
 ]

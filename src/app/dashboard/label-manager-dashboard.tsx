@@ -28,28 +28,22 @@ export async function LabelManagerDashboard({ session }: { session: SessionPaylo
     artistsCount,
     tracksCount,
     releasesCount,
-    prospectsCount,
     certifiedCount,
     pendingDetectionsCount,
-    aiPermissionsCount,
     lastInsight,
     liveNotifications,
   ] = await Promise.all([
     prisma.artist.count({ where: { labelId } }),
     prisma.track.count({ where: { labelId } }),
     prisma.release.count({ where: { labelId, status: { not: 'RELEASED' } } }),
-    prisma.aRProspect.count({ where: { labelId, status: { not: 'REJECTED' } } }),
     prisma.humanMadeCertificate.count({ where: { labelId, isRevoked: false } }),
     prisma.aIDetection.count({ where: { labelId, status: 'PENDING' } }),
-    prisma.aIPermission.count({ where: { labelId } }),
     prisma.notification.findFirst({
       where: { userId: session.userId, type: 'AI_INSIGHT' },
       orderBy: { createdAt: 'desc' },
     }),
     getNotificationsForLabel(labelId),
   ])
-
-  const tracksWithoutPerms = Math.max(0, tracksCount - aiPermissionsCount)
 
   const greeting = currentUser?.firstName ? `Bună, ${currentUser.firstName}` : 'Acasă'
 

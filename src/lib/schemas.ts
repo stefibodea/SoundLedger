@@ -25,12 +25,6 @@ const optionalEmail = z
   )
   .transform((v) => v || null)
 
-/** Checkbox HTML trimite "on" dacă bifat, altfel lipsă din FormData */
-const checkbox = z
-  .string()
-  .optional()
-  .transform((v) => v === 'on')
-
 /** Număr pozitiv opțional din câmp text */
 const optionalPositiveNumber = z
   .string()
@@ -124,13 +118,6 @@ export const createTrackSchema = z.object({
   type: z.string().transform((v) => v || 'SINGLE'),
 })
 
-export const createAlbumSchema = z.object({
-  title:       requiredString('Titlul albumului este obligatoriu').max(200),
-  artistId:    requiredString('Artistul este obligatoriu'),
-  type:        z.string().transform((v) => v || 'ALBUM'),
-  releaseDate: z.string().transform((v) => v.trim() || null),
-})
-
 // ── Contracte ──────────────────────────────────────────────────────────────────
 
 export const createContractSchema = z.object({
@@ -211,18 +198,6 @@ export const createReleaseSchema = z.object({
 
 // ── AI Compliance ──────────────────────────────────────────────────────────────
 
-export const setAIPermissionSchema = z.object({
-  trackId:          requiredString('Piesa este obligatorie'),
-  returnArtist:     z.string().transform((v) => v.trim()),
-  allowAITraining:  checkbox,
-  allowResearchOnly: checkbox,
-  requiresLicense:  checkbox,
-  artistConsent:    checkbox,
-  consentDate:      z.string().transform((v) => v.trim() || null),
-  minCompensation:  optionalPositiveNumber,
-  notes:            z.string().transform((v) => v.trim() || null),
-})
-
 export const analyzeSuspectSchema = z.object({
   suspectUrl:    z.string().min(1, 'URL-ul piesei suspecte este obligatoriu')
     .refine((v) => /^https?:\/\/.+/.test(v), 'URL invalid — trebuie să înceapă cu https://'),
@@ -253,12 +228,10 @@ export type RegisterInput        = z.infer<typeof registerSchema>
 export type CreateArtistInput    = z.infer<typeof createArtistSchema>
 export type UpdateArtistInput    = z.infer<typeof updateArtistSchema>
 export type CreateTrackInput     = z.infer<typeof createTrackSchema>
-export type CreateAlbumInput     = z.infer<typeof createAlbumSchema>
 export type CreateContractInput  = z.infer<typeof createContractSchema>
 export type CreateRevenueInput   = z.infer<typeof createRevenueSchema>
 export type CreateProspectInput  = z.infer<typeof createProspectSchema>
 export type CreateReleaseInput   = z.infer<typeof createReleaseSchema>
-export type SetAIPermissionInput = z.infer<typeof setAIPermissionSchema>
 export type AnalyzeSuspectInput  = z.infer<typeof analyzeSuspectSchema>
 export type IssueCertInput       = z.infer<typeof issueCertificateSchema>
 export type InviteUserInput      = z.infer<typeof inviteUserSchema>

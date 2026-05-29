@@ -19,7 +19,6 @@ export default async function ReleasesPage() {
     where: { labelId: session.labelId },
     include: {
       track: { include: { artist: { select: { name: true, photo: true } } } },
-      album: { select: { id: true, title: true } },
     },
     orderBy: { releaseDate: 'asc' },
   })
@@ -39,7 +38,6 @@ export default async function ReleasesPage() {
     track: r.track
       ? { id: r.trackId ?? '', title: r.track.title, artist: { name: r.track.artist.name, photo: r.track.artist.photo ?? null } }
       : null,
-    album: r.album ? { id: r.album.id, title: r.album.title } : null,
   }))
 
   return (

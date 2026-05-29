@@ -49,14 +49,12 @@ model Label {
   members     User[]   @relation("LabelMembers")
   artists     Artist[]
   tracks      Track[]
-  albums      Album[]
   contracts   Contract[]
   revenues    Revenue[]
   royaltyPayments RoyaltyPayment[]
   arProspects    ARProspect[]
   releases       Release[]
   invitations    Invitation[]
-  aiPermissions     AIPermission[]
   aiDetections      AIDetection[]
   humanMadeCerts    HumanMadeCertificate[]
   audioFingerprints AudioFingerprint[]
@@ -113,7 +111,6 @@ model Artist {
 
   // Relations
   tracks        Track[]
-  albums        Album[]
   contracts     Contract[]
   revenues      Revenue[]
   royaltyPayments RoyaltyPayment[]
@@ -145,33 +142,13 @@ model Track {
   artist        Artist   @relation(fields: [artistId], references: [id])
   labelId       String
   label         Label    @relation(fields: [labelId], references: [id])
-  albumId       String?
-  album         Album?   @relation(fields: [albumId], references: [id])
   revenues      Revenue[]
   releases      Release[]
-  aiPermission   AIPermission?
   humanMadeCert  HumanMadeCertificate?
   fingerprint    AudioFingerprint?
   creativeRecord CreativeRecord?
 }
 
-model Album {
-  id            String   @id @default(cuid())
-  title         String
-  releaseDate   String?
-  coverArt      String?
-  type          String   @default("ALBUM") // ALBUM, EP
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // Relations
-  artistId      String
-  artist        Artist   @relation(fields: [artistId], references: [id])
-  labelId       String
-  label         Label    @relation(fields: [labelId], references: [id])
-  tracks        Track[]
-  releases      Release[]
-}
 
 model Contract {
   id              String   @id @default(cuid())
@@ -263,15 +240,12 @@ model Release {
   releaseDate   String
   status        String   @default("PLANNING") // PLANNING, READY, RELEASED
   checklist     String?  // JSON string
-  socialPlan    String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   // Relations
   trackId       String?
   track         Track?   @relation(fields: [trackId], references: [id])
-  albumId       String?
-  album         Album?   @relation(fields: [albumId], references: [id])
   labelId       String
   label         Label    @relation(fields: [labelId], references: [id])
 }
@@ -289,25 +263,6 @@ model Notification {
 
 // ── Modul AI Compliance & Rights Protection ───────────────────────────────────
 
-// Permisiuni AI per piesă — stabilite de Label Manager cu consimțământul artistului
-model AIPermission {
-  id      String @id @default(cuid())
-  trackId String @unique
-  track   Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
-  labelId String
-  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
-
-  allowAITraining   Boolean  @default(false) // Permite utilizarea pentru antrenare AI
-  allowResearchOnly Boolean  @default(false) // Doar research academic, nu comercial
-  requiresLicense   Boolean  @default(true)  // Necesită licență plătită
-  artistConsent     Boolean  @default(false) // Artistul a consimțit explicit
-  minCompensation   Float?                   // Compensație minimă cerută (EUR)
-  consentDate       DateTime?                // Data la care artistul a consimțit
-  notes             String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
 
 // Detecție piesă suspectă — raportată de echipa labelului când suspectează utilizare AI neautorizată
 model AIDetection {

@@ -57,7 +57,6 @@ function TrackStatusToggle({ id, status }: { id: string; status: string }) {
 
 const TYPE_LABELS: Record<string, string> = {
   SINGLE:      'Single',
-  ALBUM_TRACK: 'Album Track',
   EP_TRACK:    'EP Track',
 }
 
@@ -72,19 +71,6 @@ function TypeBadge({ type }: { type: string }) {
         border: '1px solid rgba(155,148,240,0.35)',
         color: '#9B94F0',
         boxShadow: '0 0 8px rgba(155,148,240,0.15)',
-      }}>
-        {label}
-      </div>
-    )
-  }
-  if (type === 'ALBUM_TRACK') {
-    return (
-      <div style={{
-        display: 'inline-flex', alignItems: 'center',
-        padding: '3px 10px', borderRadius: 999, fontSize: 12, fontWeight: 500,
-        background: 'rgba(96,165,250,0.10)',
-        border: '1px solid rgba(96,165,250,0.25)',
-        color: '#60a5fa',
       }}>
         {label}
       </div>
@@ -183,7 +169,7 @@ export type TrackRow = {
 
 export type ArtistOption = { id: string; name: string }
 
-type TypeFilter   = 'all' | 'SINGLE' | 'ALBUM_TRACK' | 'EP_TRACK'
+type TypeFilter   = 'all' | 'SINGLE' | 'EP_TRACK'
 type StatusFilter = 'all' | 'RELEASED' | 'UNRELEASED'
 type SortKey      = 'title' | 'artist' | 'date' | 'bpm'
 
@@ -684,7 +670,6 @@ export function CatalogClient({ tracks, artists, canWrite, labelName, initialArt
                   {([
                     { value: 'all', label: 'Toate' },
                     { value: 'SINGLE', label: 'Single' },
-                    { value: 'ALBUM_TRACK', label: 'Album' },
                     { value: 'EP_TRACK', label: 'EP' },
                   ] as { value: TypeFilter; label: string }[]).map(({ value, label }) => {
                     const active = typeFilter === value
@@ -851,7 +836,6 @@ export function CatalogClient({ tracks, artists, canWrite, labelName, initialArt
               <label className="form-label" htmlFor="m-type">Tip *</label>
               <select id="m-type" name="type" className="form-input form-select" required>
                 <option value="SINGLE">Single</option>
-                <option value="ALBUM_TRACK">Track album</option>
                 <option value="EP_TRACK">Track EP</option>
               </select>
             </div>

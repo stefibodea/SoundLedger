@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canManageArtists, canManageCompliance } from '@/lib/roles'
 import { assertArtistBelongsToLabel } from '@/lib/tenant-security'
-import { createTrackSchema, createAlbumSchema } from '@/lib/schemas'
+import { createTrackSchema } from '@/lib/schemas'
 import { saveAudioFile, deleteAudioFile } from '@/lib/file-upload'
 
 async function saveCoverFile(file: File, trackId: string): Promise<string> {
@@ -445,27 +445,3 @@ export async function declareCreativeRecordAction(formData: FormData) {
   redirect(`/catalog/${trackId}?declared=1`)
 }
 
-export async function createAlbumAction(formData: FormData) {
-  const session = await requireSession()
-  if (!session.labelId || !canManageArtists(session.role)) redirect('/dashboard')
-
-  const albumResult = createAlbumSchema.safeParse({
-    title:       formData.get('title'),
-    artistId:    formData.get('artistId'),
-    type:        formData.get('type'),
-    releaseDate: formData.get('releaseDate') ?? '',
-  })
-  if (!albumResult.success) {
-    const msg = albumResult.error.issues[0]?.message ?? 'Date invalide'
-    redirect(`/catalog/albums?error=${encodeURIComponent(msg)}`)
-  }
-  const { title, artistId, type, releaseDate } = albumResult.data
-
-  await assertArtistBelongsToLabel(artistId, session.labelId, '/catalog/albums?error=Artist+invalid')
-
-  await prisma.album.create({
-    data: { title, artistId, labelId: session.labelId, type, releaseDate },
-  })
-
-  redirect('/catalog/albums')
-}

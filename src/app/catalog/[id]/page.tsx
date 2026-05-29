@@ -44,7 +44,6 @@ export default async function TrackDetailPage({ params, searchParams }: PageProp
       where: { id },
       include: {
         artist: true,
-        album:  true,
         revenues:       { orderBy: { period: 'asc' } },
         fingerprint:    true,
         creativeRecord: true,
@@ -67,7 +66,7 @@ export default async function TrackDetailPage({ params, searchParams }: PageProp
   const totalRevenue = track.revenues.reduce((sum, r) => sum + r.amount, 0)
   const audioUrl   = getAudioFileUrl(track.audioFile)
 
-  const TYPE_LABELS: Record<string, string> = { SINGLE: 'Single', ALBUM_TRACK: 'Track album', EP_TRACK: 'Track EP' }
+  const TYPE_LABELS: Record<string, string> = { SINGLE: 'Single', EP_TRACK: 'Track EP' }
 
   const cr = track.creativeRecord
   const declarationType: 'UMAN' | 'AI' | null = cr
@@ -148,7 +147,6 @@ export default async function TrackDetailPage({ params, searchParams }: PageProp
             <Link href={`/artists/${track.artist.id}`} style={{ color: 'var(--primary)', fontWeight: 500 }}>
               {track.artist.name}
             </Link>
-            {track.album && <span> · {track.album.title}</span>}
             {track.releaseDate && <span> · {track.releaseDate}</span>}
             {track.duration && <span> · {formatDuration(track.duration)}</span>}
             {totalRevenue > 0 && <span> · <strong style={{ color: 'var(--text-primary)' }}>{totalRevenue.toFixed(0)} €</strong> venituri</span>}
@@ -336,7 +334,6 @@ export default async function TrackDetailPage({ params, searchParams }: PageProp
                 { label: 'Tonalitate',    value: track.key },
                 { label: 'Durata',        value: track.duration ? formatDuration(track.duration) : null },
                 { label: 'Data lansarii', value: track.releaseDate },
-                { label: 'Album',         value: track.album?.title },
               ].filter(({ value }) => value).map(({ label, value }) => (
                 <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '5px 0', borderBottom: '1px solid var(--border-light)' }}>
                   <dt style={{ fontSize: 12, color: 'var(--text-tertiary)', flexShrink: 0 }}>{label}</dt>

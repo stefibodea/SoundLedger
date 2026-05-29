@@ -56,7 +56,6 @@ export default async function EditTrackPage({ params, searchParams }: PageProps)
               <label className="form-label">Tip</label>
               <select name="type" className="form-input form-select" defaultValue={track.type}>
                 <option value="SINGLE">Single</option>
-                <option value="ALBUM_TRACK">Track album</option>
                 <option value="EP_TRACK">Track EP</option>
               </select>
             </div>

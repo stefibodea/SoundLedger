@@ -24,7 +24,7 @@ export default async function CatalogPage({
   startOfMonth.setDate(1)
   startOfMonth.setHours(0, 0, 0, 0)
 
-  const [rawTracks, label, rawArtists, albumsCount, releasedCount, addedThisMonth] = await Promise.all([
+  const [rawTracks, label, rawArtists, releasedCount, addedThisMonth] = await Promise.all([
     prisma.track.findMany({
       where: { labelId: session.labelId },
       include: {
@@ -40,7 +40,6 @@ export default async function CatalogPage({
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     }),
-    prisma.album.count({ where: { labelId: session.labelId } }),
     prisma.track.count({ where: { labelId: session.labelId, status: 'RELEASED' } }),
     prisma.track.count({ where: { labelId: session.labelId, createdAt: { gte: startOfMonth } } }),
   ])
@@ -117,7 +116,6 @@ export default async function CatalogPage({
       <KpiVinylSidebar kpis={[
         { value: totalTracks,    label: 'Piese',        accentColor: 'purple' },
         { value: releasedCount,  label: 'Lansate',      accentColor: 'green' },
-        { value: albumsCount,    label: 'Albume',       accentColor: 'blue' },
         { value: addedThisMonth, label: 'Luna aceasta', accentColor: 'yellow' },
       ]} />
 

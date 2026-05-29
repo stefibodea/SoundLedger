@@ -14,7 +14,6 @@ export type ReleaseRow = {
   releaseDate: string
   checklist: string | null
   track: { id: string; title: string; artist: { name: string; photo: string | null } } | null
-  album: { id: string; title: string } | null
 }
 
 type ChecklistItem = { label: string; done: boolean }
@@ -64,7 +63,7 @@ function fmtDateShort(dateStr: string): string {
 
 function releaseName(r: ReleaseRow): string {
   if (r.track) return `${r.track.artist.name} — ${r.track.title}`
-  return r.album?.title ?? 'Lansare'
+  return 'Lansare'
 }
 
 function matchesDay(releaseDate: string, cell: Date): boolean {
@@ -485,7 +484,7 @@ export function ReleasesClient({ releases }: Props) {
                             title={releaseName(r)}
                           >
                             <div style={{ fontSize: 10, fontWeight: 700, color: sc.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.3 }}>
-                              {r.track?.title ?? r.album?.title ?? 'Lansare'}
+                              {r.track?.title ?? 'Lansare'}
                             </div>
                             {r.track?.artist && (
                               <div style={{ fontSize: 9, color: sc.color, opacity: 0.65, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.3 }}>
@@ -563,7 +562,7 @@ export function ReleasesClient({ releases }: Props) {
                           >
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {r.track?.title ?? r.album?.title ?? 'Lansare'}
+                                {r.track?.title ?? 'Lansare'}
                               </div>
                               <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 1 }}>
                                 {r.track?.artist.name ?? ''} · {fmtDateShort(r.releaseDate)}
@@ -599,7 +598,7 @@ export function ReleasesClient({ releases }: Props) {
                               >
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {r.track?.title ?? r.album?.title ?? 'Lansare'}
+                                    {r.track?.title ?? 'Lansare'}
                                   </div>
                                   <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 1 }}>
                                     {r.track?.artist.name ?? ''} · {fmtDateShort(r.releaseDate)}
@@ -748,7 +747,7 @@ export function ReleasesClient({ releases }: Props) {
 
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <strong style={{ fontSize: 14, fontWeight: 600, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>
-                        {r.track?.title ?? r.album?.title ?? 'Lansare'}
+                        {r.track?.title ?? 'Lansare'}
                       </strong>
                       {r.track?.artist && (
                         <span style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -841,7 +840,7 @@ export function ReleasesClient({ releases }: Props) {
                           {selectedRelease.track?.artist.name ?? ''}
                         </div>
                         <div style={{ fontSize: 15, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>
-                          {selectedRelease.track?.title ?? selectedRelease.album?.title ?? 'Lansare'}
+                          {selectedRelease.track?.title ?? 'Lansare'}
                         </div>
                       </div>
                     </div>

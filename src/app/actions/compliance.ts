@@ -5,59 +5,11 @@ import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guards'
 import { canViewCompliance, canManageCompliance, canActOnDetection } from '@/lib/roles'
 import { analyzeSuspectTrack, generateText } from '@/lib/ai'
-import { setAIPermissionSchema, analyzeSuspectSchema, issueCertificateSchema } from '@/lib/schemas'
+import { analyzeSuspectSchema, issueCertificateSchema } from '@/lib/schemas'
 
 function isQuotaError(e: unknown): boolean {
   const msg = e instanceof Error ? e.message : String(e)
   return msg.includes('429') || msg.includes('quota') || msg.includes('Quota')
-}
-
-// ── Permisiuni AI ──────────────────────────────────────────────────────────────
-
-export async function setAIPermissionAction(formData: FormData) {
-  const session = await requireSession()
-  if (!session.labelId || !canManageCompliance(session.role)) redirect('/compliance')
-
-  const result = setAIPermissionSchema.safeParse({
-    trackId:           formData.get('trackId'),
-    returnArtist:      formData.get('returnArtist') ?? '',
-    allowAITraining:   formData.get('allowAITraining'),
-    allowResearchOnly: formData.get('allowResearchOnly'),
-    requiresLicense:   formData.get('requiresLicense'),
-    artistConsent:     formData.get('artistConsent'),
-    consentDate:       formData.get('consentDate') ?? '',
-    minCompensation:   formData.get('minCompensation') ?? '',
-    notes:             formData.get('notes') ?? '',
-  })
-  if (!result.success) {
-    const msg = result.error.issues[0]?.message ?? 'Date invalide'
-    redirect(`/compliance/permissions?error=${encodeURIComponent(msg)}`)
-  }
-  const { trackId, returnArtist, allowAITraining, allowResearchOnly, requiresLicense, artistConsent, consentDate, minCompensation, notes } = result.data
-
-  // Verifică că piesa aparține labelului
-  const track = await prisma.track.findUnique({ where: { id: trackId } })
-  if (!track || track.labelId !== session.labelId) redirect('/compliance/permissions')
-
-  const permData = {
-    allowAITraining,
-    allowResearchOnly,
-    requiresLicense,
-    artistConsent,
-    consentDate: consentDate ? new Date(consentDate) : null,
-    minCompensation,
-    notes,
-  }
-
-  await prisma.aIPermission.upsert({
-    where:  { trackId },
-    create: { trackId, labelId: session.labelId, ...permData },
-    update: permData,
-  })
-
-  const qs = new URLSearchParams({ saved: '1', trackId })
-  if (returnArtist) qs.set('artist', returnArtist)
-  redirect(`/compliance/permissions?${qs.toString()}`)
 }
 
 // ── Scanner — analizează piesă suspectă ───────────────────────────────────────
@@ -306,9 +258,8 @@ export async function generateComplianceReportAction() {
   const session = await requireSession()
   if (!session.labelId || !canViewCompliance(session.role)) redirect('/compliance')
 
-  const [totalTracks, withPermissions, withCerts, openDetections] = await Promise.all([
+  const [totalTracks, withCerts, openDetections] = await Promise.all([
     prisma.track.count({ where: { labelId: session.labelId } }),
-    prisma.aIPermission.count({ where: { labelId: session.labelId } }),
     prisma.humanMadeCertificate.count({ where: { labelId: session.labelId, isRevoked: false } }),
     prisma.aIDetection.count({ where: { labelId: session.labelId, status: { in: ['PENDING', 'CONFIRMED'] } } }),
   ])
@@ -319,7 +270,6 @@ Generează un raport executiv de conformitate AI ("Human First") pentru un label
 
 Date label:
 - Total piese în catalog: ${totalTracks}
-- Piese cu permisiuni AI setate: ${withPermissions} din ${totalTracks}
 - Piese certificate "Human Made": ${withCerts} din ${totalTracks}
 - Detecții deschise (posibile utilizări neautorizate): ${openDetections}
 

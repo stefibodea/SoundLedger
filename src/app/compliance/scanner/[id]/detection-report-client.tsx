@@ -30,7 +30,6 @@ export type ParsedMatch = {
   chromaSimilarity: number
   tempoMatch: number
   segments: Array<{ startSec: number; endSec: number; score: number }>
-  permissionStatus: 'allowed' | 'denied' | 'no_permission_set'
 }
 
 type DetectionData = {
@@ -340,23 +339,6 @@ export function DetectionReportClient({ detection, matches, topTrack, canManage,
               </div>
             ))}
           </div>
-
-          {/* Permisiuni */}
-          {m.permissionStatus === 'denied' && (
-            <div style={{ fontSize: 12, background: 'rgba(252,165,165,0.1)', border: '1px solid rgba(252,165,165,0.25)', borderRadius: 6, padding: '6px 10px', marginBottom: 10, color: '#fca5a5' }}>
-              AI Training interzis — posibilă încălcare drepturi
-            </div>
-          )}
-          {m.permissionStatus === 'allowed' && (
-            <div style={{ fontSize: 12, background: 'rgba(110,231,183,0.1)', border: '1px solid rgba(110,231,183,0.25)', borderRadius: 6, padding: '6px 10px', marginBottom: 10, color: '#6ee7b7' }}>
-              AI Training permis
-            </div>
-          )}
-          {m.permissionStatus === 'no_permission_set' && (
-            <div style={{ fontSize: 12, background: 'rgba(253,230,138,0.1)', border: '1px solid rgba(253,230,138,0.25)', borderRadius: 6, padding: '6px 10px', marginBottom: 10, color: '#fde68a' }}>
-              Permisiuni AI nesetate
-            </div>
-          )}
 
           {/* Segmente — ascunse: algoritmul Chromaprint + OpenL3 nu produce timestamps */}
         </div>

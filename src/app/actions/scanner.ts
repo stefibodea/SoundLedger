@@ -95,25 +95,11 @@ export async function analyzeSuspectTrackAction(formData: FormData) {
     const audioPath = path.join(process.cwd(), 'public', 'uploads', 'suspects', filename)
     const result = await compareAudioWithCatalog(audioPath, catalog, 3)
 
-    // f) Augmentează matches cu permissionStatus
-    const permissions = await prisma.aIPermission.findMany({
-      where: { trackId: { in: result.matches.map((m) => m.trackId) }, labelId: session.labelId },
-    })
-
-    const matchesWithPermissions = result.matches.map((match) => {
-      const perm = permissions.find((p) => p.trackId === match.trackId)
-      let permissionStatus: 'allowed' | 'denied' | 'no_permission_set'
-      if (!perm) permissionStatus = 'no_permission_set'
-      else if (!perm.allowAITraining && !perm.allowResearchOnly) permissionStatus = 'denied'
-      else permissionStatus = 'allowed'
-      return { ...match, permissionStatus }
-    })
-
-    // g) Actualizează detecția cu rezultatele
+    // f) Actualizează detecția cu rezultatele
     await prisma.aIDetection.update({
       where: { id: detection.id },
       data: {
-        matches:         JSON.stringify(matchesWithPermissions),
+        matches:         JSON.stringify(result.matches),
         topMatchScore:   result.topMatchScore,
         topMatchTrackId: result.topMatchTrackId,
         suspectDuration: result.suspectDuration,
